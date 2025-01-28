@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     xmlns:tools="http://schemas.android.com/tools"
+     android:layout_height="match_parent"
+     android:layout_width="match_parent"
+     android:background="@color/yellowbg"
+     android:id="@+id/operations">
+
+    <TextView
+         android:layout_height="wrap_content"
+         android:layout_width="match_parent"
+         android:textSize="50sp"
+         android:textColor="@color/white"
+         android:layout_marginTop="70dp"
+         android:layout_marginBottom="100dp"
+         android:gravity="center_horizontal"
+         android:layout_marginHorizontal="28dp"
+         android:shadowRadius="4"
+         android:fontFamily="@font/paytone_one"
+         android:shadowColor="#000000"
+         android:shadowDx="2"
+         android:shadowDy="2"
+         android:id="@+id/text_choose_operation"
+         android:text="@string/choose_operation" />
+
+    <GridLayout
+         android:layout_height="wrap_content"
+         android:layout_width="wrap_content"
+         android:layout_marginBottom="30dp"
+         android:useDefaultMargins="true"
+         android:layout_centerHorizontal="true"
+         android:alignmentMode="alignMargins"
+         android:layout_alignParentBottom="true"
+         android:columnCount="2"
+         android:rowCount="2">
+
+        <androidx.appcompat.widget.AppCompatImageView
+             android:layout_height="143dp"
+             android:layout_width="143dp"
+             android:src="@drawable/ic_operation_add"
+             android:background="@drawable/btn_condition_delete"
+             android:padding="40dp"
+             android:id="@+id/btn_operation_add" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+             android:layout_height="143dp"
+             android:layout_width="143dp"
+             android:src="@drawable/ic_operation_subtract"
+             android:background="@drawable/btn_condition_two"
+             android:padding="40dp"
+             android:layout_marginStart="8dp"
+             android:id="@+id/btn_operation_subtract" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+             android:layout_height="143dp"
+             android:layout_width="143dp"
+             android:src="@drawable/ic_operation_multiply"
+             android:background="@drawable/btn_condition_create"
+             android:padding="40dp"
+             android:layout_marginTop="8dp"
+             android:id="@+id/btn_operation_multiply" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+             android:layout_height="143dp"
+             android:layout_width="143dp"
+             android:src="@drawable/ic_operation_divide"
+             android:background="@drawable/btn_condition_one"
+             android:padding="40dp"
+             android:layout_marginTop="8dp"
+             android:layout_marginStart="8dp"
+             android:id="@+id/btn_operation_divide" />
+
+    </GridLayout>
+
+</RelativeLayout>

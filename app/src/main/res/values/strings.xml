@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">MathSquare</string>
+    <string name="play_game">play game</string>
+    <string name="tutorials">tutorials</string>
+    <string name="exit_game">exit game</string>
+    <string name="choose_operation">Choose a math operation</string>
+    <string name="difficulty">difficulty</string>
+    <string name="easy">easy</string>
+    <string name="medium">medium</string>
+    <string name="hard">hard</string>
+
+
+
+</resources>

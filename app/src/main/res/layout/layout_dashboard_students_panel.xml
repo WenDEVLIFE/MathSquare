@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:layout_height="match_parent"
+     android:layout_width="match_parent"
+     android:background="@color/yellowbg"
+     android:fillViewport="true"
+     android:id="@+id/scroll">
+
+    <LinearLayout
+         android:layout_height="wrap_content"
+         android:layout_width="match_parent"
+         android:gravity="top"
+         android:orientation="vertical"
+         android:id="@+id/main">
+
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:gravity="start|center"
+             android:orientation="vertical"
+             android:layout_marginTop="60dp">
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="match_parent"
+                 android:gravity="center_horizontal"
+                 android:layout_marginHorizontal="28dp"
+                 android:shadowRadius="4"
+                 android:textSize="25sp"
+                 android:fontFamily="@font/paytone_one"
+                 android:textColor="@color/white"
+                 android:shadowColor="#000000"
+                 android:shadowDx="2"
+                 android:shadowDy="2"
+                 android:text="Manage Quiz History" />
+
+        </LinearLayout>
+
+        <LinearLayout
+             android:layout_height="120dp"
+             android:layout_width="match_parent"
+             android:gravity="center"
+             android:orientation="horizontal"
+             android:layout_marginTop="10dp">
+
+            <ImageView
+                 android:layout_height="60dp"
+                 android:layout_width="60dp"
+                 android:src="@drawable/ic_delete"
+                 android:background="@drawable/btn_condition_delete"
+                 android:elevation="16dp"
+                 android:padding="16dp"
+                 android:id="@+id/deletesection" />
+            
+            <ImageView
+                 android:layout_height="60dp"
+                 android:layout_width="60dp"
+                 android:src="@drawable/ic_check"
+                android:layout_marginLeft="18dp"
+                 android:background="@drawable/btn_green_off"
+                 android:elevation="16dp"
+                 android:padding="16dp"
+                android:visibility="gone"
+                 android:id="@+id/checkdelete" />
+
+        </LinearLayout>
+
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:layout_marginEnd="10dp"
+             android:gravity="center"
+             android:background="@drawable/bg_board_two"
+             android:padding="8dp"
+             android:orientation="horizontal"
+             android:layout_marginStart="10dp">
+
+            <LinearLayout
+                 android:layout_height="wrap_content"
+                 android:layout_width="match_parent"
+                 android:gravity="center|top"
+                 android:background="@drawable/bg_board_three"
+                 android:padding="12dp"
+                 android:orientation="vertical">
+
+                <LinearLayout
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:gravity="top|center"
+                     android:orientation="horizontal">
+
+                    <TableLayout
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:orientation="horizontal"
+    android:id="@+id/tableLayout"
+    android:stretchColumns="1,2"> <!-- Stretch only the necessary columns -->
+
+
+                      <TableRow
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent">
+
+    <CheckBox
+        android:layout_height="wrap_content"
+        android:layout_width="20dp"
+        android:layout_gravity="start"
+        android:visibility="gone"
+                                android:layout_marginEnd="8dp"
+        android:id="@+id/rowCheckboxSelectAll" />
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:gravity="start"
+        android:fontFamily="@font/paytone_one"
+        android:textSize="15sp"
+        android:textColor="#204520"
+        android:layout_weight="1"
+        android:layout_gravity="start"
+        android:text="Name"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:gravity="center"
+        android:fontFamily="@font/paytone_one"
+        android:textSize="15sp"
+        android:textColor="#204520"
+        android:layout_weight="1"
+        android:layout_gravity="end"
+        android:text="Section"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:gravity="center"
+        android:fontFamily="@font/paytone_one"
+        android:textSize="15sp"
+        android:textColor="#204520"
+        android:layout_weight="1"
+        android:layout_gravity="end"
+        android:text="Grade"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:gravity="center"
+        android:fontFamily="@font/paytone_one"
+        android:textSize="15sp"
+        android:textColor="#204520"
+        android:layout_weight="1"
+        android:layout_gravity="end"
+        android:text="Game No."
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:gravity="center"
+        android:fontFamily="@font/paytone_one"
+        android:textSize="15sp"
+        android:textColor="#204520"
+        android:layout_weight="1"
+        android:layout_gravity="end"
+        android:text="Score"
+        android:textStyle="bold" />
+</TableRow>
+
+
+
+                    </TableLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:layout_marginEnd="10dp"
+             android:gravity="center"
+             android:padding="8dp"
+             android:orientation="horizontal"
+             android:layout_marginTop="30dp"
+             android:layout_marginStart="10dp">
+
+            <LinearLayout
+                 android:layout_height="match_parent"
+                 android:layout_width="match_parent"
+                 android:gravity="top|center"
+                 android:padding="6dp"
+                 android:orientation="vertical">
+
+                <LinearLayout
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:gravity="top|center"
+                     android:orientation="horizontal">
+
+                    <LinearLayout
+                         android:layout_height="50dp"
+                         android:layout_width="220dp"
+                         android:gravity="start|center"
+                         android:background="@drawable/box_create"
+                         android:orientation="horizontal">
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="80dp"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:text="Quiz 1" />
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="20dp"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:text="-" />
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="match_parent"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:id="@+id/operation_type"
+                             android:text="Grade 1" />
+
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                         android:layout_height="match_parent"
+                         android:layout_width="match_parent"
+                         android:thumb="@drawable/switch_thumb"
+                         app:track="@drawable/switch_track"
+                         app:showText="false"
+                         android:id="@+id/switch_quiz1" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:gravity="top|center"
+                     android:orientation="horizontal"
+                     android:layout_marginTop="8dp">
+
+                    <LinearLayout
+                         android:layout_height="50dp"
+                         android:layout_width="220dp"
+                         android:gravity="start|center"
+                         android:background="@drawable/box_create"
+                         android:orientation="horizontal">
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="80dp"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:text="Quiz 2" />
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="20dp"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:text="-" />
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="match_parent"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:id="@+id/operation_type_2"
+                             android:text="Grade 2" />
+
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                         android:layout_height="match_parent"
+                         android:layout_width="match_parent"
+                         android:thumb="@drawable/switch_thumb"
+                         app:track="@drawable/switch_track"
+                         app:showText="false"
+                         android:id="@+id/switch_quiz2" />
+
+                </LinearLayout>⁹
+
+                <LinearLayout
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:gravity="top|center"
+                     android:orientation="horizontal"
+                     android:layout_marginTop="8dp">
+
+                    <LinearLayout
+                         android:layout_height="50dp"
+                         android:layout_width="220dp"
+                         android:gravity="start|center"
+                         android:background="@drawable/box_create"
+                         android:orientation="horizontal">
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="80dp"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:text="Quiz 3" />
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="20dp"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:text="-" />
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="match_parent"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:id="@+id/operation_type_3"
+                             android:text="Grade 3" />
+
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                         android:layout_height="match_parent"
+                         android:layout_width="match_parent"
+                         android:thumb="@drawable/switch_thumb"
+                         app:track="@drawable/switch_track"
+                         app:showText="false"
+                         android:id="@+id/switch_quiz3" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:gravity="top|center"
+                     android:orientation="horizontal"
+                     android:layout_marginTop="8dp">
+
+                    <LinearLayout
+                         android:layout_height="50dp"
+                         android:layout_width="220dp"
+                         android:gravity="start|center"
+                         android:background="@drawable/box_create"
+                         android:orientation="horizontal">
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="80dp"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:text="Quiz 4" />
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="20dp"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:text="-" />
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="match_parent"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:id="@+id/operation_type3"
+                             android:text="Grade 4" />
+
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                         android:layout_height="match_parent"
+                         android:layout_width="match_parent"
+                         android:thumb="@drawable/switch_thumb"
+                         app:track="@drawable/switch_track"
+                         app:showText="false"
+                         android:id="@+id/switch_quiz4" />
+
+                </LinearLayout>
+                
+                  <LinearLayout
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:gravity="top|center"
+                     android:orientation="horizontal"
+                     android:layout_marginTop="8dp">
+
+                    <LinearLayout
+                         android:layout_height="50dp"
+                         android:layout_width="220dp"
+                         android:gravity="start|center"
+                         android:background="@drawable/box_create"
+                         android:orientation="horizontal">
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="80dp"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:text="Quiz 5" />
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="20dp"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:text="-" />
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="match_parent"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:id="@+id/operation_type5"
+                             android:text="Grade 5" />
+
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                         android:layout_height="match_parent"
+                         android:layout_width="match_parent"
+                         android:thumb="@drawable/switch_thumb"
+                         app:track="@drawable/switch_track"
+                         app:showText="false"
+                         android:id="@+id/switch_quiz5" />
+
+                </LinearLayout>
+                
+                  <LinearLayout
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:gravity="top|center"
+                     android:orientation="horizontal"
+                     android:layout_marginTop="8dp">
+
+                    <LinearLayout
+                         android:layout_height="50dp"
+                         android:layout_width="220dp"
+                         android:gravity="start|center"
+                         android:background="@drawable/box_create"
+                         android:orientation="horizontal">
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="80dp"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:text="Quiz 6" />
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="20dp"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:text="-" />
+
+                        <TextView
+                             android:layout_height="match_parent"
+                             android:layout_width="match_parent"
+                             android:gravity="center"
+                             android:textSize="16sp"
+                             android:fontFamily="@font/paytone_one"
+                             android:textColor="@color/white"
+                             android:id="@+id/operation_type6"
+                             android:text="Grade 6" />
+
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                         android:layout_height="match_parent"
+                         android:layout_width="match_parent"
+                         android:thumb="@drawable/switch_thumb"
+                         app:track="@drawable/switch_track"
+                         app:showText="false"
+                         android:id="@+id/switch_quiz6" />
+
+                </LinearLayout>
+                
+            </LinearLayout>
+
+        </LinearLayout>
+        
+          <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:gravity="start|center"
+             android:orientation="vertical"
+             android:layout_marginTop="120dp">
+
+            <TextView
+                 android:layout_height="0dp"
+                 android:layout_width="match_parent"
+                 android:gravity="center_horizontal"
+                 android:layout_marginHorizontal="28dp"
+                 android:shadowRadius="4"
+                 android:textSize="25sp"
+                 android:fontFamily="@font/paytone_one"
+                 android:textColor="#00000000"
+                 android:shadowColor="#00000000"
+                 android:shadowDx="2"
+                 android:shadowDy="2"
+                 android:text="Space is empty" />
+
+        </LinearLayout>
+
+        
+    </LinearLayout>
+
+</ScrollView>

@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:layout_height="match_parent"
+     android:layout_width="match_parent"
+     android:background="@color/yellowbg"
+     android:fillViewport="true"
+     android:id="@+id/scroll">
+
+    <LinearLayout
+         android:layout_height="wrap_content"
+         android:layout_width="match_parent"
+         android:gravity="top|center"
+         android:orientation="vertical"
+         android:id="@+id/main">
+
+        <LinearLayout
+             android:layout_height="70dp"
+             android:layout_width="match_parent"
+             android:gravity="center"
+             android:background="@drawable/btn_long_condition"
+             android:orientation="vertical"
+             android:layout_marginLeft="25dp"
+             android:layout_marginRight="25dp"
+             android:layout_marginTop="20dp">
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="match_parent"
+                 android:gravity="center_horizontal"
+                 android:layout_marginHorizontal="28dp"
+                 android:shadowRadius="4"
+                 android:textSize="23sp"
+                 android:fontFamily="@font/paytone_one"
+                 android:textColor="@color/white"
+                 android:shadowColor="#000000"
+                 android:shadowDx="2"
+                 android:shadowDy="2"
+                 android:text="Quizzess" />
+
+        </LinearLayout>
+
+        <GridLayout
+             android:layout_height="wrap_content"
+             android:layout_width="wrap_content"
+             android:layout_marginBottom="30dp"
+             android:useDefaultMargins="true"
+             android:layout_centerHorizontal="true"
+             android:layout_marginTop="30dp"
+             android:columnCount="2"
+             android:rowCount="2">
+
+            <LinearLayout
+                 android:layout_height="80dp"
+                 android:layout_width="80dp"
+                 android:gravity="center"
+                 android:background="@drawable/btn_short_condition_off"
+                 android:orientation="vertical"
+                 android:id="@+id/quiz_1">
+
+                <TextView
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:gravity="center_horizontal"
+                     android:layout_marginHorizontal="28dp"
+                     android:shadowRadius="4"
+                     android:textSize="23sp"
+                     android:fontFamily="@font/paytone_one"
+                     android:textColor="@color/white"
+                     android:shadowColor="#000000"
+                     android:shadowDx="2"
+                     android:shadowDy="2"
+                     android:text="1" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                 android:layout_height="80dp"
+                 android:layout_width="80dp"
+                 android:gravity="center"
+                 android:background="@drawable/btn_short_condition_off"
+                 android:orientation="vertical"
+                 android:layout_marginStart="60dp"
+                 android:id="@+id/quiz_2">
+
+                <TextView
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:gravity="center_horizontal"
+                     android:layout_marginHorizontal="28dp"
+                     android:shadowRadius="4"
+                     android:textSize="23sp"
+                     android:fontFamily="@font/paytone_one"
+                     android:textColor="@color/white"
+                     android:shadowColor="#000000"
+                     android:shadowDx="2"
+                     android:shadowDy="2"
+                     android:text="2" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                 android:layout_height="80dp"
+                 android:layout_width="80dp"
+                 android:gravity="center"
+                 android:background="@drawable/btn_short_condition_off"
+                 android:orientation="vertical"
+                 android:layout_marginTop="30dp"
+                 android:id="@+id/quiz_3">
+
+                <TextView
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:gravity="center_horizontal"
+                     android:layout_marginHorizontal="28dp"
+                     android:shadowRadius="4"
+                     android:textSize="23sp"
+                     android:fontFamily="@font/paytone_one"
+                     android:textColor="@color/white"
+                     android:shadowColor="#000000"
+                     android:shadowDx="2"
+                     android:shadowDy="2"
+                     android:text="3" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                 android:layout_height="80dp"
+                 android:layout_width="80dp"
+                 android:gravity="center"
+                 android:background="@drawable/btn_short_condition_off"
+                 android:orientation="vertical"
+                 android:layout_marginTop="30dp"
+                 android:layout_marginStart="60dp"
+                 android:id="@+id/quiz_4">
+
+                <TextView
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:gravity="center_horizontal"
+                     android:layout_marginHorizontal="28dp"
+                     android:shadowRadius="4"
+                     android:textSize="23sp"
+                     android:fontFamily="@font/paytone_one"
+                     android:textColor="@color/white"
+                     android:shadowColor="#000000"
+                     android:shadowDx="2"
+                     android:shadowDy="2"
+                     android:text="4" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                 android:layout_height="80dp"
+                 android:layout_width="80dp"
+                 android:gravity="center"
+                 android:background="@drawable/btn_short_condition_off"
+                 android:orientation="vertical"
+                 android:layout_marginTop="30dp"
+                 android:id="@+id/quiz_5">
+
+                <TextView
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:gravity="center_horizontal"
+                     android:layout_marginHorizontal="28dp"
+                     android:shadowRadius="4"
+                     android:textSize="23sp"
+                     android:fontFamily="@font/paytone_one"
+                     android:textColor="@color/white"
+                     android:shadowColor="#000000"
+                     android:shadowDx="2"
+                     android:shadowDy="2"
+                     android:text="5" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                 android:layout_height="80dp"
+                 android:layout_width="80dp"
+                 android:gravity="center"
+                 android:background="@drawable/btn_short_condition_off"
+                 android:orientation="vertical"
+                 android:layout_marginTop="30dp"
+                 android:layout_marginStart="60dp"
+                 android:id="@+id/quiz_6">
+
+                <TextView
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:gravity="center_horizontal"
+                     android:layout_marginHorizontal="28dp"
+                     android:shadowRadius="4"
+                     android:textSize="23sp"
+                     android:fontFamily="@font/paytone_one"
+                     android:textColor="@color/white"
+                     android:shadowColor="#000000"
+                     android:shadowDx="2"
+                     android:shadowDy="2"
+                     android:text="6" />
+
+            </LinearLayout>
+
+        </GridLayout>
+
+    </LinearLayout>
+
+</ScrollView>
