@@ -297,11 +297,30 @@ private void stopButtonFocusAnimation(View button) {
         animator.setRepeatCount(ObjectAnimator.INFINITE); // Repeat indefinitely
         animator.start();
     }
-     @Override
+    @Override
     protected void onStart() {
         super.onStart();
 
             MusicManager.resume();
         
     }
+      @Override
+protected void onDestroy() {
+    super.onDestroy();
+    MusicManager.pause();
+}
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MusicManager.resume();
+        
+    }
+    
+@Override
+    protected void onPause() {
+        super.onPause();
+        MusicManager.pause();
+    }
+
 }

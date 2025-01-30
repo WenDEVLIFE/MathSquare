@@ -156,11 +156,30 @@ private void playSound(String fileName) {
             e.printStackTrace();
         }
     }
-     @Override
+    @Override
     protected void onStart() {
         super.onStart();
 
             MusicManager.resume();
         
     }
+      @Override
+protected void onDestroy() {
+    super.onDestroy();
+    MusicManager.pause();
+}
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MusicManager.resume();
+        
+    }
+    
+@Override
+    protected void onPause() {
+        super.onPause();
+        MusicManager.pause();
+    }
+
 }

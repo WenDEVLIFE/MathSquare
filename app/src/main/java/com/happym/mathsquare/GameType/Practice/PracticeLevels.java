@@ -254,8 +254,9 @@ intent.putExtra("operation", operation);
 intent.putExtra("difficulty", difficulty);
 intent.putExtra("game_type", "practice");
                 intent.putExtra("heartLimit", heartCount);
-intent.putExtra("timeLimit", timerCount);
-
+intent.putExtra("timerLimit", timerCount);
+intent.putExtra("questionLimit", questionCount);
+                
 // Animate button click and stop animation
 animateButtonClick(btnEnter);
 stopButtonFocusAnimation(btnEnter);
@@ -399,12 +400,31 @@ private void stopButtonFocusAnimation(View button) {
         animatorSet.cancel();  // Stop the animation when focus is lost
     }
 }
- @Override
+@Override
     protected void onStart() {
         super.onStart();
 
             MusicManager.resume();
         
     }
+      @Override
+protected void onDestroy() {
+    super.onDestroy();
+    MusicManager.pause();
+}
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MusicManager.resume();
+        
+    }
+    
+@Override
+    protected void onPause() {
+        super.onPause();
+        MusicManager.pause();
+    }
+
     
 }
