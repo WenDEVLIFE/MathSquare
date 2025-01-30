@@ -4,6 +4,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.graphics.Color;
+import android.text.InputFilter;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.SetOptions;
 import android.os.Bundle;
@@ -56,6 +57,25 @@ FirebaseFirestore db = FirebaseFirestore.getInstance();
         Spinner numberDropdownPicker = findViewById(R.id.numberDropdownPicker);
         TextView spinnerError = findViewById(R.id.spinnerError);
 
+TextInputEditText firstNameEditText = (TextInputEditText) firstNameLayout.getEditText();
+
+InputFilter noSpacesFilter = (source, start, end, dest, dstart, dend) -> {
+    if (source.toString().contains(" ")) {
+        return "";
+    }
+    return source;
+};
+
+if (firstNameEditText != null) {
+    firstNameEditText.setFilters(new InputFilter[]{noSpacesFilter});
+}
+
+       TextInputEditText lastNameEditText = (TextInputEditText) lastNameLayout.getEditText();
+
+if (lastNameEditText != null) {
+    lastNameEditText.setFilters(new InputFilter[]{noSpacesFilter});
+}
+        
 // Set up Spinner with list of grades
 List<String> grades = Arrays.asList("Select your grade", "1", "2", "3", "4", "5", "6");
 ArrayAdapter<String> adapterGrades = new ArrayAdapter<>(this, R.layout.spinner_item, grades);
@@ -197,7 +217,21 @@ db.collection("Accounts").document("Students")
             if (task.isSuccessful()) {
                 if (!task.getResult().isEmpty()) {
                     // A student with the same firstName and lastName already exists
-                    Toast.makeText(this, "Student already exists: " + firstName + " " + lastName, Toast.LENGTH_SHORT).show();
+                    animateButtonPushDowm(submitButton);
+                                Intent intent = new Intent(this, MainActivity.class);
+                                sharedPreferences.StudentIsSetLoggedIn(studentSignUp.this, true);
+                                            sharedPreferences.setLoggedIn(studentSignUp.this, false);
+sharedPreferences.saveSection(studentSignUp.this, section);
+                    sharedPreferences.saveGrade(studentSignUp.this, grade);
+                    sharedPreferences.saveFirstN(studentSignUp.this, firstName);
+                    sharedPreferences.saveLastN(studentSignUp.this, lastName);
+                                startActivity(intent);
+                                  finish(); 
+                                Toast.makeText(this, "Welcome Student!", Toast.LENGTH_SHORT).show();
+                                stopButtonFocusAnimation(submitButton);
+                                animateButtonFocus(submitButton);
+                                          
+                                    
                 } else {
                     // Student doesn't exist, proceed to save new data with UUID
                     db.collection("Accounts").document("Students").collection("MathSquare")
@@ -211,14 +245,17 @@ db.collection("Accounts").document("Students")
                                 animateButtonPushDowm(submitButton);
                                 Intent intent = new Intent(this, MainActivity.class);
                                 sharedPreferences.StudentIsSetLoggedIn(studentSignUp.this, true);
+                                            sharedPreferences.setLoggedIn(studentSignUp.this, false);
 sharedPreferences.saveSection(studentSignUp.this, section);
                     sharedPreferences.saveGrade(studentSignUp.this, grade);
                     sharedPreferences.saveFirstN(studentSignUp.this, firstName);
                     sharedPreferences.saveLastN(studentSignUp.this, lastName);
                                 startActivity(intent);
+                                 finish();          
                                 Toast.makeText(this, "Welcome Student!", Toast.LENGTH_SHORT).show();
                                 stopButtonFocusAnimation(submitButton);
                                 animateButtonFocus(submitButton);
+                                            
                             })
                             .addOnFailureListener(e -> {
                                 // Handle failure in saving data

@@ -238,11 +238,30 @@ private void stopButtonFocusAnimation(View button) {
         animatorSet.cancel();  // Stop the animation when focus is lost
     }
 }
-     @Override
+  @Override
     protected void onStart() {
         super.onStart();
 
             MusicManager.resume();
         
     }
+      @Override
+protected void onDestroy() {
+    super.onDestroy();
+    MusicManager.pause();
+}
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MusicManager.resume();
+        
+    }
+    
+@Override
+    protected void onPause() {
+        super.onPause();
+        MusicManager.pause();
+    }
+
 }

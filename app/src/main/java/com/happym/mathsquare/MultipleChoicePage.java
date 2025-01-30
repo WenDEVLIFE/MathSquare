@@ -138,8 +138,8 @@ public class MultipleChoicePage extends AppCompatActivity
         quidId = getIntent().getStringExtra("quidId");
         levelid = getIntent().getStringExtra("passing");
         heartLimit = getIntent().getIntExtra("heartLimit", 3);
-        timerLimit = getIntent().getIntExtra("timerLimit", 10);
-        questionLimits = getIntent().getIntExtra("questionLimit", 5);
+        timerLimit = getIntent().getIntExtra("timerLimit", 5);
+        questionLimits = getIntent().getIntExtra("questionLimit", 10);
 
         updateHeartDisplay();
         startTimer(timerLimit * 60 * 1000);
@@ -648,7 +648,7 @@ public class MultipleChoicePage extends AppCompatActivity
     @Override
     protected void onStart() {
         super.onStart();
-        MusicManager.shutdown();
+        MusicManager.stop();
         playBGGame("ingame.mp3");
     }
 

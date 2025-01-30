@@ -205,7 +205,12 @@ switch (getResult) {
                                     );
                         }
                     } else {
-                        // Document with quizid = "N/A" doesn't exist, create a new document
+                      
+                    }
+                } else {
+                    Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                    
+                     // Document with quizid = "N/A" doesn't exist, create a new document
                         collectionRef.add(studentData)
                                 .addOnSuccessListener(aVoid -> 
                                     Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show()
@@ -213,9 +218,6 @@ switch (getResult) {
                                 .addOnFailureListener(e -> 
                                     Toast.makeText(this, "Error adding quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
                                 );
-                    }
-                } else {
-                    Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
                 }
             })
             .addOnFailureListener(e -> {

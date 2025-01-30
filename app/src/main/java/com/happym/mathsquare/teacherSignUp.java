@@ -8,7 +8,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.graphics.Color;
-
+import android.text.InputFilter;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -68,6 +68,32 @@ public class teacherSignUp extends AppCompatActivity {
         TextInputLayout passwordRepeatLayout = findViewById(R.id.password_repeat);
         
         AppCompatButton submitButton = findViewById(R.id.btn_submit);
+        
+       TextInputEditText emailEditText = (TextInputEditText) emailLayout.getEditText();
+TextInputEditText firstNameEditText = (TextInputEditText) firstNameLayout.getEditText();
+
+InputFilter noSpacesFilter = (source, start, end, dest, dstart, dend) -> {
+    if (source.toString().contains(" ")) {
+        return "";
+    }
+    return source;
+};
+
+if (emailEditText != null) {
+    emailEditText.setFilters(new InputFilter[]{noSpacesFilter});
+           firstNameEditText.setFilters(new InputFilter[]{noSpacesFilter});
+}
+
+       TextInputEditText passwordEditText = (TextInputEditText) passwordLayout.getEditText();
+TextInputEditText passwordREditText = (TextInputEditText) passwordRepeatLayout.getEditText();
+
+
+
+if (passwordEditText != null) {
+    passwordEditText.setFilters(new InputFilter[]{noSpacesFilter});
+           passwordREditText.setFilters(new InputFilter[]{noSpacesFilter});
+}
+        
         
         submitButton.setOnClickListener(v -> {
             boolean hasError = false;

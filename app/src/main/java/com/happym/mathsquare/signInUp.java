@@ -48,8 +48,8 @@ private MediaPlayer soundEffectPlayer;
             
                 Intent intent = new Intent(signInUp.this, Dashboard.class);
                 startActivity(intent);
-            
             Toast.makeText(this, "Welcome back Teacher!", Toast.LENGTH_SHORT).show();
+            finish();
             
         }else if(sharedPreferences.StudentIsLoggedIn(this)){
             
@@ -75,15 +75,19 @@ private MediaPlayer soundEffectPlayer;
                     
                     if (task.isSuccessful()) {
                         
-                       Intent intent1 = new Intent(signInUp.this, MainActivity.class);
-                        startActivity(intent1);
+                       Intent intent = new Intent(signInUp.this, 
+MainActivity.class);
+    startActivity(intent);
             
-                        
+                        sharedPreferences.setLoggedIn(this, false);
+                        finish();
                     if (!task.getResult().isEmpty()) {
                             Toast.makeText(this, "Account Deleted, Sign Up a new Student Account", Toast.LENGTH_LONG).show();
                             
-                            Intent intent2 = new Intent(signInUp.this, studentSignUp.class);
-                            startActivity(intent2);
+                            Intent intenttwo = new Intent(signInUp.this, studentSignUp.class);
+    startActivity(intenttwo);
+                            sharedPreferences.setLoggedIn(this, false);
+                            finish();
                             }
                       }  
                         
@@ -94,7 +98,7 @@ private MediaPlayer soundEffectPlayer;
                    Intent intent = new Intent(signInUp.this, 
 MainActivity.class);
     startActivity(intent);
-                    
+                    finish();
             });
             
         }else{
@@ -213,23 +217,6 @@ btnExit.setOnLongClickListener(v -> {
         });
             
         }
-        
-        String emailTeacher = sharedPreferences.getFirstN(this);
-            String studentFirstName = sharedPreferences.getFirstN(this);
-            if(emailTeacher != null){
-                sharedPreferences.setLoggedIn(signInUp.this, true);
-                Toast.makeText(this, "1", Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(signInUp.this, Dashboard.class);
-                startActivity(intent);
-                }else if(studentFirstName != null){
-            sharedPreferences.StudentIsSetLoggedIn(signInUp.this, true);
-                
-                Intent intent = new Intent(signInUp.this, 
-MainActivity.class);
-    startActivity(intent);
-            }
-        
-        
 
 
     }
@@ -245,7 +232,6 @@ MainActivity.class);
             mp.release();
             bgMediaPlayer = null;
         });
-         MusicManager.addMediaPlayer(bgMediaPlayer);      
         bgMediaPlayer.start();
     } catch (IOException e) {
         e.printStackTrace();

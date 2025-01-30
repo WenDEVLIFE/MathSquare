@@ -11,22 +11,21 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.Button;
+import android.animation.ObjectAnimator;
+import android.animation.AnimatorSet;
+import android.view.animation.BounceInterpolator;
 
 // import androidx.activity.EdgeToEdge;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.browser.customtabs.CustomTabsIntent;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import android.animation.ObjectAnimator;
-import android.animation.AnimatorSet;
-import android.view.animation.BounceInterpolator;
+
 import android.view.View;
 import com.google.firebase.FirebaseApp;
 import java.io.IOException;
@@ -48,16 +47,22 @@ public class MainActivity extends AppCompatActivity {
         
         FirebaseApp.initializeApp(this);
         
+       MusicManager.playBGGame(this, "music.mp3"); // Replace with actual file
+        
         TextView txtTitle = findViewById(R.id.text_title);
         Button btnPlay = findViewById(R.id.btn_playgame);
         Button btnTutorial = findViewById(R.id.btn_tutorials);
         Button btnEExit = findViewById(R.id.btn_exitgame);
         LinearLayout btnPlayQuiz = findViewById(R.id.btn_play_quiz);
-
+        LinearLayout btnLogOut = findViewById(R.id.btn_logout);
+        
+        
+       animateButtonFocus(btnLogOut);
         animateButtonFocus(btnPlay);
         animateButtonFocus(btnTutorial);
         animateButtonFocus(btnEExit);
         animateButtonFocus(btnPlayQuiz);
+        animateButtonFocus(btnLogOut);
         startRotationAnimation(txtTitle);
         
         if(sharedPreferences.StudentIsLoggedIn(this)){
@@ -80,6 +85,25 @@ public class MainActivity extends AppCompatActivity {
                 
         });
         
+        
+        btnLogOut.setOnClickListener(view -> {
+               animateButtonClick(btnLogOut);
+               Intent intent = new Intent(this, signInUp.class);
+                                sharedPreferences.StudentIsSetLoggedIn(this, false);
+                                            sharedPreferences.setLoggedIn(this, false);
+sharedPreferences.clearSection(this);
+                    sharedPreferences.clearGrade(this);
+                    sharedPreferences.clearFirstName(this);
+                    sharedPreferences.clearLastName(this);
+               playSound("click.mp3");
+                                startActivity(intent);
+                finish();
+                                Toast.makeText(this, "Logout successfully!", Toast.LENGTH_SHORT).show();
+                                stopButtonFocusAnimation(btnLogOut);
+                                animateButtonFocus(btnLogOut);
+                
+        });
+        
         btnPlayQuiz.setOnClickListener(view -> {
                 animateButtonClick(btnPlayQuiz);
             Intent intent = new Intent(MainActivity.this, QuizzesSection.class);
@@ -97,17 +121,10 @@ btnTutorial.setOnClickListener(view -> {
 
     String youtubeUrl = "https://www.youtube.com/";
     
-    // Create a Custom Tabs intent
-    CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
-builder.setToolbarColor(ContextCompat.getColor(view.getContext(), R.color.yellowbg)); // Change toolbar color
-builder.setShowTitle(true); // Show the webpage title
-CustomTabsIntent customTabsIntent = builder.build();
-customTabsIntent.launchUrl(view.getContext(), Uri.parse(youtubeUrl));
-
     
-    // Launch YouTube in a Chrome WebView Tab
-    customTabsIntent.launchUrl(view.getContext(), Uri.parse(youtubeUrl));
 });
+
+
 
 
 
@@ -126,7 +143,7 @@ customTabsIntent.launchUrl(view.getContext(), Uri.parse(youtubeUrl));
             return insets;
         });
         
-        playBGGame("music.mp3");
+        
     }
     
     private void playSound(String fileName) {
@@ -244,48 +261,25 @@ private void stopButtonFocusAnimation(View button) {
     // Start the animation
     animatorSet.start();
 }
-    private void playBGGame(String fileName) {
-    if (bgMediaPlayer == null) { // Prevent re-initializing
-            try {
-        AssetFileDescriptor afd = getAssets().openFd(fileName);
-        bgMediaPlayer = new MediaPlayer();
-        bgMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-        bgMediaPlayer.prepare();
-        bgMediaPlayer.setOnCompletionListener(mp -> {
-            mp.release();
-            bgMediaPlayer = null;
-        });
-         MusicManager.addMediaPlayer(bgMediaPlayer);      
-        bgMediaPlayer.start();
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
-    }
-}
+    
      @Override
 protected void onDestroy() {
     super.onDestroy();
-   /*if (bgMediaPlayer != null) {
-        bgMediaPlayer.release();
-        bgMediaPlayer = null;
-    }*/
-    
+    MusicManager.pause();
 }
 
     @Override
     protected void onResume() {
         super.onResume();
-        playBGGame("music.mp3");
+        MusicManager.resume();
         
     }
     
-@Override
+     @Override
     protected void onPause() {
         super.onPause();
 
-        if (bgMediaPlayer != null) {
-            MusicManager.pause();
-        }
+        MusicManager.pause();
         
     }
 

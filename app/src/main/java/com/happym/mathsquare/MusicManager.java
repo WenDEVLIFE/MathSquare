@@ -1,39 +1,47 @@
 package com.happym.mathsquare;
+import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MusicManager {
-    private static List<MediaPlayer> mediaPlayers = new ArrayList<>();
+    private static MediaPlayer bgMediaPlayer;
 
-    public static void addMediaPlayer(MediaPlayer mediaPlayer) {
-        mediaPlayers.add(mediaPlayer);
-    }
-
-    public static void shutdown() {
-        for (MediaPlayer mediaPlayer : mediaPlayers) {
-            if (mediaPlayer.isPlaying()) {
-                mediaPlayer.stop();
+    public static void playBGGame(Context context, String fileName) {
+        if (bgMediaPlayer == null) { // Prevent multiple instances
+            try {
+                AssetFileDescriptor afd = context.getAssets().openFd(fileName);
+                bgMediaPlayer = new MediaPlayer();
+                bgMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+                bgMediaPlayer.setLooping(true); // ✅ Ensure continuous play
+                bgMediaPlayer.prepare();
+                
+                bgMediaPlayer.start();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            mediaPlayer.release();
         }
-        mediaPlayers.clear();
     }
-    
+
     public static void pause() {
-        for (MediaPlayer mediaPlayer : mediaPlayers) {
-            if (mediaPlayer.isPlaying()) {
-                mediaPlayer.pause();
-            }
+        if (bgMediaPlayer != null && bgMediaPlayer.isPlaying()) {
+            bgMediaPlayer.pause();
         }
     }
-    
-    public static void resume() {
-    for (MediaPlayer mediaPlayer : mediaPlayers) {
-        if (!mediaPlayer.isPlaying()) { // Check if it's NOT playing
-            mediaPlayer.start(); // Resume playback
-        }
-    }
-}
 
+    public static void resume() {
+        if (bgMediaPlayer != null && !bgMediaPlayer.isPlaying()) {
+            bgMediaPlayer.start();
+        }
+    }
+
+    public static void stop() {
+        if (bgMediaPlayer != null) {
+            bgMediaPlayer.stop();
+            bgMediaPlayer.release();
+            bgMediaPlayer = null;
+        }
+    }
 }

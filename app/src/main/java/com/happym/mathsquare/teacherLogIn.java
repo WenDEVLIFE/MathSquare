@@ -1,5 +1,6 @@
 package com.happym.mathsquare;
 
+import android.text.InputFilter;
 import static com.happym.mathsquare.R.id.btn_sign_up;
 
 import android.animation.AnimatorSet;
@@ -38,6 +39,27 @@ TextInputLayout passwordLayout = findViewById(R.id.password);
 AppCompatButton submitButton = findViewById(R.id.btn_sign_in);
         AppCompatButton signUpButton = findViewById(R.id.btn_sign_up);
 
+       TextInputEditText emailEditText = (TextInputEditText) emailLayout.getEditText();
+
+InputFilter noSpacesFilter = (source, start, end, dest, dstart, dend) -> {
+    if (source.toString().contains(" ")) {
+        return "";
+    }
+    return source;
+};
+
+if (emailEditText != null) {
+    emailEditText.setFilters(new InputFilter[]{noSpacesFilter});
+}
+
+       TextInputEditText passwordEditText = (TextInputEditText) passwordLayout.getEditText();
+
+
+
+if (passwordEditText != null) {
+    passwordEditText.setFilters(new InputFilter[]{noSpacesFilter});
+}
+        
      signUpButton.setOnClickListener(v -> {
          Intent intent = new Intent(teacherLogIn.this, teacherSignUp.class);
          startActivity(intent);

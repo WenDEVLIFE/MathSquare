@@ -162,4 +162,23 @@ private void stopButtonFocusAnimation(View button) {
             MusicManager.resume();
         
     }
+      @Override
+protected void onDestroy() {
+    super.onDestroy();
+    MusicManager.pause();
+}
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MusicManager.resume();
+        
+    }
+    
+@Override
+    protected void onPause() {
+        super.onPause();
+        MusicManager.pause();
+    }
+
 }
