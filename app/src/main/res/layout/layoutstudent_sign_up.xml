@@ -43,9 +43,9 @@
             <com.google.android.material.textfield.TextInputEditText
                  android:layout_height="wrap_content"
                  android:layout_width="match_parent"
-                 android:hint="First Name"
                  android:textColorHint="@color/white"
                  android:fontFamily="@font/paytone_one"
+               android:maxLines="1"
                  android:backgroundTint="@color/white"
                  android:textColor="@color/white" />
 
@@ -64,8 +64,8 @@
             <com.google.android.material.textfield.TextInputEditText
                  android:layout_height="wrap_content"
                  android:layout_width="match_parent"
-                 android:hint="Last Name"
                  android:textColorHint="@color/white"
+               android:maxLines="1"
                  android:fontFamily="@font/paytone_one"
                  android:backgroundTint="@color/white"
                  android:textColor="@color/white" />
