@@ -91,6 +91,8 @@
          android:exported="true">
         
         </activity>
+<activity android:name=".WebViewActivity"
+    android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
 
         <meta-data
             android:name="preloaded_fonts"
