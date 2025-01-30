@@ -121,9 +121,10 @@ btnTutorial.setOnClickListener(view -> {
 
     String youtubeUrl = "https://www.youtube.com/";
     
-    
+    Intent intent = new Intent(this, WebViewActivity.class);
+    intent.putExtra("URL", youtubeUrl);
+    this.startActivity(intent);
 });
-
 
 
 
