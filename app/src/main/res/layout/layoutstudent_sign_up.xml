@@ -45,9 +45,9 @@
                  android:layout_width="match_parent"
                  android:textColorHint="@color/white"
                  android:fontFamily="@font/paytone_one"
-               android:maxLines="1"
                  android:backgroundTint="@color/white"
-                 android:textColor="@color/white" />
+                 android:textColor="@color/white"
+                 android:maxLines="1" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -65,10 +65,10 @@
                  android:layout_height="wrap_content"
                  android:layout_width="match_parent"
                  android:textColorHint="@color/white"
-               android:maxLines="1"
                  android:fontFamily="@font/paytone_one"
                  android:backgroundTint="@color/white"
-                 android:textColor="@color/white" />
+                 android:textColor="@color/white"
+                 android:maxLines="1" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -117,12 +117,12 @@
 
                 <Spinner
                      android:layout_height="60dp"
-                     android:layout_width="wrap_content"
+                     android:layout_width="match_parent"
                      android:spinnerMode="dropdown"
                      android:paddingTop="5dp"
-                     android:id="@+id/numberDropdownPicker">
-
-                </Spinner>
+                     android:id="@+id/numberDropdownPicker"
+/>
+                
 
                 <TextView
                      android:layout_height="wrap_content"
