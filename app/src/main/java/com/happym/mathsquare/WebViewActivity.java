@@ -1,64 +1,92 @@
-package com.happym.mathsquare;
+package com.happym.mathsqure;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.OvershootInterpolator;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import androidx.appcompat.app.ActionBar;
+import android.widget.Button;
+import android.animation.ObjectAnimator;
+import android.animation.AnimatorSet;
+import android.view.animation.BounceInterpolator;
+
+// import androidx.activity.EdgeToEdge;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+
+import android.view.View;
+import com.google.firebase.FirebaseApp;
+
+import java.io.IOException;
+import org.w3c.dom.Text;
+
+import com.happym.mathsquare.sharedPreferences;
+import com.happym.mathsquare.R;
 
 public class WebViewActivity extends AppCompatActivity {
+
     private WebView webView;
+    private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_web_view);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        setContentView(R.layout.layout_web);
 
-        // Set up Toolbar
-        Toolbar toolbar = findViewById(R.id.toolbar);
+        FirebaseApp.initializeApp(this);
+
+        toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true); // Enable back button
+        getSupportActionBar().setTitle("WebView");
 
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true); // Show back button
-            actionBar.setTitle("WebView"); // Change title if needed
-        }
-
-        // Set up WebView
         webView = findViewById(R.id.webView);
+        setupWebView();
+
+        String webURL = getIntent().getStringExtra("URL");
+        if (webURL != null) {
+            webView.loadUrl(webURL);
+        }
+    }
+
+    private void setupWebView() {
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setSupportZoom(true);
+        webSettings.setBuiltInZoomControls(true);
+        webSettings.setDisplayZoomControls(false);
 
         webView.setWebViewClient(new WebViewClient());
-
-        // Load URL
-        String url = getIntent().getStringExtra("URL");
-        if (url != null) {
-            webView.loadUrl(url);
-        }
+        webView.setWebChromeClient(new WebChromeClient());
     }
 
-    // Handle Back Button in Toolbar
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish(); // Close activity
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
-    // Handle back press to navigate WebView history
     @Override
     public void onBackPressed() {
         if (webView.canGoBack()) {
-            webView.goBack(); // Go back in WebView
+            webView.goBack();
         } else {
-            super.onBackPressed(); // Close activity if no history
+            super.onBackPressed();
         }
     }
 }

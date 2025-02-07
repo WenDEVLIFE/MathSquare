@@ -326,7 +326,7 @@ public class MultipleChoicePage extends AppCompatActivity
 
     private void checkAnswer(int btnText, Button btnChoice) {
         if (isGameOver) return;
-
+playSound("click.mp3");
         int actualAnswer = problemSet.get(currentQuestionIndex).getAnswer();
         boolean isCorrect = (btnText == actualAnswer);
 
@@ -537,6 +537,8 @@ public class MultipleChoicePage extends AppCompatActivity
     }
 
     private void animateIncorrectAnswer(Button button) {
+        
+        playSound("wrong.mp4");
         // Change the background color to red
         button.setBackgroundResource(R.drawable.btn_condition_red);
 

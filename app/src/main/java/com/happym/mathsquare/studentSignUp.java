@@ -3,8 +3,11 @@ package com.happym.mathsquare;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.text.InputFilter;
+import android.view.ViewGroup;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.SetOptions;
 import android.os.Bundle;
@@ -77,11 +80,41 @@ if (lastNameEditText != null) {
 }
         
 // Set up Spinner with list of grades
-List<String> grades = Arrays.asList("Select your grade", "1", "2", "3", "4", "5", "6");
-ArrayAdapter<String> adapterGrades = new ArrayAdapter<>(this, R.layout.spinner_item, grades);
-adapterGrades.setDropDownViewResource(R.layout.spinner_item);
+List<String> grades = Arrays.asList("Choose My Grade", "1", "2", "3", "4", "5", "6");
+ArrayAdapter<String> adapterGrades = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, grades){
+@Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView textView = (TextView) view;
+                textView.setTypeface(null, Typeface.BOLD); // Make font bold
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                TextView textView = (TextView) view;
+                textView.setTypeface(null, Typeface.BOLD); // Make dropdown items bold
+                return view;
+            }
+        };
+        
+        adapterGrades.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 numberDropdownPicker.setAdapter(adapterGrades);
 
+
+        int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+
+        if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
+            // Dark Mode: Set dropdown background to dark and transparent when not selected
+            numberDropdownPicker.setPopupBackgroundResource(android.R.color.darker_gray);
+            numberDropdownPicker.setBackgroundColor(Color.TRANSPARENT);
+        } else {
+            // Light Mode: Set dropdown background to light and transparent when not selected
+            numberDropdownPicker.setPopupBackgroundResource(android.R.color.white);
+            numberDropdownPicker.setBackgroundColor(Color.TRANSPARENT);
+        }
+        
 // Set up listener to retrieve sections when a grade is selected
 numberDropdownPicker.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
     @Override

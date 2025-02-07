@@ -28,6 +28,9 @@ import androidx.core.view.WindowInsetsCompat;
 
 import android.view.View;
 import com.google.firebase.FirebaseApp;
+
+
+import com.happym.mathsqure.WebViewActivity;
 import java.io.IOException;
 import org.w3c.dom.Text;
 
@@ -120,10 +123,10 @@ btnTutorial.setOnClickListener(view -> {
     animateButtonFocus(btnTutorial);
 
     String youtubeUrl = "https://www.youtube.com/";
-    
+   
     Intent intent = new Intent(this, WebViewActivity.class);
     intent.putExtra("URL", youtubeUrl);
-    this.startActivity(intent);
+    startActivity(intent);
 });
 
 
