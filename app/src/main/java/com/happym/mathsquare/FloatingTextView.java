@@ -2,12 +2,12 @@ package com.happym.mathsquare;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Handler;
 import android.util.AttributeSet;
-import android.view.View;
+import android.util.Log;
+import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -15,6 +15,7 @@ import android.widget.TextView;
 import java.util.Random;
 
 public class FloatingTextView extends RelativeLayout {
+    private static final String TAG = "FloatingTextView";
     private Random random = new Random();
     private Handler handler = new Handler();
     private boolean useLetters = false; // Toggle between numbers and letters
@@ -35,7 +36,14 @@ public class FloatingTextView extends RelativeLayout {
     }
 
     private void init() {
-        startAnimationLoop();
+        // Wait until the layout is complete before starting the animation loop
+        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                startAnimationLoop();
+            }
+        });
     }
 
     public void setUseLetters(boolean useLetters) {
@@ -53,26 +61,31 @@ public class FloatingTextView extends RelativeLayout {
     }
 
     private void addFloatingText() {
-        final TextView textView = new TextView(getContext());
-        textView.setTextSize(random.nextInt(30) + 30); // Random size between 30sp - 60sp
-        textView.setTextColor(Color.WHITE);
-        textView.setAlpha(0.5f); // Set transparency
+        if (getWidth() > 0 && getHeight() > 0) {
+            Log.d(TAG, "Adding floating text");
+            final TextView textView = new TextView(getContext());
+            textView.setTextSize(random.nextInt(30) + 30); // Random size between 30sp - 60sp
+            textView.setTextColor(Color.WHITE);
+            textView.setAlpha(0.5f); // Set transparency
 
-        // Choose between numbers (0-9) or letters (A-Z)
-        String text = useLetters ? String.valueOf((char) (random.nextInt(26) + 'A')) 
-                                 : String.valueOf(random.nextInt(10));
-        textView.setText(text);
+            // Choose between numbers (0-9) or letters (A-Z)
+            String text = useLetters ? String.valueOf((char) (random.nextInt(26) + 'A'))
+                    : String.valueOf(random.nextInt(10));
+            textView.setText(text);
 
-        // Random starting position
-        int startX = random.nextInt(getWidth());
-        int startY = random.nextInt(getHeight());
-        textView.setX(startX);
-        textView.setY(startY);
+            // Random starting position
+            int startX = random.nextInt(getWidth());
+            int startY = random.nextInt(getHeight());
+            textView.setX(startX);
+            textView.setY(startY);
 
-        addView(textView);
+            addView(textView);
 
-        // Animate movement
-        animateText(textView);
+            // Animate movement
+            animateText(textView);
+        } else {
+            Log.d(TAG, "Width or height is 0");
+        }
     }
 
     private void animateText(final TextView textView) {
