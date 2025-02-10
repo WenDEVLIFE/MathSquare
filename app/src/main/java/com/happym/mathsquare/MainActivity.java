@@ -30,7 +30,7 @@ import android.view.View;
 import com.google.firebase.FirebaseApp;
 
 
-import com.happym.mathsqure.WebViewActivity;
+
 import java.io.IOException;
 import org.w3c.dom.Text;
 
