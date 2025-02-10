@@ -30,7 +30,7 @@ import android.view.View;
 import com.google.firebase.FirebaseApp;
 
 
-
+import com.happym.mathsqure.WebViewActivity;
 import java.io.IOException;
 import org.w3c.dom.Text;
 
@@ -40,13 +40,18 @@ public class MainActivity extends AppCompatActivity {
 
     private MediaPlayer bgMediaPlayer;
     private MediaPlayer soundEffectPlayer;
-    
+    private FloatingTextView floatingTextView;
+
+        
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
       //  EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+        
+        floatingTextView = findViewById(R.id.floatingTextView);
+        floatingTextView.setUseLetters(false); // Set true for letters, false for numbers
         
         FirebaseApp.initializeApp(this);
         
