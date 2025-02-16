@@ -68,7 +68,8 @@ public class UserFragment extends Fragment {
         // Add AdminActivity code here
         LinearLayout signInButton1 = view.findViewById(R.id.btn_playgame_as_student);
         signInButton1.setOnClickListener(v -> {
-
+            Intent intent = new Intent(getContext(), AddAdminActivity.class);
+            startActivity(intent);
         });
 
         LinearLayout signUpButton = view.findViewById(R.id.btn_signinteacher);

@@ -15,6 +15,13 @@
         android:theme="@style/Theme.MathSquare"
         tools:targetApi="31">
         <activity
+            android:name=".AddAdminActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AddAdmin"
+            android:exported="false"
+            android:theme="@style/Theme.MathSquare" />
+        <activity
             android:name=".AdminActivity"
             android:exported="false" />
         <activity
