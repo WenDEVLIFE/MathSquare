@@ -5,14 +5,14 @@
     <item android:title="Users"
         android:icon="@drawable/baseline_person_24"
         android:id="@+id/explore"
-        android:textColor="@color/black"
+        android:textColor="@color/colorAccent"
         />
 
 
     <item android:title="Logout"
         android:icon="@drawable/baseline_power_settings_new_24"
         android:id="@+id/wishlist"
-        android:textColor="@color/black"
+        android:textColor="@color/colorAccent"
         />
 
 

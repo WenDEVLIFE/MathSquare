@@ -20,12 +20,12 @@
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@color/yellowbg"
+        android:background="@color/white"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintBottom_toBottomOf="parent"
         app:menu="@menu/adminmenu"
-        app:itemIconTint="@color/white"
+        app:itemIconTint="@color/colorAccent"
         android:id="@+id/bottomNavigationView" />
 </androidx.constraintlayout.widget.ConstraintLayout>
