@@ -2,6 +2,9 @@ package com.happym.mathsquare;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -36,9 +39,18 @@ public class AdminActivity extends AppCompatActivity {
             }
             else if (item.getItemId() == R.id.logout) {
                 // Do nothing
-                Intent intent = new Intent(AdminActivity.this, MainActivity.class);
-                startActivity(intent);
-                finish();
+                AlertDialog.Builder builder = new AlertDialog.Builder(AdminActivity.this);
+                builder.setTitle("Logout");
+                builder.setMessage("Are you sure you want to logout?");
+                builder.setPositiveButton("Yes", (dialog, which) -> {
+                    startActivity(new Intent(AdminActivity.this, signInUp.class));
+                    finish();
+                    Toast.makeText(AdminActivity.this, "Logged out", Toast.LENGTH_SHORT).show();
+                });
+                builder.setNegativeButton("No", (dialog, which) -> {
+                    dialog.dismiss();
+                });
+                builder.show();
             }
         } );
     }

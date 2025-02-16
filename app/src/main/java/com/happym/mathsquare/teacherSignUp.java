@@ -149,12 +149,7 @@ if (passwordEditText != null) {
                         .set(teacherData)
                         .addOnSuccessListener(aVoid -> {
                             // Account created, navigate to Dashboard
-                            sharedPreferences.setLoggedIn(teacherSignUp.this, true);
-                            sharedPreferences.saveEmail(teacherSignUp.this, email);
-                            
-                            Intent intent = new Intent(teacherSignUp.this, Dashboard.class);
-                            
-                            startActivity(intent);
+                           Toast.makeText(teacherSignUp.this, "Teacher account created successfully", Toast.LENGTH_LONG).show();
                             finish();
                         })
                         .addOnFailureListener(e -> {
