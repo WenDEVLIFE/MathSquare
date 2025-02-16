@@ -251,13 +251,15 @@ db.collection("Accounts").document("Students")
                 if (!task.getResult().isEmpty()) {
                     // A student with the same firstName and lastName already exists
                     animateButtonPushDowm(submitButton);
-                                Intent intent = new Intent(this, MainActivity.class);
+                                
                                 sharedPreferences.StudentIsSetLoggedIn(studentSignUp.this, true);
                                             sharedPreferences.setLoggedIn(studentSignUp.this, false);
 sharedPreferences.saveSection(studentSignUp.this, section);
                     sharedPreferences.saveGrade(studentSignUp.this, grade);
                     sharedPreferences.saveFirstN(studentSignUp.this, firstName);
                     sharedPreferences.saveLastN(studentSignUp.this, lastName);
+                                    
+                                Intent intent = new Intent(this, MainActivity.class);   
                                 startActivity(intent);
                                   finish(); 
                                 Toast.makeText(this, "Welcome Student!", Toast.LENGTH_SHORT).show();
@@ -276,13 +278,15 @@ sharedPreferences.saveSection(studentSignUp.this, section);
 
                                 // Proceed with UI actions (navigate to MainActivity)
                                 animateButtonPushDowm(submitButton);
-                                Intent intent = new Intent(this, MainActivity.class);
+                                
                                 sharedPreferences.StudentIsSetLoggedIn(studentSignUp.this, true);
                                             sharedPreferences.setLoggedIn(studentSignUp.this, false);
 sharedPreferences.saveSection(studentSignUp.this, section);
                     sharedPreferences.saveGrade(studentSignUp.this, grade);
                     sharedPreferences.saveFirstN(studentSignUp.this, firstName);
                     sharedPreferences.saveLastN(studentSignUp.this, lastName);
+                                            
+                                Intent intent = new Intent(this, MainActivity.class);           
                                 startActivity(intent);
                                  finish();          
                                 Toast.makeText(this, "Welcome Student!", Toast.LENGTH_SHORT).show();
