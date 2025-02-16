@@ -372,290 +372,295 @@ private void applyVignetteEffect() {
     }
     
    private void sendScoreResult(int Score, String quizid, String gametype, String levelNum, String nextlevel, String worldType, String OnTimerDifficulty) {
-    String section = sharedPreferences.getSection(this);
-    String grade = sharedPreferences.getGrade(this);
-    String firstName = sharedPreferences.getFirstN(this);
-    String lastName = sharedPreferences.getLastN(this);
-    String quizname = "Quiz " + quizid;
-    String uuid = UUID.randomUUID().toString(); // Generate a random UUID
+       String section = sharedPreferences.getSection(this);
+       String grade = sharedPreferences.getGrade(this);
+       String firstName = sharedPreferences.getFirstN(this);
+       String lastName = sharedPreferences.getLastN(this);
+       String quizname = "Quiz " + quizid;
+       String uuid = UUID.randomUUID().toString(); // Generate a random UUID
 
-    HashMap<String, Object> studentDataQuiz = new HashMap<>();
-    studentDataQuiz.put("firstName", firstName);
-    studentDataQuiz.put("lastName", lastName);
-    studentDataQuiz.put("section", section);
-    studentDataQuiz.put("grade", grade);
-    studentDataQuiz.put("quizno", quizname);
-    studentDataQuiz.put("quizscore", String.valueOf(Score));
-        
-        HashMap<String, Object> OnTimerData = new HashMap<>();
-    OnTimerData.put("firstName", firstName);
-    OnTimerData.put("lastName", lastName);
-    OnTimerData.put("section", section);
-    OnTimerData.put("grade", grade);
-    OnTimerData.put("ontimer_difficulty", OnTimerDifficulty);
-    OnTimerData.put("ontimer_score", String.valueOf(Score));
-        
+       HashMap<String, Object> studentDataQuiz = new HashMap<>();
+       studentDataQuiz.put("firstName", firstName);
+       studentDataQuiz.put("lastName", lastName);
+       studentDataQuiz.put("section", section);
+       studentDataQuiz.put("grade", grade);
+       studentDataQuiz.put("quizno", quizname);
+       studentDataQuiz.put("quizscore", String.valueOf(Score));
+
+       HashMap<String, Object> OnTimerData = new HashMap<>();
+       OnTimerData.put("firstName", firstName);
+       OnTimerData.put("lastName", lastName);
+       OnTimerData.put("section", section);
+       OnTimerData.put("grade", grade);
+       OnTimerData.put("ontimer_difficulty", OnTimerDifficulty);
+       OnTimerData.put("ontimer_score", String.valueOf(Score));
+
        HashMap<String, Object> PracticeData = new HashMap<>();
-    PracticeData.put("firstName", firstName);
-    PracticeData.put("lastName", lastName);
-    PracticeData.put("section", section);
-    PracticeData.put("grade", grade);
-    PracticeData.put("practice_difficulty", OnTimerDifficulty);
-    PracticeData.put("practice_score", String.valueOf(Score));
+       PracticeData.put("firstName", firstName);
+       PracticeData.put("lastName", lastName);
+       PracticeData.put("section", section);
+       PracticeData.put("grade", grade);
+       PracticeData.put("practice_difficulty", OnTimerDifficulty);
+       PracticeData.put("practice_score", String.valueOf(Score));
 
-    HashMap<String, Object> passingData = new HashMap<>();
-    passingData.put("firstName", firstName);
-    passingData.put("lastName", lastName);
-    passingData.put("section", section);
-    passingData.put("grade", grade);
-    passingData.put("passing_level_must_complete", nextlevel);
-    passingData.put("passing_level", levelNum);
-    passingData.put("passing_" + levelNum + "_score", String.valueOf(Score));
-    
+       HashMap<String, Object> passingData = new HashMap<>();
+       passingData.put("firstName", firstName);
+       passingData.put("lastName", lastName);
+       passingData.put("section", section);
+       passingData.put("grade", grade);
+       passingData.put("passing_level_must_complete", nextlevel);
+       passingData.put("passing_level", levelNum);
+       passingData.put("passing_" + levelNum + "_score", String.valueOf(Score));
 
-    if (Score >= 1 && Score <= 4) {
-        passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));   
-        passingData.put("passing_" + levelNum, "1 Star");
-    } else if (Score >= 5 && Score <= 9) {
-           passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));   
-        passingData.put("passing_" + levelNum, "2 Stars");
-    } else if (Score > 10) {
-         passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));     
-        passingData.put("passing_" + levelNum, "3 Stars");
-    }
 
-       if(gametype == "passing_level"){
-            
-        
-    CollectionReference collectionRef = db.collection("Accounts")
-        .document("Students")
-        .collection("MathSquare");
+       if (Score >= 1 && Score <= 4) {
+           passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));
+           passingData.put("passing_" + levelNum, "1 Star");
+       } else if (Score >= 5 && Score <= 9) {
+           passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));
+           passingData.put("passing_" + levelNum, "2 Stars");
+       } else if (Score > 10) {
+           passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));
+           passingData.put("passing_" + levelNum, "3 Stars");
+       }
 
-    collectionRef.whereEqualTo("firstName", firstName)
-        .whereEqualTo("lastName", lastName)
-            .whereEqualTo("passing_level_must_complete", nextlevel)
-        .get()
-        .addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                if (!task.getResult().isEmpty()) {
-                    for (DocumentSnapshot document : task.getResult()) {
-                        DocumentReference docRef = collectionRef.document(document.getId());
+       if (gametype == "passing_level") {
 
-                        // Add levelNum to the correct world array without overwriting
-                        
 
-                        if (worldType.equals("world_one")) {
-                            completedLevelsField = "passing_completed_world_one_levels";
-                            worldCompletedField = "passing_world_one_completed";
-                        } else if (worldType.equals("world_two")) {
-                            completedLevelsField = "passing_completed_world_two_levels";
-                            worldCompletedField = "passing_world_two_completed";
-                        } else if (worldType.equals("world_three")) {
-                            completedLevelsField = "passing_completed_world_three_levels";
-                            worldCompletedField = "passing_world_three_completed";
-                        } else if (worldType.equals("world_four")) {
-                            completedLevelsField = "passing_completed_world_four_levels";
-                            worldCompletedField = "passing_world_four_completed";
-                        } else if (worldType.equals("world_five")) {
-                            completedLevelsField = "passing_completed_world_five_levels";
-                            worldCompletedField = "passing_world_five_completed";
-                        }
-
-                        if (!completedLevelsField.isEmpty()) {
-                            docRef.get().addOnSuccessListener(snapshot -> {
-                                if (snapshot.exists()) {
-                                    // Check if array exists
-                                    List<String> completedLevels = (List<String>) snapshot.get(completedLevelsField);
-                                    if (completedLevels == null) {
-                                        // If field does not exist, create it
-                                        docRef.update(completedLevelsField, Arrays.asList(levelNum))
-                                            .addOnSuccessListener(aVoid -> 
-                                                Toast.makeText(this, "New level tracking created", Toast.LENGTH_SHORT).show()
-                                            )
-                                            .addOnFailureListener(e -> 
-                                                Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                            );
-                                    } else {
-                                        // If field exists, add new level without overwriting
-                                        docRef.update(completedLevelsField, FieldValue.arrayUnion(levelNum))
-                                            .addOnSuccessListener(aVoid -> 
-                                                Toast.makeText(this, "Level updated successfully", Toast.LENGTH_SHORT).show()
-                                            )
-                                            .addOnFailureListener(e -> 
-                                                Toast.makeText(this, "Error updating level: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                            );
-                                    }
-                                }
-                            });
-                        }
-
-                        // Set next world if levelNum is "level_10"
-                        if (levelNum.equals("level_10")) {
-                            docRef.update(worldCompletedField, worldType)
-                                .addOnSuccessListener(aVoid -> 
-                                    Toast.makeText(this, worldType + " completed!", Toast.LENGTH_SHORT).show()
-                                )
-                                .addOnFailureListener(e -> 
-                                    Toast.makeText(this, "Error updating world: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                );
-
-                            String nextWorld = "";
-                            if (worldType.equals("world_one")) nextWorld = "world_two";
-                            else if (worldType.equals("world_two")) nextWorld = "world_three";
-                            else if (worldType.equals("world_three")) nextWorld = "world_four";
-                            else if (worldType.equals("world_four")) nextWorld = "world_five";
-                            else if (worldType.equals("world_five")) nextWorld = "world_soon";
-
-                            docRef.update("passing_next_world", nextWorld);
-                        }
-                    }
-                } else {
-                    // If no document exists, create a new one
-                    collectionRef.add(passingData)
-                        .addOnSuccessListener(aVoid -> 
-                            Toast.makeText(this, "New record added", Toast.LENGTH_SHORT).show()
-                        )
-                        .addOnFailureListener(e -> 
-                            Toast.makeText(this, "Error adding record: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                        );
-                }
-            }
-        })
-        .addOnFailureListener(e -> {
-            Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        });
-        
-        
-     }  else if(gametype == "quiz"){
            CollectionReference collectionRef = db.collection("Accounts")
-            .document("Students")
-            .collection("MathSquare");
+                   .document("Students")
+                   .collection("MathSquare");
 
-    // Query to check if a document with the same firstName, lastName, and quizid = "N/A" exists
-    collectionRef.whereEqualTo("firstName", firstName)
-            .whereEqualTo("lastName", lastName)
-            .whereEqualTo("quizno", "N/A")
-            .get()
-            .addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    if (!task.getResult().isEmpty()) {
-                        // Document with quizid = "N/A" exists, replace it
-                        for (DocumentSnapshot document : task.getResult()) {
-                            collectionRef.document(document.getId())
-                                    .set(passingData) // Replaces the existing document
-                                    .addOnSuccessListener(aVoid -> 
-                                        Toast.makeText(this, "Quiz updated successfully", Toast.LENGTH_SHORT).show()
-                                    )
-                                    .addOnFailureListener(e -> 
-                                        Toast.makeText(this, "Error updating quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                    );
-                        }
-                    } else {
-                      
-                    }
-                } else {
-                    Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                    
-                     // Document with quizid = "N/A" doesn't exist, create a new document
-                        collectionRef.add(passingData)
-                                .addOnSuccessListener(aVoid -> 
-                                    Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show()
-                                )
-                                .addOnFailureListener(e -> 
-                                    Toast.makeText(this, "Error adding quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                );
-                }
-            })
-            .addOnFailureListener(e -> {
-                Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            });
-            }else if(gametype == "OnTimer"){
+           collectionRef.whereEqualTo("firstName", firstName)
+                   .whereEqualTo("lastName", lastName)
+                   .whereEqualTo("passing_level_must_complete", nextlevel)
+                   .get()
+                   .addOnCompleteListener(task -> {
+                       if (task.isSuccessful()) {
+                           if (!task.getResult().isEmpty()) {
+                               for (DocumentSnapshot document : task.getResult()) {
+                                   DocumentReference docRef = collectionRef.document(document.getId());
+
+                                   // Add levelNum to the correct world array without overwriting
+
+
+                                   if (worldType.equals("world_one")) {
+                                       completedLevelsField = "passing_completed_world_one_levels";
+                                       worldCompletedField = "passing_world_one_completed";
+                                   } else if (worldType.equals("world_two")) {
+                                       completedLevelsField = "passing_completed_world_two_levels";
+                                       worldCompletedField = "passing_world_two_completed";
+                                   } else if (worldType.equals("world_three")) {
+                                       completedLevelsField = "passing_completed_world_three_levels";
+                                       worldCompletedField = "passing_world_three_completed";
+                                   } else if (worldType.equals("world_four")) {
+                                       completedLevelsField = "passing_completed_world_four_levels";
+                                       worldCompletedField = "passing_world_four_completed";
+                                   } else if (worldType.equals("world_five")) {
+                                       completedLevelsField = "passing_completed_world_five_levels";
+                                       worldCompletedField = "passing_world_five_completed";
+                                   }
+
+                                   if (!completedLevelsField.isEmpty()) {
+                                       docRef.get().addOnSuccessListener(snapshot -> {
+                                           if (snapshot.exists()) {
+                                               // Check if array exists
+                                               List<String> completedLevels = (List<String>) snapshot.get(completedLevelsField);
+                                               if (completedLevels == null) {
+                                                   // If field does not exist, create it
+                                                   docRef.update(completedLevelsField, Arrays.asList(levelNum))
+                                                           .addOnSuccessListener(aVoid ->
+                                                                   Toast.makeText(this, "New level tracking created", Toast.LENGTH_SHORT).show()
+                                                           )
+                                                           .addOnFailureListener(e ->
+                                                                   Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                                                           );
+                                               } else {
+                                                   // If field exists, add new level without overwriting
+                                                   docRef.update(completedLevelsField, FieldValue.arrayUnion(levelNum))
+                                                           .addOnSuccessListener(aVoid ->
+                                                                   Toast.makeText(this, "Level updated successfully", Toast.LENGTH_SHORT).show()
+                                                           )
+                                                           .addOnFailureListener(e ->
+                                                                   Toast.makeText(this, "Error updating level: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                                                           );
+                                               }
+                                           }
+                                       });
+                                   }
+
+                                   // Set next world if levelNum is "level_10"
+                                   if (levelNum.equals("level_10")) {
+                                       docRef.update(worldCompletedField, worldType)
+                                               .addOnSuccessListener(aVoid ->
+                                                       Toast.makeText(this, worldType + " completed!", Toast.LENGTH_SHORT).show()
+                                               )
+                                               .addOnFailureListener(e ->
+                                                       Toast.makeText(this, "Error updating world: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                                               );
+
+                                       String nextWorld = "";
+                                       if (worldType.equals("world_one")) nextWorld = "world_two";
+                                       else if (worldType.equals("world_two"))
+                                           nextWorld = "world_three";
+                                       else if (worldType.equals("world_three"))
+                                           nextWorld = "world_four";
+                                       else if (worldType.equals("world_four"))
+                                           nextWorld = "world_five";
+                                       else if (worldType.equals("world_five"))
+                                           nextWorld = "world_soon";
+
+                                       docRef.update("passing_next_world", nextWorld);
+                                   }
+                               }
+                           } else {
+                               // If no document exists, create a new one
+                               collectionRef.add(passingData)
+                                       .addOnSuccessListener(aVoid ->
+                                               Toast.makeText(this, "New record added", Toast.LENGTH_SHORT).show()
+                                       )
+                                       .addOnFailureListener(e ->
+                                               Toast.makeText(this, "Error adding record: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                                       );
+                           }
+                       }
+                   })
+                   .addOnFailureListener(e -> {
+                       Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                   });
+
+
+       } else if (gametype == "quiz") {
            CollectionReference collectionRef = db.collection("Accounts")
-            .document("Students")
-            .collection("MathSquare");
+                   .document("Students")
+                   .collection("MathSquare");
 
-    // Query to check if a document with the same firstName, lastName, and quizid = "N/A" exists
-    collectionRef.whereEqualTo("firstName", firstName)
-            .whereEqualTo("lastName", lastName)
-            .whereEqualTo("ontimer_difficulty", OnTimerDifficulty)
-            .get()
-            .addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    if (!task.getResult().isEmpty()) {
-                        // Document with quizid = "N/A" exists, replace it
-                        for (DocumentSnapshot document : task.getResult()) {
-                            collectionRef.document(document.getId())
-                                    .set(OnTimerData) // Replaces the existing document
-                                    .addOnSuccessListener(aVoid -> 
-                                        Toast.makeText(this, "Quiz updated successfully", Toast.LENGTH_SHORT).show()
-                                    )
-                                    .addOnFailureListener(e -> 
-                                        Toast.makeText(this, "Error updating quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                    );
-                        }
-                    } else {
-                      
-                    }
-                } else {
-                    Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                    
-                     // Document with quizid = "N/A" doesn't exist, create a new document
-                        collectionRef.add(OnTimerData)
-                                .addOnSuccessListener(aVoid -> 
-                                    Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show()
-                                )
-                                .addOnFailureListener(e -> 
-                                    Toast.makeText(this, "Error adding quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                );
-                }
-            })
-            .addOnFailureListener(e -> {
-                Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            });
-            }else if(gametype == "Practice"){
+           // Query to check if a document with the same firstName, lastName, and quizid = "N/A" exists
+           collectionRef.whereEqualTo("firstName", firstName)
+                   .whereEqualTo("lastName", lastName)
+                   .whereEqualTo("quizno", "N/A")
+                   .get()
+                   .addOnCompleteListener(task -> {
+                       if (task.isSuccessful()) {
+                           if (!task.getResult().isEmpty()) {
+                               // Document with quizid = "N/A" exists, replace it
+                               for (DocumentSnapshot document : task.getResult()) {
+                                   collectionRef.document(document.getId())
+                                           .set(passingData) // Replaces the existing document
+                                           .addOnSuccessListener(aVoid ->
+                                                   Toast.makeText(this, "Quiz updated successfully", Toast.LENGTH_SHORT).show()
+                                           )
+                                           .addOnFailureListener(e ->
+                                                   Toast.makeText(this, "Error updating quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                                           );
+                               }
+                           } else {
+
+                           }
+                       } else {
+                           Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+
+                           // Document with quizid = "N/A" doesn't exist, create a new document
+                           collectionRef.add(passingData)
+                                   .addOnSuccessListener(aVoid ->
+                                           Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show()
+                                   )
+                                   .addOnFailureListener(e ->
+                                           Toast.makeText(this, "Error adding quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                                   );
+                       }
+                   })
+                   .addOnFailureListener(e -> {
+                       Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                   });
+       } else if (gametype == "OnTimer") {
            CollectionReference collectionRef = db.collection("Accounts")
-            .document("Students")
-            .collection("MathSquare");
+                   .document("Students")
+                   .collection("MathSquare");
 
-    // Query to check if a document with the same firstName, lastName, and quizid = "N/A" exists
-    collectionRef.whereEqualTo("firstName", firstName)
-            .whereEqualTo("lastName", lastName)
-            .whereEqualTo("practice_score", "None")
-            .get()
-            .addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    if (!task.getResult().isEmpty()) {
-                        // Document with quizid = "N/A" exists, replace it
-                        for (DocumentSnapshot document : task.getResult()) {
-                            collectionRef.document(document.getId())
-                                    .set(PracticeData) // Replaces the existing document
-                                    .addOnSuccessListener(aVoid -> 
-                                        Toast.makeText(this, "Quiz updated successfully", Toast.LENGTH_SHORT).show()
-                                    )
-                                    .addOnFailureListener(e -> 
-                                        Toast.makeText(this, "Error updating quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                    );
-                        }
-                    } else {
-                      
-                    }
-                } else {
-                    Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                    
-                     // Document with quizid = "N/A" doesn't exist, create a new document
-                        collectionRef.add(PracticeData)
-                                .addOnSuccessListener(aVoid -> 
-                                    Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show()
-                                )
-                                .addOnFailureListener(e -> 
-                                    Toast.makeText(this, "Error adding quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                );
-                }
-            })
-            .addOnFailureListener(e -> {
-                Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            });
-}
+           // Query to check if a document with the same firstName, lastName, and quizid = "N/A" exists
+           collectionRef.whereEqualTo("firstName", firstName)
+                   .whereEqualTo("lastName", lastName)
+                   .whereEqualTo("ontimer_difficulty", OnTimerDifficulty)
+                   .get()
+                   .addOnCompleteListener(task -> {
+                       if (task.isSuccessful()) {
+                           if (!task.getResult().isEmpty()) {
+                               // Document with quizid = "N/A" exists, replace it
+                               for (DocumentSnapshot document : task.getResult()) {
+                                   collectionRef.document(document.getId())
+                                           .set(OnTimerData) // Replaces the existing document
+                                           .addOnSuccessListener(aVoid ->
+                                                   Toast.makeText(this, "Quiz updated successfully", Toast.LENGTH_SHORT).show()
+                                           )
+                                           .addOnFailureListener(e ->
+                                                   Toast.makeText(this, "Error updating quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                                           );
+                               }
+                           } else {
 
+                           }
+                       } else {
+                           Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+
+                           // Document with quizid = "N/A" doesn't exist, create a new document
+                           collectionRef.add(OnTimerData)
+                                   .addOnSuccessListener(aVoid ->
+                                           Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show()
+                                   )
+                                   .addOnFailureListener(e ->
+                                           Toast.makeText(this, "Error adding quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                                   );
+                       }
+                   })
+                   .addOnFailureListener(e -> {
+                       Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                   });
+       } else if (gametype == "Practice") {
+           CollectionReference collectionRef = db.collection("Accounts")
+                   .document("Students")
+                   .collection("MathSquare");
+
+           // Query to check if a document with the same firstName, lastName, and quizid = "N/A" exists
+           collectionRef.whereEqualTo("firstName", firstName)
+                   .whereEqualTo("lastName", lastName)
+                   .whereEqualTo("practice_score", "None")
+                   .get()
+                   .addOnCompleteListener(task -> {
+                       if (task.isSuccessful()) {
+                           if (!task.getResult().isEmpty()) {
+                               // Document with quizid = "N/A" exists, replace it
+                               for (DocumentSnapshot document : task.getResult()) {
+                                   collectionRef.document(document.getId())
+                                           .set(PracticeData) // Replaces the existing document
+                                           .addOnSuccessListener(aVoid ->
+                                                   Toast.makeText(this, "Quiz updated successfully", Toast.LENGTH_SHORT).show()
+                                           )
+                                           .addOnFailureListener(e ->
+                                                   Toast.makeText(this, "Error updating quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                                           );
+                               }
+                           } else {
+
+                           }
+                       } else {
+                           Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+
+                           // Document with quizid = "N/A" doesn't exist, create a new document
+                           collectionRef.add(PracticeData)
+                                   .addOnSuccessListener(aVoid ->
+                                           Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show()
+                                   )
+                                   .addOnFailureListener(e ->
+                                           Toast.makeText(this, "Error adding quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                                   );
+                       }
+                   })
+                   .addOnFailureListener(e -> {
+                       Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                   });
+       }
+
+   }
 
 }

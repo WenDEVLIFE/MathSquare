@@ -173,7 +173,7 @@ btnEnterTeacher.setOnClickListener(view -> {
             btnEnterAsGuest.setOnClickListener(view -> {
                     playSound("click.mp3");
     animateButtonPushDowm(btnEnterAsGuest);  
-    Intent intent = new Intent(signInUp.this, NumberAnimation.class);
+    Intent intent = new Intent(signInUp.this, MainActivity.class);
     startActivity(intent);
                 stopButtonFocusAnimation(btnEnterAsGuest);
                 animateButtonFocus(btnEnterAsGuest);

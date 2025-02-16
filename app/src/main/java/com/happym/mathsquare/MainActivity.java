@@ -5,7 +5,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
@@ -13,7 +12,6 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.Button;
 import android.animation.ObjectAnimator;
 import android.animation.AnimatorSet;
-import android.view.animation.BounceInterpolator;
 
 // import androidx.activity.EdgeToEdge;
 import android.widget.LinearLayout;
@@ -30,17 +28,9 @@ import android.view.View;
 import com.google.firebase.FirebaseApp;
 
 
-import com.happym.mathsquare.WebViewActivity;
 import java.io.IOException;
-import org.w3c.dom.Text;
 
-import com.happym.mathsquare.sharedPreferences;
-
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
-import android.content.Intent;
-import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -49,33 +39,12 @@ import android.graphics.RadialGradient;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
-import android.media.MediaPlayer;
-import android.os.Bundle;
 import android.view.Gravity;
-import android.view.MotionEvent;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.OvershootInterpolator;
-import android.widget.Button;
 
 // import androidx.activity.EdgeToEdge;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 
-import android.animation.ObjectAnimator;
-import android.animation.AnimatorSet;
-import android.view.animation.BounceInterpolator;
-import java.io.IOException;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
