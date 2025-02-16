@@ -1,12 +1,16 @@
 package com.happym.mathsquare;
 
+import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.appcompat.widget.AppCompatButton;
+import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -59,6 +63,20 @@ public class UserFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_user, container, false);
+        View view = inflater.inflate(R.layout.fragment_user, container, false);
+
+        // Add AdminActivity code here
+        LinearLayout signInButton1 = view.findViewById(R.id.btn_playgame_as_student);
+        signInButton1.setOnClickListener(v -> {
+
+        });
+
+        LinearLayout signUpButton = view.findViewById(R.id.btn_signinteacher);
+        signUpButton.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), teacherSignUp.class);
+            startActivity(intent);
+        });
+
+        return view;
     }
 }

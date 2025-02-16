@@ -1,7 +1,6 @@
 package com.happym.mathsquare;
 
 import android.text.InputFilter;
-import static com.happym.mathsquare.R.id.btn_sign_up;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
@@ -37,7 +36,7 @@ public class teacherLogIn extends AppCompatActivity {
         TextInputLayout emailLayout = findViewById(R.id.email_address_layout);
 TextInputLayout passwordLayout = findViewById(R.id.password);
 AppCompatButton submitButton = findViewById(R.id.btn_sign_in);
-        AppCompatButton signUpButton = findViewById(R.id.btn_sign_up);
+
 
        TextInputEditText emailEditText = (TextInputEditText) emailLayout.getEditText();
 
@@ -60,10 +59,7 @@ if (passwordEditText != null) {
     passwordEditText.setFilters(new InputFilter[]{noSpacesFilter});
 }
         
-     signUpButton.setOnClickListener(v -> {
-         Intent intent = new Intent(teacherLogIn.this, teacherSignUp.class);
-         startActivity(intent);
-     });
+
 
 submitButton.setOnClickListener(v -> {
     boolean hasError = false;
@@ -114,9 +110,27 @@ submitButton.setOnClickListener(v -> {
                         animateShakeRotateEditTextErrorAnimation(passwordLayout);
                     }
                 } else {
-                    // No account found with the entered email
-                    emailLayout.setError("Account does not exist");
-                    animateShakeRotateEditTextErrorAnimation(emailLayout);
+
+                    db.collection("Admin")
+                            .whereEqualTo("email", email).get().addOnSuccessListener(queryDocumentSnapshots -> {
+                        if (!queryDocumentSnapshots.isEmpty()) {
+                            // Admin account
+                            String storedPassword = queryDocumentSnapshots.getDocuments().get(0).getString("password");
+                            if (storedPassword != null && storedPassword.equals(password)) {
+                                Intent intent = new Intent(teacherLogIn.this, AdminActivity.class);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                // Incorrect password
+                                passwordLayout.setError("Incorrect password");
+                                animateShakeRotateEditTextErrorAnimation(passwordLayout);
+                            }
+                        } else {
+                            // Account does not exist
+                            emailLayout.setError("Account does not exist");
+                            animateShakeRotateEditTextErrorAnimation(emailLayout);
+                        }
+                            });
                 }
             })
             .addOnFailureListener(e -> {
