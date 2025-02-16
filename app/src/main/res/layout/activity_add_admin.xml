@@ -38,7 +38,7 @@
             android:layout_marginEnd="16dp"
             app:counterEnabled="true"
             android:hint="Email Address"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/CustomTextInputLayout"
             android:layout_marginStart="16dp"
             android:id="@+id/email_address_layout"
             app:counterMaxLength="50">
@@ -61,7 +61,7 @@
             android:layout_width="match_parent"
             android:layout_marginEnd="16dp"
             android:hint="Teacher First Name"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/CustomTextInputLayout"
             android:layout_marginTop="16dp"
             android:layout_marginStart="16dp"
             android:id="@+id/first_name_layout">
@@ -84,7 +84,7 @@
             app:endIconMode="password_toggle"
             android:layout_marginEnd="16dp"
             android:hint="Password"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/CustomTextInputLayout"
             android:layout_marginTop="16dp"
             android:layout_marginStart="16dp"
             android:id="@+id/password">
@@ -107,7 +107,7 @@
             app:endIconMode="password_toggle"
             android:layout_marginEnd="16dp"
             android:hint="Repeat Password"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/CustomTextInputLayout"
             android:layout_marginTop="16dp"
             android:layout_marginStart="16dp"
             android:id="@+id/password_repeat">
