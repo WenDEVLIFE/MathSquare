@@ -15,12 +15,37 @@
 
     </FrameLayout>
 
+    <LinearLayout
+         android:layout_height="match_parent"
+         android:layout_width="match_parent"
+         android:gravity="center">
+
+        <TextView
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:textSize="33sp"
+             android:textColor="#FFFFFF"
+             android:textAlignment="center"
+             app:layout_constraintTop_toTopOf="parent"
+             android:shadowRadius="2"
+             app:layout_constraintStart_toStartOf="parent"
+             android:fontFamily="@font/paytone_one"
+             android:shadowColor="#000000"
+             app:layout_constraintEnd_toEndOf="parent"
+             android:shadowDx="4"
+             android:shadowDy="3"
+             android:id="@+id/operationDisplay"
+             android:text="Multiplication" />
+
+    </LinearLayout>
+
     <androidx.constraintlayout.widget.ConstraintLayout
          xmlns:android="http://schemas.android.com/apk/res/android"
          xmlns:app="http://schemas.android.com/apk/res-auto"
          xmlns:tools="http://schemas.android.com/tools"
          android:layout_height="match_parent"
-         android:layout_width="match_parent">
+         android:layout_width="match_parent"
+         android:id="@+id/gameView">
 
         <TextView
              android:layout_height="250dp"

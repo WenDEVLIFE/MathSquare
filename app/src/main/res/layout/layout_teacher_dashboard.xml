@@ -130,20 +130,22 @@
                                  android:textSize="18sp"
                                  android:fontFamily="@font/paytone_one"
                                  android:textColor="#5DB575"
+                                android:id="@+id/first_grade"
                                  android:layout_weight="1"
                                  android:layout_gravity="start"
                                  android:text="1" />
 
                             <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="end"
-                                android:layout_weight="1"
-                                android:fontFamily="@font/paytone_one"
-                                android:gravity="center"
-                                android:text="Nara"
-                                android:textColor="#5DB575"
-                                android:textSize="18sp" />
+                                 android:layout_height="wrap_content"
+                                 android:layout_width="0dp"
+                                 android:gravity="center"
+                                 android:textSize="18sp"
+                                android:id="@+id/first_section"
+                                 android:fontFamily="@font/paytone_one"
+                                 android:textColor="#5DB575"
+                                 android:layout_weight="1"
+                                 android:layout_gravity="end"
+                                 android:text="Nara" />
 
                         </TableRow>
 
