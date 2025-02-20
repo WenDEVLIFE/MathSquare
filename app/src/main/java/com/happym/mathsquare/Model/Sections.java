@@ -1,4 +1,5 @@
 package com.happym.mathsquare.Model;
+import java.util.Objects;
 
 public class Sections {
 
@@ -35,5 +36,20 @@ public class Sections {
 
     public void setDocId(String docId) {
         this.docId = docId;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Sections that = (Sections) obj;
+        return section.equals(that.section) &&
+               grade.equals(that.grade) &&
+               docId.equals(that.docId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(section, grade, docId);
     }
 }
