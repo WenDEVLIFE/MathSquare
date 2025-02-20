@@ -24,6 +24,7 @@ import androidx.core.view.WindowCompat;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.happym.mathsquare.Model.Student;
 
@@ -75,7 +76,10 @@ deleteBtn.setOnClickListener(v -> {
         deleteBtn.setImageResource(R.drawable.ic_cancel);
 
         if (rowCheckbox != null) {
-            rowCheckbox.setVisibility(View.VISIBLE);
+            for (CheckBox checkBox : rowCheckBoxes) {
+    checkBox.setVisibility(View.VISIBLE);
+}
+
         }
     } else {
         // Second press: cancel and reset
@@ -87,7 +91,9 @@ deleteBtn.setOnClickListener(v -> {
         deleteBtn.setImageResource(R.drawable.ic_delete);
 
         if (rowCheckbox != null) {
-            rowCheckbox.setVisibility(View.GONE);
+            for (CheckBox checkBox : rowCheckBoxes) {
+    checkBox.setVisibility(View.GONE);
+}
         }
     }
 });
@@ -239,6 +245,7 @@ private void initializeSwitchListeners() {
             db.collection("Accounts")
                 .document("Students")
                 .collection("MathSquare") // Access the "MathSquare" collection
+           .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get()
                 .addOnCompleteListener(task -> {
                     try {
@@ -380,7 +387,10 @@ private void addRowsToTable(List<Student> students) {
  checkBtn.setImageResource(R.drawable.ic_check);
         checkBtn.setVisibility(View.GONE);
                 deleteBtn.setImageResource(R.drawable.ic_delete);
-        rowCheckbox.setVisibility(View.GONE);
+        for (CheckBox checkBox : rowCheckBoxes) {
+    checkBox.setVisibility(View.GONE);
+}
+
 }
 
     

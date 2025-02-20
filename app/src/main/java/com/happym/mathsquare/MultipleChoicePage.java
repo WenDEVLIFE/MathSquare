@@ -4,12 +4,16 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -112,7 +116,8 @@ public class MultipleChoicePage extends AppCompatActivity
             questionProgressTextView,
             text_operator,
             heartTxt,
-            timerTxt;
+            timerTxt,
+   operationDisplay;
     private Button btnChoice1, btnChoice2, btnChoice3, btnChoice4;
     private MediaPlayer bgMediaPlayer;
     private MediaPlayer soundEffectPlayer;
@@ -121,14 +126,19 @@ public class MultipleChoicePage extends AppCompatActivity
     private static final String PREFS_NAME = "MathAppPrefs";
     private static final String KEY_OPERATION_SET = "selectedOperationSet";
     private static final int REQUEST_CODE_RESULTS = 1;
-    
+   private String currentOperation, newOperation;
     private FrameLayout numberContainer;
     private FrameLayout backgroundFrame;
+    private ArrayList<String> operationList;
+    private ConstraintLayout gameView;
+    
     private final Random random = new Random();
     private final int[] numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     private final int numberCount = 3; // Number of numbers per side
     private ValueAnimator vignetteAnimator;
 private boolean isRedTransitionApplied = false; // Prevents unnecessary re-animation
+ 
+private List<String> usedOperations = new ArrayList<>();
 
     
     @Override
@@ -140,14 +150,23 @@ private boolean isRedTransitionApplied = false; // Prevents unnecessary re-anima
         imgBtn_pause = findViewById(R.id.imgBtn_pause);
 
         operationTextView = findViewById(R.id.text_operation);
+       
+        
         givenOneTextView = findViewById(R.id.text_givenone);
         givenTwoTextView = findViewById(R.id.text_giventwo);
         feedbackTextView = findViewById(R.id.text_feedback);
+        
         text_operator = findViewById(R.id.text_operator);
         heartTxt = findViewById(R.id.heart_txt);
         timerTxt = findViewById(R.id.timer_txt);
         questionProgressTextView = findViewById(R.id.text_question_progress);
 
+        gameView = findViewById(R.id.gameView);
+       operationDisplay = findViewById(R.id.operationDisplay);
+        
+        gameView.setVisibility(View.VISIBLE);
+        
+        
         ImageButton imageButton = findViewById(R.id.imgBtn_home);
         imageButton.setOnClickListener(
                 new View.OnClickListener() {
@@ -197,7 +216,8 @@ private boolean isRedTransitionApplied = false; // Prevents unnecessary re-anima
             return insets;
         });
 
-        gametype = getIntent().getStringExtra("game_type");
+        String gameType = getIntent().getStringExtra("game_type");
+        
         quidId = getIntent().getStringExtra("quidId");
         worldType = getIntent().getStringExtra("passing_world");
         levelid = getIntent().getStringExtra("passing");
@@ -209,22 +229,29 @@ private boolean isRedTransitionApplied = false; // Prevents unnecessary re-anima
         updateHeartDisplay();
         startTimer(timerLimit * 60 * 1000);
 
+        
         operationText =
-                getIntent().getStringExtra("operation") != null
-                        ? getIntent().getStringExtra("operation")
-                        : "Subtraction";
+                getIntent().getStringExtra("operation");
+        
+       operationList = getIntent().getStringArrayListExtra("operationList");
+        
+if (operationList == null || operationList.isEmpty()) {
+    operationList = new ArrayList<>();
+    operationList.add("Subtraction");
+}
+        
         difficulty =
                 getIntent().getStringExtra("difficulty") != null
                         ? getIntent().getStringExtra("difficulty")
-                        : "Easy";
+                        : "";
 
-        if (operationText == null) {
-            Toast.makeText(this, "No Operation detected at the moment. :(", Toast.LENGTH_SHORT)
+        if(operationList == null) {
+            
+             if (operationText == null ) {
+            Toast.makeText(this, "No Math Operation detected at the moment. :(", Toast.LENGTH_SHORT)
                     .show();
         } else {
-            operationText =
-                    operationText.substring(0, 1).toUpperCase()
-                            + operationText.substring(1).toLowerCase();
+            
             operationTextView.setText(operationText);
             feedbackTextView.setText("Operation detected");
 
@@ -236,15 +263,27 @@ private boolean isRedTransitionApplied = false; // Prevents unnecessary re-anima
                 generateNewQuestion(currentQuestionIndex, problemSet);
             }
         }
+            
+        } else{
+            Toast.makeText(this, operationList.toString() , Toast.LENGTH_SHORT)
+                    .show();
+            
+           switchOperation(difficulty);
+          
+        }
+        
+       
 
         btnChoice1.setOnClickListener(
-                view -> checkAnswer(Integer.parseInt(btnChoice1.getText().toString()), btnChoice1));
+                view -> checkAnswer(Integer.parseInt(btnChoice1.getText().toString()), btnChoice1, gameType));
         btnChoice2.setOnClickListener(
-                view -> checkAnswer(Integer.parseInt(btnChoice2.getText().toString()), btnChoice2));
+                view -> checkAnswer(Integer.parseInt(btnChoice2.getText().toString()), btnChoice2,gameType));
         btnChoice3.setOnClickListener(
-                view -> checkAnswer(Integer.parseInt(btnChoice3.getText().toString()), btnChoice3));
+                view -> checkAnswer(Integer.parseInt(btnChoice3.getText().toString()), btnChoice3, gameType));
         btnChoice4.setOnClickListener(
-                view -> checkAnswer(Integer.parseInt(btnChoice4.getText().toString()), btnChoice4));
+                view -> checkAnswer(Integer.parseInt(btnChoice4.getText().toString()), btnChoice4,gameType));
+        
+        
         playBGGame("ingame.mp3");
     backgroundFrame = findViewById(R.id.main);
         numberContainer = findViewById(R.id.number_container); // Get FrameLayout from XML
@@ -260,6 +299,228 @@ private boolean isRedTransitionApplied = false; // Prevents unnecessary re-anima
         }
     });
 }
+    
+  
+
+private void switchOperation(String difficulty) {
+    if (operationList.isEmpty()) {
+        Toast.makeText(this, "No more operations available!", Toast.LENGTH_SHORT).show();
+        return;
+    }
+
+    // Reset used operations when all are used
+    if (usedOperations.size() == operationList.size()) {
+        usedOperations.clear();
+    }
+
+    // Get next unused operation
+     newOperation = null;
+    for (String op : operationList) {
+        if (!usedOperations.contains(op)) {
+            newOperation = op;
+            break;
+        }
+    }
+
+    // Add to used operations and update UI
+    if (newOperation != null) {
+        usedOperations.add(newOperation);
+        setupProblemSetList(difficulty, newOperation);
+
+    } else {
+        Toast.makeText(this, "Error selecting new operation!", Toast.LENGTH_SHORT).show();
+    }
+}
+
+
+private void setupProblemSetList(String difficulty, String operation) {
+    BufferedReader bufferedReader;
+    CSVProcessor csvProcessor = new CSVProcessor();
+    String fileName = "";
+    text_operator.setText("");
+
+    switch (operation) {
+        case "Addition":
+            fileName = "additionProblemSet.csv";
+            text_operator.setText("+");
+            break;
+        case "Subtraction":
+            fileName = "subtractionProblemSet.csv";
+            text_operator.setText("-");
+            break;
+        case "Multiplication":
+            fileName = "multiplicationProblemSet.csv";
+            text_operator.setText("×");
+            break;
+        case "Division":
+            fileName = "divisionProblemSet.csv";
+            text_operator.setText("÷");
+            break;
+    }
+
+    try {
+        bufferedReader = new BufferedReader(new InputStreamReader(getAssets().open(fileName)));
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+
+    List<MathProblem> mathProblemList = csvProcessor.readCSVFile(bufferedReader);
+    List<MathProblem> filteredProblems = csvProcessor.getProblemsByOperation(mathProblemList, difficulty);
+
+    // 🔹 Clear old problem set
+    problemSet.clear();
+
+    // 🔹 Add only 5 new questions
+    List<MathProblem> selectedProblems = filteredProblems.subList(0, Math.min(5, filteredProblems.size()));
+    problemSet.addAll(selectedProblems);
+
+    // 🔹 Ensure the problem set is filled up to 20 questions
+    while (problemSet.size() < 20 && filteredProblems.size() > 0) {
+        problemSet.addAll(selectedProblems);
+    }
+
+    // Trim if exceeds 20
+    if (problemSet.size() > 20) {
+        problemSet = problemSet.subList(problemSet.size() - 20, problemSet.size());
+    }
+
+    // 🔹 Reset UI and generate the first question
+    updateUI(operation);
+}
+
+
+private void updateUI(String nextOperation) {
+    String questionProgressText = (currentQuestionIndex + 1) + "/20";
+    questionProgressTextView.setText(questionProgressText);
+operationTextView.setText(nextOperation);
+        operationDisplay.setText(nextOperation);
+        gameView.setVisibility(View.GONE);
+        operationDisplay.setVisibility(View.VISIBLE);
+        operationDisplay.setAlpha(0f);
+        operationDisplay.animate().alpha(1f).setDuration(1000).withEndAction(() -> {
+            new Handler().postDelayed(() -> {
+                operationDisplay.animate().alpha(0f).setDuration(1000).withEndAction(() -> {
+                    operationDisplay.setVisibility(View.GONE);
+                    gameView.setVisibility(View.VISIBLE);
+                    generateNewQuestionList(currentQuestionIndex, problemSet);
+                });
+            }, 2000);
+        });
+    
+}
+    
+private void generateNewQuestionList(int currentQIndex, List<MathProblem> sourceQuestions) {
+    if (currentQIndex < sourceQuestions.size()) {
+        MathProblem currentProblem = sourceQuestions.get(currentQIndex);
+
+        int[] givens = currentProblem.getGivenNumbers();
+        num1 = givens[0];
+        num2 = givens[1];
+        givenOneTextView.setText(String.valueOf(num1));
+        givenTwoTextView.setText(String.valueOf(num2));
+
+        List<String> choicesList = new ArrayList<>(Arrays.asList(currentProblem.getChoicesArray()));
+        Collections.shuffle(choicesList);
+
+        btnChoice1.setText(choicesList.get(0));
+        btnChoice2.setText(choicesList.get(1));
+        btnChoice3.setText(choicesList.get(2));
+        btnChoice4.setText(choicesList.get(3));
+
+        questionProgressTextView.setText((currentQIndex + 1) + "/20");
+    } else {
+        Toast.makeText(this, "All questions completed.", Toast.LENGTH_SHORT).show();
+    }
+}
+
+private void generateNewQuestion(int currentQIndex, List<MathProblem> sourceQuestions) {
+        if (currentQIndex < sourceQuestions.size()) {
+            MathProblem currentProblem = sourceQuestions.get(currentQIndex);
+
+            int[] givens = currentProblem.getGivenNumbers();
+            num1 = givens[0];
+            num2 = givens[1];
+            givenOneTextView.setText(String.valueOf(num1));
+            givenTwoTextView.setText(String.valueOf(num2));
+
+            List<String> choicesList =
+                    new ArrayList<>(Arrays.asList(currentProblem.getChoicesArray()));
+            Collections.shuffle(choicesList);
+
+            btnChoice1.setText(choicesList.get(0));
+            btnChoice2.setText(choicesList.get(1));
+            btnChoice3.setText(choicesList.get(2));
+            btnChoice4.setText(choicesList.get(3));
+
+            questionProgressTextView.setText((currentQIndex + 1) + "/" + sourceQuestions.size());
+        } else {
+            Toast.makeText(this, "All questions repeated.", Toast.LENGTH_SHORT).show();
+            // Navigate to Results or perform other logic here
+        }
+    }
+    
+
+    
+    private void setupProblemSet(String operationText, String difficulty) {
+        BufferedReader bufferedReader = null;
+        CSVProcessor csvProcessor = new CSVProcessor();
+        String fileName = "additionProblemSet.csv";
+        text_operator.setText("");
+
+        if (operationText.equalsIgnoreCase("addition")) {
+            fileName = "additionProblemSet.csv";
+            text_operator.setText("+");
+        } else if (operationText.equalsIgnoreCase("subtraction")) {
+            fileName = "subtractionProblemSet.csv";
+            text_operator.setText("-");
+        } else if (operationText.equalsIgnoreCase("multiplication")) {
+            fileName = "multiplicationProblemSet.csv";
+            text_operator.setText("x");
+        } else if (operationText.equalsIgnoreCase("division")) {
+            fileName = "divisionProblemSet.csv";
+            text_operator.setText("÷");
+        }
+
+        try {
+            bufferedReader = new BufferedReader(new InputStreamReader(getAssets().open(fileName)));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        List<MathProblem> mathProblemList = csvProcessor.readCSVFile(bufferedReader);
+        List<MathProblem> filteredProblems =
+                csvProcessor.getProblemsByOperation(mathProblemList, difficulty);
+
+        // Ensure questionLimits is within the allowed range (3 to 10)
+        if (questionLimits < 3) {
+            questionLimits = 3;
+        } else if (questionLimits > 20) {
+            questionLimits = 20;
+        }
+
+        // Trim the problemSet based on the selected limit
+        problemSet = filteredProblems.subList(0, Math.min(questionLimits, filteredProblems.size()));
+
+        String questionProgressText = (currentQuestionIndex + 1) + "/" + problemSet.size();
+        questionProgressTextView.setText(questionProgressText);
+
+        // Detect repeated questions
+        Set<String> questionSet = new HashSet<>();
+        for (MathProblem problem : problemSet) {
+            if (!questionSet.add(problem.getQuestion())) {
+                Toast.makeText(
+                                this,
+                                "Repeated question found: " + problem.getQuestion(),
+                                Toast.LENGTH_SHORT)
+                        .show();
+            }
+        }
+    }
+    
+    
+
+    
+
     
     private void startNumberAnimationLoop() {
         changeNumbers();
@@ -484,88 +745,7 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
         }
     }
 
-    private void setupProblemSet(String operationText, String difficulty) {
-        BufferedReader bufferedReader = null;
-        CSVProcessor csvProcessor = new CSVProcessor();
-        String fileName = "additionProblemSet.csv";
-        text_operator.setText("");
-
-        if (operationText.equalsIgnoreCase("addition")) {
-            fileName = "additionProblemSet.csv";
-            text_operator.setText("+");
-        } else if (operationText.equalsIgnoreCase("subtraction")) {
-            fileName = "subtractionProblemSet.csv";
-            text_operator.setText("-");
-        } else if (operationText.equalsIgnoreCase("multiplication")) {
-            fileName = "multiplicationProblemSet.csv";
-            text_operator.setText("x");
-        } else if (operationText.equalsIgnoreCase("division")) {
-            fileName = "divisionProblemSet.csv";
-            text_operator.setText("÷");
-        }
-
-        try {
-            bufferedReader = new BufferedReader(new InputStreamReader(getAssets().open(fileName)));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        List<MathProblem> mathProblemList = csvProcessor.readCSVFile(bufferedReader);
-        List<MathProblem> filteredProblems =
-                csvProcessor.getProblemsByOperation(mathProblemList, difficulty);
-
-        // Ensure questionLimits is within the allowed range (3 to 10)
-        if (questionLimits < 3) {
-            questionLimits = 3;
-        } else if (questionLimits > 10) {
-            questionLimits = 10;
-        }
-
-        // Trim the problemSet based on the selected limit
-        problemSet = filteredProblems.subList(0, Math.min(questionLimits, filteredProblems.size()));
-
-        String questionProgressText = (currentQuestionIndex + 1) + "/" + problemSet.size();
-        questionProgressTextView.setText(questionProgressText);
-
-        // Detect repeated questions
-        Set<String> questionSet = new HashSet<>();
-        for (MathProblem problem : problemSet) {
-            if (!questionSet.add(problem.getQuestion())) {
-                Toast.makeText(
-                                this,
-                                "Repeated question found: " + problem.getQuestion(),
-                                Toast.LENGTH_SHORT)
-                        .show();
-            }
-        }
-    }
-
-    private void generateNewQuestion(int currentQIndex, List<MathProblem> sourceQuestions) {
-        if (currentQIndex < sourceQuestions.size()) {
-            MathProblem currentProblem = sourceQuestions.get(currentQIndex);
-
-            int[] givens = currentProblem.getGivenNumbers();
-            num1 = givens[0];
-            num2 = givens[1];
-            givenOneTextView.setText(String.valueOf(num1));
-            givenTwoTextView.setText(String.valueOf(num2));
-
-            List<String> choicesList =
-                    new ArrayList<>(Arrays.asList(currentProblem.getChoicesArray()));
-            Collections.shuffle(choicesList);
-
-            btnChoice1.setText(choicesList.get(0));
-            btnChoice2.setText(choicesList.get(1));
-            btnChoice3.setText(choicesList.get(2));
-            btnChoice4.setText(choicesList.get(3));
-
-            questionProgressTextView.setText((currentQIndex + 1) + "/" + sourceQuestions.size());
-        } else {
-            Toast.makeText(this, "All questions repeated.", Toast.LENGTH_SHORT).show();
-            // Navigate to Results or perform other logic here
-        }
-    }
-
+    
     private void updateHeartDisplay() {
         heartTxt.setText(String.valueOf(heartLimit));
     }
@@ -599,82 +779,58 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
         }
     }
 
-    private void checkAnswer(int btnText, Button btnChoice) {
-        if (isGameOver) return;
-playSound("click.mp3");
-        int actualAnswer = problemSet.get(currentQuestionIndex).getAnswer();
-        boolean isCorrect = (btnText == actualAnswer);
+    private void checkAnswer(int btnText, Button btnChoice, String gameType) {
+    if (isGameOver) return;
+    playSound("click.mp3");
 
-        if (isCorrect) {
-            score++;
-            feedbackTextView.setText("Correct!");
-            animateCorrectAnswer(btnChoice);
-        } else {
-            feedbackTextView.setText("Wrong! The correct answer is " + actualAnswer);
-            animateIncorrectAnswer(btnChoice);
-            playSound("wrong.mp3");
-            heartLimit--; // Decrease heart count
-            updateHeartDisplay();
+    int actualAnswer = problemSet.get(currentQuestionIndex).getAnswer();
+    boolean isCorrect = (btnText == actualAnswer);
 
-            if (heartLimit == 0) {
-                playSound("failed.mp3"); // Stop background music & play failed sound
-                showGameOver();
-                return;
-            }
-            
-            if  (heartLimit == 1) {
-                startVignetteEffect(); // Then check for heartLimit changes
-            }
+    if (isCorrect) {
+        score++;
+        feedbackTextView.setText("Correct!");
+        animateCorrectAnswer(btnChoice);
+        playEffectSound("correct.mp3");
+    } else {
+        feedbackTextView.setText("Wrong! The correct answer is " + actualAnswer);
+        animateIncorrectAnswer(btnChoice);
+        playEffectSound("wrong.mp3");
+        heartLimit--;
+        updateHeartDisplay();
 
-            highlightCorrectAnswer(actualAnswer);
+        if (heartLimit == 0) {
+            playSound("failed.mp3");
+            showGameOver(gameType);
+            return;
         }
 
-        answeredQuestions.add(problemSet.get(currentQuestionIndex));
-        currentQuestionIndex++;
+        if (heartLimit == 1) {
+            startVignetteEffect();
+        }
 
-        btnChoice.postDelayed(
-                () -> {
-                    if (currentQuestionIndex < problemSet.size()) {
-                        generateNewQuestion(currentQuestionIndex, problemSet);
-                    } else {
-                        questionProgressTextView.setText("");
-                        Intent intent = new Intent(MultipleChoicePage.this, Results.class);
-                        int totalQuestions = problemSet.size();
-
-                        // Stop background music before playing victory/defeat sound
-                        if (score == totalQuestions) {
-                            intent.putExtra("EXTRA_RESULT", "Congratulations!");
-                            playSound("victory.mp3");
-                        } else if (score > totalQuestions * 0.75) {
-                            intent.putExtra("EXTRA_RESULT", "Good Job!");
-                            playSound("victory.mp3");
-                        } else if (score > totalQuestions / 2) {
-                            intent.putExtra("EXTRA_RESULT", "Nice Try!");
-                            playSound("victory.mp3");
-                        } else {
-                            intent.putExtra("EXTRA_RESULT", "Failed");
-                            playSound("failed.mp3");
-                        }
-
-                        // Pass data to Results activity
-                        intent.putExtra("EXTRA_SCORE", score);
-                    intent.putExtra("quizid", quidId);
-                    intent.putExtra("passing_level_next", levelNext);
-                    intent.putExtra("level_type", levelid);
-                    intent.putExtra("passing_world_type",worldType);
-                    intent.putExtra("game_type",gametype);
-                        intent.putExtra("EXTRA_TOTAL", totalQuestions);
-                        intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
-                        intent.putExtra("EXTRA_DIFFICULTY", difficulty);
-                        intent.putParcelableArrayListExtra(
-                                "EXTRA_ANSWERED_QUESTIONS", new ArrayList<>(answeredQuestions));
-                        startActivity(intent);
-                        finish();
-                    }
-                    feedbackTextView.setText("");
-                },
-                1000);
+        highlightCorrectAnswer(actualAnswer);
     }
+
+    answeredQuestions.add(problemSet.get(currentQuestionIndex));
+    currentQuestionIndex++;
+
+    // **Check if operation needs to switch every 5 questions**
+    if (currentQuestionIndex % 5 == 0 && operationList != null && !operationList.isEmpty()) {
+        switchOperation(difficulty);  // Use difficulty when switching
+    }
+
+    btnChoice.postDelayed(() -> {
+        feedbackTextView.setText("");
+
+        if (currentQuestionIndex < 20) {
+            generateNewQuestionList(currentQuestionIndex, problemSet);
+        } else {
+            Toast.makeText(this, "All Questions Completed!", Toast.LENGTH_SHORT).show();
+        }
+    }, 1000);
+}
+
+    
 
     private void playSound(String fileName) {
         
@@ -702,25 +858,57 @@ playSound("click.mp3");
         }
     }
 
+private void playEffectSound(String fileName) {
+    // Get AudioManager and set media volume to max
+    AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+    int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume, 0); // Set to max
+
+    // Stop any previous sound effect before playing a new one
+    if (soundEffectPlayer != null) {
+        soundEffectPlayer.release();
+        soundEffectPlayer = null;
+    }
+
+    try {
+        AssetFileDescriptor afd = getAssets().openFd(fileName);
+        soundEffectPlayer = new MediaPlayer();
+        soundEffectPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+        soundEffectPlayer.prepare();
+        
+        // Set volume to max
+        soundEffectPlayer.setVolume(1.0f, 1.0f);
+
+        soundEffectPlayer.setOnCompletionListener(mp -> {
+            mp.release();
+            soundEffectPlayer = null;
+        });
+
+        soundEffectPlayer.start();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+
+
     private void playBGGame(String fileName) {
-        if (bgMediaPlayer == null) { // Prevent re-initializing
-            try {
-                AssetFileDescriptor afd = getAssets().openFd(fileName);
-                bgMediaPlayer = new MediaPlayer();
-                bgMediaPlayer.setDataSource(
-                        afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-                bgMediaPlayer.prepare();
-                bgMediaPlayer.setOnCompletionListener(
-                        mp -> {
-                            mp.release();
-                            bgMediaPlayer = null;
-                        });
-                bgMediaPlayer.start();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    if (bgMediaPlayer == null) { // Prevent re-initializing
+        try {
+            AssetFileDescriptor afd = getAssets().openFd(fileName);
+            bgMediaPlayer = new MediaPlayer();
+            bgMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+            bgMediaPlayer.prepare();
+            
+            // Set looping to true
+            bgMediaPlayer.setLooping(true);
+
+            bgMediaPlayer.start();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
+}
+
 
     private void highlightCorrectAnswer(int actualAnswer) {
         if (Integer.parseInt(btnChoice1.getText().toString()) == actualAnswer) {
@@ -743,7 +931,7 @@ playSound("click.mp3");
         pauseDialog.show(getSupportFragmentManager(), "PauseDialog");
     }
 
-    private void showGameOver() {
+    private void showGameOver(String gameType) {
         isGameOver = true;
         countDownTimer.cancel();
 
@@ -762,6 +950,13 @@ playSound("click.mp3");
         }
 
         // Pass data to Results activity
+      
+                    intent.putExtra("quizid", quidId);
+                    intent.putExtra("passinglevelnext", levelNext);
+                    intent.putExtra("leveltype", levelid);
+                    intent.putExtra("passingworldtype",worldType);
+                    intent.putExtra("gametype",gameType);
+        
         intent.putExtra("EXTRA_SCORE", score);
         intent.putExtra("EXTRA_TOTAL", totalQuestions);
         intent.putExtra("EXTRA_OPERATIONTEXT", operationText);

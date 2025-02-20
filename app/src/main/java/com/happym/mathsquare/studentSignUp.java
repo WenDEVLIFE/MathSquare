@@ -237,6 +237,7 @@ sectionChooser.setOnClickListener(v -> sectionChooser.showDropDown());
                 studentData.put("section", section);
                 studentData.put("grade", grade);
                studentData.put("quizno", "N/A");
+                studentData.put("timestamp", FieldValue.serverTimestamp());           
                 studentData.put("quizscore", "0");    
                     
 

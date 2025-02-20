@@ -1,5 +1,6 @@
 package com.happym.mathsquare;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
@@ -68,9 +69,11 @@ import java.util.Random;
 public class Results extends AppCompatActivity {
     private FirebaseFirestore db;
     private String quizId, quizScore;
+    private ProgressDialog loadingDialog;
     private TextView showScore, showResult, showMotive;
     private List<MathProblem> problemSet = new ArrayList<>();
 private MediaPlayer soundEffectPlayer;
+    private boolean saveSuccesfully = false;
     
     private FrameLayout numberContainer,backgroundFrame;
     private final Random random = new Random();
@@ -130,12 +133,12 @@ textView.setText("");
         });
 
         String getResult = getIntent().getStringExtra("EXTRA_RESULT");
-        String worldType = getIntent().getStringExtra("passing_world_type");
-        String levelType = getIntent().getStringExtra("level_type");
+        String worldType = getIntent().getStringExtra("passingworldtype");
+        String levelType = getIntent().getStringExtra("leveltype");
         String difficulty = getIntent().getStringExtra("EXTRA_DIFFICULTY");
-       String levelNext = getIntent().getStringExtra("passing_level_next");
+       String levelNext = getIntent().getStringExtra("passinglevelnext");
         String getQuiz = getIntent().getStringExtra("quizid");
-            String gameType = getIntent().getStringExtra("game_type");
+            String gameType = getIntent().getStringExtra("gametype");
 int getScore = getIntent().getIntExtra("EXTRA_SCORE", 0);
 int getTotal = getIntent().getIntExtra("EXTRA_TOTAL", 0);
 
@@ -147,17 +150,19 @@ showMotive = findViewById(R.id.textViewMotive);
 showResult.setText(getResult);
 String scoreDisplay = getScore + "/" + getTotal;
 showScore.setText(scoreDisplay);
-
+        
+ loadingDialog = new ProgressDialog(this);
+    loadingDialog.setMessage("Saving Progress...");
+    loadingDialog.setCancelable(false);
+    
+       
 // Display Motivational message based on the result
 switch (getResult) {
     case "Congratulations!":
             
             if(sharedPreferences.StudentIsLoggedIn(this)){
-                if(getQuiz != null){
-                   sendScoreResult(getScore,getQuiz,gameType,levelType, levelNext, worldType, difficulty);
-                }else if (gameType != null){
+                
                    sendScoreResult(getScore,getQuiz,gameType,levelType,levelNext,worldType,difficulty);
-                }
                
             }
             
@@ -165,22 +170,16 @@ switch (getResult) {
         break;
     case "Good Job!":
             if(sharedPreferences.StudentIsLoggedIn(this)){
-                if(getQuiz != null){
-                   sendScoreResult(getScore,getQuiz,gameType,levelType, levelNext, worldType, difficulty);
-                }else if (gameType != null){
                    sendScoreResult(getScore,getQuiz,gameType,levelType,levelNext,worldType,difficulty);
-                }
+                
                
             }
         showMotive.setText("Keep it Up!");
         break;
     case "Nice Try!":
             if(sharedPreferences.StudentIsLoggedIn(this)){
-               if(getQuiz != null){
-                   sendScoreResult(getScore,getQuiz,gameType,levelType, levelNext, worldType, difficulty);
-                }else if (gameType != null){
                    sendScoreResult(getScore,getQuiz,gameType,levelType,levelNext,worldType,difficulty);
-                }
+                
                
                
             }
@@ -188,23 +187,22 @@ switch (getResult) {
         break;
     case "Failed":
             if(sharedPreferences.StudentIsLoggedIn(this)){
-                if(getQuiz != null){
-                   sendScoreResult(getScore,getQuiz,gameType,levelType, levelNext, worldType, difficulty);
-                }else if (gameType != null){
-                   sendScoreResult(getScore,getQuiz,gameType,levelType,levelNext,worldType,difficulty);
-                }
-               
+                  sendScoreResult(getScore,getQuiz,gameType,levelType,levelNext,worldType,difficulty);
             }
+           
         showMotive.setText("Try Again!");
         break;
 }
-
+        
+       
    backgroundFrame = findViewById(R.id.main);
         numberContainer = findViewById(R.id.number_container); // Get FrameLayout from XML
 
         startNumberAnimationLoop();
         
 backgroundFrame.post(this::applyVignetteEffect);
+        
+        
         
     }
     private void startNumberAnimationLoop() {
@@ -371,296 +369,362 @@ private void applyVignetteEffect() {
         }
     }
     
-   private void sendScoreResult(int Score, String quizid, String gametype, String levelNum, String nextlevel, String worldType, String OnTimerDifficulty) {
-       String section = sharedPreferences.getSection(this);
-       String grade = sharedPreferences.getGrade(this);
-       String firstName = sharedPreferences.getFirstN(this);
-       String lastName = sharedPreferences.getLastN(this);
-       String quizname = "Quiz " + quizid;
-       String uuid = UUID.randomUUID().toString(); // Generate a random UUID
+   /**
+ * Sends the score result to the Firebase backend for different game types.
+ *
+ * @param Score             The score achieved by the student.
+ * @param quizid            The quiz identifier.
+ * @param gametype          The type of game ("passing_level", "quiz", "OnTimer", or "Practicd").
+ * @param levelNum          The level number (e.g., "level_1", "level_10").
+ * @param nextlevel         The identifier for the next level to complete.
+ * @param worldType         The world in which the level is played (e.g., "world_one", "world_two").
+ * @param OnTimerDifficulty The difficulty setting for OnTimer mode.
+ */
+private void sendScoreResult(int Score, String quizid, String gametype, String levelNum, String nextlevel, String worldType, String OnTimerDifficulty) {
 
-       HashMap<String, Object> studentDataQuiz = new HashMap<>();
-       studentDataQuiz.put("firstName", firstName);
-       studentDataQuiz.put("lastName", lastName);
-       studentDataQuiz.put("section", section);
-       studentDataQuiz.put("grade", grade);
-       studentDataQuiz.put("quizno", quizname);
-       studentDataQuiz.put("quizscore", String.valueOf(Score));
+    // Show a loading dialog to indicate a process is running.
+    loadingDialog.show();
 
-       HashMap<String, Object> OnTimerData = new HashMap<>();
-       OnTimerData.put("firstName", firstName);
-       OnTimerData.put("lastName", lastName);
-       OnTimerData.put("section", section);
-       OnTimerData.put("grade", grade);
-       OnTimerData.put("ontimer_difficulty", OnTimerDifficulty);
-       OnTimerData.put("ontimer_score", String.valueOf(Score));
+    // Retrieve student-related information from shared preferences.
+    String section = sharedPreferences.getSection(this);
+    String grade = sharedPreferences.getGrade(this);
+    String firstName = sharedPreferences.getFirstN(this);
+    String lastName = sharedPreferences.getLastN(this);
+    
+    // Create a quiz name based on quizid and generate a random UUID (if needed later).
+    String quizname = "Quiz " + quizid;
+    String uuid = UUID.randomUUID().toString(); // Generate a random UUID
 
-       HashMap<String, Object> PracticeData = new HashMap<>();
-       PracticeData.put("firstName", firstName);
-       PracticeData.put("lastName", lastName);
-       PracticeData.put("section", section);
-       PracticeData.put("grade", grade);
-       PracticeData.put("practice_difficulty", OnTimerDifficulty);
-       PracticeData.put("practice_score", String.valueOf(Score));
+    // Create a HashMap to store quiz-related data.
+    HashMap<String, Object> studentDataQuiz = new HashMap<>();
+    studentDataQuiz.put("firstName", firstName);
+    studentDataQuiz.put("lastName", lastName);
+    studentDataQuiz.put("section", section);
+    studentDataQuiz.put("grade", grade);
+       studentDataQuiz.put("timestamp", FieldValue.serverTimestamp());           
+    studentDataQuiz.put("quizno", quizname);
+    studentDataQuiz.put("quizscore", String.valueOf(Score));
 
-       HashMap<String, Object> passingData = new HashMap<>();
-       passingData.put("firstName", firstName);
-       passingData.put("lastName", lastName);
-       passingData.put("section", section);
-       passingData.put("grade", grade);
-       passingData.put("passing_level_must_complete", nextlevel);
-       passingData.put("passing_level", levelNum);
-       passingData.put("passing_" + levelNum + "_score", String.valueOf(Score));
+    // Create a HashMap to store OnTimer mode data.
+    HashMap<String, Object> OnTimerData = new HashMap<>();
+    OnTimerData.put("firstName", firstName);
+    OnTimerData.put("lastName", lastName);
+    OnTimerData.put("section", section);
+    OnTimerData.put("grade", grade);
+     OnTimerData.put("timestamp", FieldValue.serverTimestamp());             
+    OnTimerData.put("ontimer_difficulty", OnTimerDifficulty);
+    OnTimerData.put("ontimer_score", String.valueOf(Score));
+
+    // Create a HashMap to store Practice mode data.
+    HashMap<String, Object> PracticeData = new HashMap<>();
+    PracticeData.put("firstName", firstName);
+    PracticeData.put("lastName", lastName);
+    PracticeData.put("section", section);
+    PracticeData.put("grade", grade);
+       PracticeData.put("timestamp", FieldValue.serverTimestamp());           
+    PracticeData.put("practice_difficulty", OnTimerDifficulty);
+    PracticeData.put("practice_score", String.valueOf(Score));
+
+    // Create a HashMap for passing level data.
+    HashMap<String, Object> passingData = new HashMap<>();
+    passingData.put("firstName", firstName);
+    passingData.put("lastName", lastName);
+    passingData.put("section", section);
+    passingData.put("grade", grade);
+       passingData.put("timestamp", FieldValue.serverTimestamp());           
+    passingData.put("passing_level_must_complete", nextlevel);
+    passingData.put("passing_level", levelNum);
+    passingData.put("passing_" + levelNum + "_score", String.valueOf(Score));
+
+    // Determine star rating based on the score and update passingData accordingly.
+    if (Score >= 1 && Score <= 4) {
+        passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));
+        passingData.put("passing_" + levelNum, "1 Star");
+    } else if (Score >= 5 && Score <= 9) {
+        passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));
+        passingData.put("passing_" + levelNum, "2 Stars");
+    } else if (Score > 10) {
+        passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));
+        passingData.put("passing_" + levelNum, "3 Stars");
+    }
+
+    // Process based on the type of game.
+    if ("passing_level".equals(gametype)) {
+        // Reference the Firebase collection for MathSquare students.
+        CollectionReference collectionRef = db.collection("Accounts")
+            .document("Students")
+            .collection("MathSquare");
+
+        // Query for a document matching the student's first name, last name,
+        // and the next level that must be completed.
+        collectionRef.whereEqualTo("firstName", firstName)
+            .whereEqualTo("lastName", lastName)
+            .whereEqualTo("passing_level_must_complete", nextlevel)
+            .get()
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    if (!task.getResult().isEmpty()) {
+                        // If a matching document exists, update it.
+                        for (DocumentSnapshot document : task.getResult()) {
+                            DocumentReference docRef = collectionRef.document(document.getId());
+
+                            // Determine which fields to update based on the worldType.
+                            if (worldType.equals("world_one")) {
+                                completedLevelsField = "passing_completed_world_one_levels";
+                                worldCompletedField = "passing_world_one_completed";
+                            } else if (worldType.equals("world_two")) {
+                                completedLevelsField = "passing_completed_world_two_levels";
+                                worldCompletedField = "passing_world_two_completed";
+                            } else if (worldType.equals("world_three")) {
+                                completedLevelsField = "passing_completed_world_three_levels";
+                                worldCompletedField = "passing_world_three_completed";
+                            } else if (worldType.equals("world_four")) {
+                                completedLevelsField = "passing_completed_world_four_levels";
+                                worldCompletedField = "passing_world_four_completed";
+                            } else if (worldType.equals("world_five")) {
+                                completedLevelsField = "passing_completed_world_five_levels";
+                                worldCompletedField = "passing_world_five_completed";
+                            }
+
+                            // Update the array of completed levels.
+                            if (!completedLevelsField.isEmpty()) {
+                                docRef.get().addOnSuccessListener(snapshot -> {
+                                    if (snapshot.exists()) {
+                                        // Retrieve the current list of completed levels.
+                                        List<String> completedLevels = (List<String>) snapshot.get(completedLevelsField);
+                                        if (completedLevels == null) {
+                                            // If the array does not exist, create it with the current level.
+                                            docRef.update(completedLevelsField, Arrays.asList(levelNum))
+                                                .addOnSuccessListener(aVoid -> {
+                                                    loadingDialog.dismiss();
+                                                    Toast.makeText(this, "New level tracking created", Toast.LENGTH_SHORT).show();
+                                                })
+                                                .addOnFailureListener(e -> {
+                                                    loadingDialog.dismiss();
+                                                    Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                                });
+                                        } else {
+                                            // If the array exists, add the new level without overwriting existing data.
+                                            docRef.update(completedLevelsField, FieldValue.arrayUnion(levelNum))
+                                                .addOnSuccessListener(aVoid -> {
+                                                    loadingDialog.dismiss();
+                                                    Toast.makeText(this, "Level updated successfully", Toast.LENGTH_SHORT).show();
+                                                })
+                                                .addOnFailureListener(e -> {
+                                                    loadingDialog.dismiss();
+                                                    Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                                });
+                                        }
+                                    }
+                                });
+                            }
+
+                            // If the level completed is "level_10", update the world completion status.
+                            if (levelNum.equals("level_10")) {
+                                docRef.update(worldCompletedField, worldType)
+                                    .addOnSuccessListener(aVoid -> {
+                                        loadingDialog.dismiss();
+                                        Toast.makeText(this, worldType + " completed!", Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        loadingDialog.dismiss();
+                                        Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                    });
+
+                                // Determine the next world based on the current world.
+                                String nextWorld = "";
+                                if (worldType.equals("world_one")) nextWorld = "world_two";
+                                else if (worldType.equals("world_two")) nextWorld = "world_three";
+                                else if (worldType.equals("world_three")) nextWorld = "world_four";
+                                else if (worldType.equals("world_four")) nextWorld = "world_five";
+                                else if (worldType.equals("world_five")) nextWorld = "world_soon";
+
+                                // Update the next world field in the document.
+                                docRef.update("passing_next_world", nextWorld);
+                            }
+                        }
+                    } else {
+                        // If no matching document exists, add a new document with passingData.
+                        collectionRef.add(passingData)
+                            .addOnSuccessListener(aVoid -> {
+                                loadingDialog.dismiss();
+                                Toast.makeText(this, "New record added", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                loadingDialog.dismiss();
+                                Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            });
+                    }
+                }
+            })
+            .addOnFailureListener(e -> {
+                loadingDialog.dismiss();
+                Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            });
+
+    } else if ("quiz".equals(gametype)) {
+        // Process for quiz game type.
+        CollectionReference collectionRef = db.collection("Accounts")
+            .document("Students")
+            .collection("MathSquare");
+
+        // Query for an existing quiz record with "quizno" set to "N/A".
+        collectionRef.whereEqualTo("firstName", firstName)
+            .whereEqualTo("lastName", lastName)
+            .whereEqualTo("quizno", "N/A")
+            .get()
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    if (!task.getResult().isEmpty()) {
+                        // If an existing record is found, replace it with the new quiz data.
+                        for (DocumentSnapshot document : task.getResult()) {
+                            collectionRef.document(document.getId())
+                                .set(studentDataQuiz)
+                                .addOnSuccessListener(aVoid -> {
+                                    loadingDialog.dismiss();
+                                    Toast.makeText(this, "Quiz updated successfully", Toast.LENGTH_SHORT).show();
+                                })
+                                .addOnFailureListener(e -> {
+                                    loadingDialog.dismiss();
+                                    Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                });
+                        }
+                    } else {
+                        // If no record exists, add a new quiz record.
+                        collectionRef.add(studentDataQuiz)
+                            .addOnSuccessListener(aVoid -> {
+                                loadingDialog.dismiss();
+                                Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                loadingDialog.dismiss();
+                                Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            });
+                    }
+                } else {
+                    // In case of query failure, attempt to add a new document.
+                    Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                    collectionRef.add(studentDataQuiz)
+                        .addOnSuccessListener(aVoid -> {
+                            loadingDialog.dismiss();
+                            Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            loadingDialog.dismiss();
+                            Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        });
+                }
+            })
+            .addOnFailureListener(e -> {
+                loadingDialog.dismiss();
+                Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            });
+
+    } else if ("OnTimer".equals(gametype)) {
+        // Process for OnTimer game type.
+        CollectionReference collectionRef = db.collection("Accounts")
+            .document("Students")
+            .collection("MathSquare");
+
+        // Query for an existing OnTimer record matching the student's difficulty level.
+        collectionRef.whereEqualTo("firstName", firstName)
+            .whereEqualTo("lastName", lastName)
+            .whereEqualTo("ontimer_difficulty", OnTimerDifficulty)
+            .get()
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    if (!task.getResult().isEmpty()) {
+                        // Update the existing OnTimer document.
+                        for (DocumentSnapshot document : task.getResult()) {
+                            collectionRef.document(document.getId())
+                                .set(OnTimerData)
+                                .addOnSuccessListener(aVoid -> {
+                                    loadingDialog.dismiss();
+                                    Toast.makeText(this, "On Timer Score updated successfully", Toast.LENGTH_SHORT).show();
+                                })
+                                .addOnFailureListener(e -> {
+                                    loadingDialog.dismiss();
+                                    Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                });
+                        }
+                    } else {
+                        // No existing document found; simply dismiss the loading dialog.
+                        loadingDialog.dismiss();
+                    }
+                } else {
+                    // In case of failure, show an error and attempt to add a new OnTimer document.
+                    Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                    collectionRef.add(OnTimerData)
+                        .addOnSuccessListener(aVoid -> {
+                            loadingDialog.dismiss();
+                            Toast.makeText(this, "New On Timer Score added", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            loadingDialog.dismiss();
+                            Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        });
+                }
+            })
+            .addOnFailureListener(e -> {
+                loadingDialog.dismiss();
+                Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            });
+
+    } else if ("Practice".equals(gametype)) {
+        // Process for Practice mode (note: "Practicd" may be a typo for "Practice").
+        CollectionReference collectionRef = db.collection("Accounts")
+            .document("Students")
+            .collection("MathSquare");
+
+        // Query for an existing Practice record where practice_score is set to "None".
+        collectionRef.whereEqualTo("firstName", firstName)
+            .whereEqualTo("lastName", lastName)
+            .whereEqualTo("practice_score", "None")
+            .get()
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    if (!task.getResult().isEmpty()) {
+                        // If found, update the existing Practice document.
+                        for (DocumentSnapshot document : task.getResult()) {
+                            collectionRef.document(document.getId())
+                                .set(PracticeData)
+                                .addOnSuccessListener(aVoid -> {
+                                    loadingDialog.dismiss();
+                                    Toast.makeText(this, "Practice Score updated successfully", Toast.LENGTH_SHORT).show();
+                                })
+                                .addOnFailureListener(e -> {
+                                    loadingDialog.dismiss();
+                                    Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                });
+                        }
+                    } else {
+                        // If no matching record is found, simply dismiss the loading dialog.
+                        loadingDialog.dismiss();
+                    }
+                } else {
+                    // On query failure, show an error and attempt to add a new Practice document.
+                    Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                    collectionRef.add(PracticeData)
+                        .addOnSuccessListener(aVoid -> {
+                            loadingDialog.dismiss();
+                            Toast.makeText(this, "New Practice Score added", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            loadingDialog.dismiss();
+                            Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        });
+                }
+            })
+            .addOnFailureListener(e -> {
+                loadingDialog.dismiss();
+                Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            });
+    } else {
+        // If none of the gametypes match, simply dismiss the loading dialog.
+        loadingDialog.dismiss();
+    }
+}
 
 
-       if (Score >= 1 && Score <= 4) {
-           passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));
-           passingData.put("passing_" + levelNum, "1 Star");
-       } else if (Score >= 5 && Score <= 9) {
-           passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));
-           passingData.put("passing_" + levelNum, "2 Stars");
-       } else if (Score > 10) {
-           passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));
-           passingData.put("passing_" + levelNum, "3 Stars");
-       }
-
-       if (gametype == "passing_level") {
-
-
-           CollectionReference collectionRef = db.collection("Accounts")
-                   .document("Students")
-                   .collection("MathSquare");
-
-           collectionRef.whereEqualTo("firstName", firstName)
-                   .whereEqualTo("lastName", lastName)
-                   .whereEqualTo("passing_level_must_complete", nextlevel)
-                   .get()
-                   .addOnCompleteListener(task -> {
-                       if (task.isSuccessful()) {
-                           if (!task.getResult().isEmpty()) {
-                               for (DocumentSnapshot document : task.getResult()) {
-                                   DocumentReference docRef = collectionRef.document(document.getId());
-
-                                   // Add levelNum to the correct world array without overwriting
-
-
-                                   if (worldType.equals("world_one")) {
-                                       completedLevelsField = "passing_completed_world_one_levels";
-                                       worldCompletedField = "passing_world_one_completed";
-                                   } else if (worldType.equals("world_two")) {
-                                       completedLevelsField = "passing_completed_world_two_levels";
-                                       worldCompletedField = "passing_world_two_completed";
-                                   } else if (worldType.equals("world_three")) {
-                                       completedLevelsField = "passing_completed_world_three_levels";
-                                       worldCompletedField = "passing_world_three_completed";
-                                   } else if (worldType.equals("world_four")) {
-                                       completedLevelsField = "passing_completed_world_four_levels";
-                                       worldCompletedField = "passing_world_four_completed";
-                                   } else if (worldType.equals("world_five")) {
-                                       completedLevelsField = "passing_completed_world_five_levels";
-                                       worldCompletedField = "passing_world_five_completed";
-                                   }
-
-                                   if (!completedLevelsField.isEmpty()) {
-                                       docRef.get().addOnSuccessListener(snapshot -> {
-                                           if (snapshot.exists()) {
-                                               // Check if array exists
-                                               List<String> completedLevels = (List<String>) snapshot.get(completedLevelsField);
-                                               if (completedLevels == null) {
-                                                   // If field does not exist, create it
-                                                   docRef.update(completedLevelsField, Arrays.asList(levelNum))
-                                                           .addOnSuccessListener(aVoid ->
-                                                                   Toast.makeText(this, "New level tracking created", Toast.LENGTH_SHORT).show()
-                                                           )
-                                                           .addOnFailureListener(e ->
-                                                                   Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                                           );
-                                               } else {
-                                                   // If field exists, add new level without overwriting
-                                                   docRef.update(completedLevelsField, FieldValue.arrayUnion(levelNum))
-                                                           .addOnSuccessListener(aVoid ->
-                                                                   Toast.makeText(this, "Level updated successfully", Toast.LENGTH_SHORT).show()
-                                                           )
-                                                           .addOnFailureListener(e ->
-                                                                   Toast.makeText(this, "Error updating level: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                                           );
-                                               }
-                                           }
-                                       });
-                                   }
-
-                                   // Set next world if levelNum is "level_10"
-                                   if (levelNum.equals("level_10")) {
-                                       docRef.update(worldCompletedField, worldType)
-                                               .addOnSuccessListener(aVoid ->
-                                                       Toast.makeText(this, worldType + " completed!", Toast.LENGTH_SHORT).show()
-                                               )
-                                               .addOnFailureListener(e ->
-                                                       Toast.makeText(this, "Error updating world: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                               );
-
-                                       String nextWorld = "";
-                                       if (worldType.equals("world_one")) nextWorld = "world_two";
-                                       else if (worldType.equals("world_two"))
-                                           nextWorld = "world_three";
-                                       else if (worldType.equals("world_three"))
-                                           nextWorld = "world_four";
-                                       else if (worldType.equals("world_four"))
-                                           nextWorld = "world_five";
-                                       else if (worldType.equals("world_five"))
-                                           nextWorld = "world_soon";
-
-                                       docRef.update("passing_next_world", nextWorld);
-                                   }
-                               }
-                           } else {
-                               // If no document exists, create a new one
-                               collectionRef.add(passingData)
-                                       .addOnSuccessListener(aVoid ->
-                                               Toast.makeText(this, "New record added", Toast.LENGTH_SHORT).show()
-                                       )
-                                       .addOnFailureListener(e ->
-                                               Toast.makeText(this, "Error adding record: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                       );
-                           }
-                       }
-                   })
-                   .addOnFailureListener(e -> {
-                       Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                   });
-
-
-       } else if (gametype == "quiz") {
-           CollectionReference collectionRef = db.collection("Accounts")
-                   .document("Students")
-                   .collection("MathSquare");
-
-           // Query to check if a document with the same firstName, lastName, and quizid = "N/A" exists
-           collectionRef.whereEqualTo("firstName", firstName)
-                   .whereEqualTo("lastName", lastName)
-                   .whereEqualTo("quizno", "N/A")
-                   .get()
-                   .addOnCompleteListener(task -> {
-                       if (task.isSuccessful()) {
-                           if (!task.getResult().isEmpty()) {
-                               // Document with quizid = "N/A" exists, replace it
-                               for (DocumentSnapshot document : task.getResult()) {
-                                   collectionRef.document(document.getId())
-                                           .set(passingData) // Replaces the existing document
-                                           .addOnSuccessListener(aVoid ->
-                                                   Toast.makeText(this, "Quiz updated successfully", Toast.LENGTH_SHORT).show()
-                                           )
-                                           .addOnFailureListener(e ->
-                                                   Toast.makeText(this, "Error updating quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                           );
-                               }
-                           } else {
-
-                           }
-                       } else {
-                           Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-
-                           // Document with quizid = "N/A" doesn't exist, create a new document
-                           collectionRef.add(passingData)
-                                   .addOnSuccessListener(aVoid ->
-                                           Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show()
-                                   )
-                                   .addOnFailureListener(e ->
-                                           Toast.makeText(this, "Error adding quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                   );
-                       }
-                   })
-                   .addOnFailureListener(e -> {
-                       Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                   });
-       } else if (gametype == "OnTimer") {
-           CollectionReference collectionRef = db.collection("Accounts")
-                   .document("Students")
-                   .collection("MathSquare");
-
-           // Query to check if a document with the same firstName, lastName, and quizid = "N/A" exists
-           collectionRef.whereEqualTo("firstName", firstName)
-                   .whereEqualTo("lastName", lastName)
-                   .whereEqualTo("ontimer_difficulty", OnTimerDifficulty)
-                   .get()
-                   .addOnCompleteListener(task -> {
-                       if (task.isSuccessful()) {
-                           if (!task.getResult().isEmpty()) {
-                               // Document with quizid = "N/A" exists, replace it
-                               for (DocumentSnapshot document : task.getResult()) {
-                                   collectionRef.document(document.getId())
-                                           .set(OnTimerData) // Replaces the existing document
-                                           .addOnSuccessListener(aVoid ->
-                                                   Toast.makeText(this, "Quiz updated successfully", Toast.LENGTH_SHORT).show()
-                                           )
-                                           .addOnFailureListener(e ->
-                                                   Toast.makeText(this, "Error updating quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                           );
-                               }
-                           } else {
-
-                           }
-                       } else {
-                           Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-
-                           // Document with quizid = "N/A" doesn't exist, create a new document
-                           collectionRef.add(OnTimerData)
-                                   .addOnSuccessListener(aVoid ->
-                                           Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show()
-                                   )
-                                   .addOnFailureListener(e ->
-                                           Toast.makeText(this, "Error adding quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                   );
-                       }
-                   })
-                   .addOnFailureListener(e -> {
-                       Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                   });
-       } else if (gametype == "Practice") {
-           CollectionReference collectionRef = db.collection("Accounts")
-                   .document("Students")
-                   .collection("MathSquare");
-
-           // Query to check if a document with the same firstName, lastName, and quizid = "N/A" exists
-           collectionRef.whereEqualTo("firstName", firstName)
-                   .whereEqualTo("lastName", lastName)
-                   .whereEqualTo("practice_score", "None")
-                   .get()
-                   .addOnCompleteListener(task -> {
-                       if (task.isSuccessful()) {
-                           if (!task.getResult().isEmpty()) {
-                               // Document with quizid = "N/A" exists, replace it
-                               for (DocumentSnapshot document : task.getResult()) {
-                                   collectionRef.document(document.getId())
-                                           .set(PracticeData) // Replaces the existing document
-                                           .addOnSuccessListener(aVoid ->
-                                                   Toast.makeText(this, "Quiz updated successfully", Toast.LENGTH_SHORT).show()
-                                           )
-                                           .addOnFailureListener(e ->
-                                                   Toast.makeText(this, "Error updating quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                           );
-                               }
-                           } else {
-
-                           }
-                       } else {
-                           Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-
-                           // Document with quizid = "N/A" doesn't exist, create a new document
-                           collectionRef.add(PracticeData)
-                                   .addOnSuccessListener(aVoid ->
-                                           Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show()
-                                   )
-                                   .addOnFailureListener(e ->
-                                           Toast.makeText(this, "Error adding quiz: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                                   );
-                       }
-                   })
-                   .addOnFailureListener(e -> {
-                       Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                   });
-       }
-
-   }
 
 }

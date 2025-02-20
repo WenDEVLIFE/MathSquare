@@ -12,7 +12,11 @@ import androidx.core.view.WindowCompat;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import android.animation.Animator;
@@ -74,7 +78,7 @@ public class QuizzesSection extends AppCompatActivity {
     
        private FirebaseFirestore db;
 private MediaPlayer soundEffectPlayer;
-    
+    private String quizType = "quiz";
     private FrameLayout numberContainer,backgroundFrame;
     private final Random random = new Random();
     private final int[] numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -287,45 +291,77 @@ private void applyVignetteEffect() {
     }
     
     private void setupQuizButton(String quizId, LinearLayout quizButton) {
-        updateQuizStatus(quizId, quizButton);
-playSound("click.mp3");
-        quizButton.setOnClickListener(view -> {
-            db.collection("Quizzes").document("Status").collection(quizId)
-                .document("status")
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        String status = documentSnapshot.getString("status");
-                        if ("closed".equalsIgnoreCase(status)) {
-                            // Do nothing if the quiz is closed
-                            Log.d("Quiz", quizId + " is closed");
-                        } else {
-                            // Quiz is open; proceed with intent
-                            Intent intent = new Intent(QuizzesSection.this, MultipleChoicePage.class);
+    // Fetch Firestore status first
+    fetchQuizStatus(quizId, quizButton);
 
-                            // Generate random operation and difficulty
-                            String[] operations = {"Addition", "Multiplication", "Division", "Subtraction"};
-                            String[] difficulties = {"Easy", "Medium", "Hard"};
+    // Set click listener
+    quizButton.setOnClickListener(view -> {
+        if (quizButton.isEnabled()) {
+            playSound("click.mp3");
 
-                            String randomOperation = operations[new Random().nextInt(operations.length)];
-                            String randomDifficulty = difficulties[new Random().nextInt(difficulties.length)];
+            Intent intent = new Intent(view.getContext(), MultipleChoicePage.class);
 
-                            // Add extras to intent
-                            intent.putExtra("quizId", quizId);
-                            intent.putExtra("operation", randomOperation);
-                               intent.putExtra("game_type", "quiz");
-                                
-                            intent.putExtra("difficulty", randomDifficulty);
+            // Shuffle operations
+            String[] operations = {"Addition", "Multiplication", "Division", "Subtraction"};
+            List<String> operationList = new ArrayList<>(Arrays.asList(operations));
+            Collections.shuffle(operationList);
 
-                            startActivity(intent);
-                        }
-                    } else {
-                        Log.d("Quiz", quizId + " status document does not exist");
-                    }
-                })
-                .addOnFailureListener(e -> Log.e("Quiz", "Failed to retrieve status for " + quizId, e));
+            // Assign difficulty based on quizId
+            String difficulty;
+            if (quizId.equals("quiz_1") || quizId.equals("quiz_2")) {
+                difficulty = "Easy";
+            } else if (quizId.equals("quiz_3") || quizId.equals("quiz_4")) {
+                difficulty = "Medium";
+            } else if (quizId.equals("quiz_5") || quizId.equals("quiz_6")) {
+                difficulty = "Hard";
+            } else {
+                difficulty = "Easy";
+            }
+
+            intent.putExtra("quizId", quizId);
+          intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));       
+            intent.putExtra("difficulty", difficulty);
+            intent.putExtra("game_type", "quiz");
+
+            view.getContext().startActivity(intent);
+        }
+    });
+}
+
+/**
+ * Fetches quiz status from Firestore and enables/disables the button accordingly.
+ */
+private void fetchQuizStatus(String quizId, LinearLayout quizButton) {
+    db.collection("Quizzes").document("Status").collection(quizId)
+        .document("status")
+        .get()
+        .addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                String status = documentSnapshot.getString("status");
+                if ("closed".equalsIgnoreCase(status)) {
+                       quizButton.setBackgroundResource(R.drawable.btn_short_condition_off);
+                        quizButton.setClickable(false);
+                    quizButton.setEnabled(false);
+                    Log.d("Quiz", quizId + " is closed");
+                } else {
+                     quizButton.setBackgroundResource(R.drawable.btn_short_condition);
+                        quizButton.setClickable(true);  
+                    quizButton.setEnabled(true);
+                }
+            } else {
+                Log.d("Quiz", quizId + " status document does not exist");
+                   quizButton.setClickable(false);
+                quizButton.setEnabled(false);
+            }
+        })
+        .addOnFailureListener(e -> {
+            Log.e("Quiz", "Failed to retrieve status for " + quizId, e);
+               quizButton.setClickable(false);
+            quizButton.setEnabled(false);
         });
-    }
+}
+
+
 
     private void updateQuizStatus(String quizId, LinearLayout quizButton) {
         db.collection("Quizzes").document("Status").collection(quizId)

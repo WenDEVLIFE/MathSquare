@@ -1,4 +1,5 @@
 package com.happym.mathsquare;
+
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
@@ -10,13 +11,19 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.view.WindowCompat;
 
 import com.google.firebase.FirebaseApp;
+
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.happym.mathsquare.dashboard_StudentsPanel;
 import com.happym.mathsquare.dashboard_SectionPanel;
 import com.happym.mathsquare.dialog.CreateSection;
@@ -32,6 +39,11 @@ import android.view.animation.BounceInterpolator;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.view.View;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.happym.mathsquare.Model.Sections;
+import com.happym.mathsquare.Model.Student;
 
 public class Dashboard extends AppCompatActivity {
     private FirebaseFirestore db;
@@ -41,6 +53,9 @@ public class Dashboard extends AppCompatActivity {
     private SwitchCompat switchquiz1,switchquiz2;
     private MediaPlayer bgMediaPlayer;
     private MediaPlayer soundEffectPlayer;
+    private TextView firstSection, firstGrade;
+    private ListenerRegistration sectionsListener;
+    private String teacherEmail;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,8 +71,14 @@ public class Dashboard extends AppCompatActivity {
         // Firestore instance
         db = FirebaseFirestore.getInstance();
         
+         // Replace this with actual logic to get the teacher's email
+        teacherEmail = sharedPreferences.getEmail(this);
+        
         switchquiz1 = findViewById(R.id.switch_quiz1);
          switchquiz2 = findViewById(R.id.switch_quiz2);
+        
+        firstSection = findViewById(R.id.first_grade);
+         firstGrade = findViewById(R.id.first_section);
         initializeSwitchListeners();
         
         ImageView createsection = findViewById(R.id.createsection);
@@ -102,6 +123,46 @@ sharedPreferences.clearSection(this);
      
     }
     
+   @Override
+protected void onStart() {
+    super.onStart();
+    listenToTeacherSections(teacherEmail,firstSection,firstGrade); // Replace with actual email
+}
+    
+    private void listenToTeacherSections(String teacherEmail, TextView gradeTextView, TextView sectionTextView) {
+    sectionsListener = db.collection("Accounts")
+            .document("Teachers")
+            .collection(teacherEmail)
+            .document("MathSquare")
+            .collection("MySections")
+            .orderBy("timestamp", Query.Direction.DESCENDING) // Ensure documents are ordered by creation time
+            .limit(1) // Fetch only the latest document
+            .addSnapshotListener((queryDocumentSnapshots, e) -> {
+                if (e != null) {
+                    Toast.makeText(this, "Error fetching data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                if (queryDocumentSnapshots != null && !queryDocumentSnapshots.isEmpty()) {
+                    DocumentSnapshot latestDocument = queryDocumentSnapshots.getDocuments().get(0);
+
+                    // Retrieve grade and section fields
+                    String grade = latestDocument.getString("Grade");
+                    String section = latestDocument.getString("Section");
+
+                    // Update TextViews if data exists
+                    if (grade !v)= null) {
+                        gradeTextView.setText("Grade: " + grade);
+                    }
+                    if (section != null) {
+                        sectionTextView.setText("Section: " + section);
+                    }
+                } else {
+                    Toast.makeText(this, "No sections found for this teacher.", Toast.LENGTH_SHORT).show();
+                }
+            });
+}
+
     // Method to set up a real-time listener and toggle Firestore status
 private void setupSwitchListener(SwitchCompat switchCompat, String quizId) {
     // Real-time listener to sync status from Firestore

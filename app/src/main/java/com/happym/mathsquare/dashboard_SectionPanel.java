@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
@@ -23,6 +24,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.happym.mathsquare.Model.Sections;
 import com.happym.mathsquare.Model.Student;
@@ -32,10 +34,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import  com.happym.mathsquare.sharedPreferences;
 import java.util.Map;
 
-public class dashboard_SectionPanel extends AppCompatActivity {
+public class dashboard_SectionPanel extends AppCompatActivity implements   CreateSection.SectionDialogListener  {
 
     private TableLayout tableLayout;
     private ImageView deleteBtn,addBtn,checkBtn;
@@ -49,6 +53,7 @@ public class dashboard_SectionPanel extends AppCompatActivity {
     private CheckBox allCheckBox, rowCheckbox;
     private boolean isDeleteButtonSelected = false;
     private boolean isCanceled = false;
+   private List<Sections> existingSections = new ArrayList<>(); // Local model
 private ListenerRegistration sectionsListener;
 private MediaPlayer bgMediaPlayer;
     private MediaPlayer soundEffectPlayer;
@@ -68,6 +73,7 @@ private MediaPlayer bgMediaPlayer;
         tableLayout = findViewById(R.id.tableLayout);
         createSectionDialog = new CreateSection();
         
+        listenToTeacherSections(teacherEmail);
         
         deleteBtn = findViewById(R.id.deletesection);
         checkBtn = findViewById(R.id.checkdelete);
@@ -75,7 +81,9 @@ private MediaPlayer bgMediaPlayer;
         allCheckBox =  findViewById(R.id.rowCheckboxSelectAll);
         addBtn.setOnClickListener(v -> {
             playSound("click.mp3");
-                createSectionDialog.show(getSupportFragmentManager(), "PauseDialog"); // Show the dialog
+                        createSectionDialog.setListener(dashboard_SectionPanel.this);
+                        createSectionDialog.show(
+                                getSupportFragmentManager(), "PauseDialog");
         });
         deleteBtn.setOnClickListener(v -> {
     // Toggle delete button selection state
@@ -87,10 +95,11 @@ private MediaPlayer bgMediaPlayer;
         allCheckBox.setVisibility(View.VISIBLE);
         checkBtn.setVisibility(View.VISIBLE);
         deleteBtn.setImageResource(R.drawable.ic_cancel);
+        for (CheckBox checkBox : rowCheckBoxes) {
+    checkBox.setVisibility(View.VISIBLE);
+}
 
-        if (rowCheckbox != null) {
-            rowCheckbox.setVisibility(View.VISIBLE);
-        }
+                    
     } else {
         // Second press: cancel and reset
         isCanceled = true;
@@ -101,7 +110,9 @@ private MediaPlayer bgMediaPlayer;
         deleteBtn.setImageResource(R.drawable.ic_delete);
 
         if (rowCheckbox != null) {
-            rowCheckbox.setVisibility(View.GONE);
+            for (CheckBox checkBox : rowCheckBoxes) {
+    checkBox.setVisibility(View.GONE);
+}
         }
     }
 });
@@ -149,7 +160,14 @@ playSound("click.mp3");
         
         
     }
-
+    
+   @Override
+    public void onUpdateSection(boolean resumeGame) {
+        if (resumeGame) {
+            recreate();
+        }
+    }
+    
     private void playSound(String fileName) {
         // Stop any previous sound effect before playing a new one
         if (soundEffectPlayer != null) {
@@ -174,12 +192,14 @@ playSound("click.mp3");
         }
     }
     
+
 private void listenToTeacherSections(String teacherEmail) {
     sectionsListener = db.collection("Accounts")
             .document("Teachers")
             .collection(teacherEmail)
             .document("MathSquare")
             .collection("MySections")
+       .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener((queryDocumentSnapshots, e) -> {
                 if (e != null) {
                     Toast.makeText(this, "Error fetching data: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -187,73 +207,84 @@ private void listenToTeacherSections(String teacherEmail) {
                 }
 
                 if (queryDocumentSnapshots != null && !queryDocumentSnapshots.isEmpty()) {
-                    List<Sections> grades = new ArrayList<>();
+                    List<Sections> newSections = new ArrayList<>();
+
                     for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
                         String grade = documentSnapshot.getString("Grade");
                         String section = documentSnapshot.getString("Section");
-                        String documentId = documentSnapshot.getId();
+                        String documentId = documentSnapshot.getString("DocumentKey");
 
-                        if (grade != null && section != null) {
-                            grades.add(new Sections(section, grade, documentId));
+                        if (grade != null && section != null && documentId != null) {
+                            Sections newSection = new Sections(section, grade, documentId);
+
+                            // Check if it already exists in the local model
+                            if (!existingSections.contains(newSection)) { 
+                                existingSections.add(newSection); // Add to local model
+                                newSections.add(newSection); // Add to table
+                            }
                         }
                     }
-                    addRowsToTable(grades);
+                   addRowsToTable(newSections);
                 } else {
                     Toast.makeText(this, "No sections found for this teacher.", Toast.LENGTH_SHORT).show();
                 }
             });
 }
 
-// Call this function in `onStart()`
-@Override
-protected void onStart() {
-    super.onStart();
-    listenToTeacherSections(teacherEmail); // Replace with actual email
-}
-
-// Stop the listener when not needed
-@Override
-protected void onStop() {
-    super.onStop();
-    if (sectionsListener != null) {
-        sectionsListener.remove();
-    }
-}
 
     
 private void addRowsToTable(List<Sections> students) {
-        for (Sections student : students) {
-            TableRow row = (TableRow) LayoutInflater.from(this).inflate(R.layout.row_grade, null);
+    List<TableRow> rows = new ArrayList<>(); // Store rows temporarily
 
-            rowCheckbox = row.findViewById(R.id.rowCheckbox);
-            TextView sectionText = row.findViewById(R.id.sectionText);
-            TextView gradeText = row.findViewById(R.id.gradeText);
+    for (Sections student : students) {
+        // Inflate a new row instance for each student
+        TableRow row = (TableRow) LayoutInflater.from(this).inflate(R.layout.row_grade, tableLayout, false);
 
-            sectionText.setText(student.getSection());
-            gradeText.setText(student.getGrade());
-            
-            row.setTag(student.getDocId());
+        // Assign the class-level rowCheckbox to the row's checkbox
+        rowCheckbox = row.findViewById(R.id.rowCheckbox);
+        TextView sectionText = row.findViewById(R.id.sectionText);
+        TextView gradeText = row.findViewById(R.id.gradeText);
 
-            // Track selected rows and individual checkboxes
-            rowCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                   playSound("click.mp3");
-                if (isChecked) {
-                    selectedRows.add(row);
-                } else {
-                    selectedRows.remove(row);
-                    // Uncheck the "Select All" checkbox if any row is deselected
-                    allCheckBox.setOnCheckedChangeListener(null); // Temporarily remove listener
-                    allCheckBox.setChecked(false);
-                    allCheckBox.setOnCheckedChangeListener((buttonView1, isChecked1) -> {
-                        toggleAllRows(isChecked1);
-                    });
-                }
-            });
+        sectionText.setText(student.getSection());
+        gradeText.setText(student.getGrade());
+        row.setTag(student.getDocId());
+               
+        // Store the row to process it later
+        rows.add(row);
+        rowCheckBoxes.add(rowCheckbox);  // Keep track of checkboxes
 
-            rowCheckBoxes.add(rowCheckbox); // Add the checkbox to the list
-            tableLayout.addView(row);
-        }
+        // Add checkbox behavior for selection tracking
+        rowCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            playSound("click.mp3");
+            if (isChecked) {
+                selectedRows.add(row);
+            } else {
+                selectedRows.remove(row);
+
+                // Uncheck "Select All" if any row is deselected
+                allCheckBox.setOnCheckedChangeListener(null); // Temporarily remove listener
+                allCheckBox.setChecked(false);
+                allCheckBox.setOnCheckedChangeListener((buttonView1, isChecked1) -> {
+                    toggleAllRows(isChecked1);
+                });
+            }
+        });
+
+        // Add row to the table but WITHOUT setting the tag yet
+        tableLayout.addView(row);
     }
+
+    // Second loop to ensure each row gets its correct documentId
+    for (int i = 0; i < students.size(); i++) {
+        TableRow row = rows.get(i);
+        Sections student = students.get(i);
+
+        row.setTag(student.getDocId()); // Set unique document ID for each row
+        Log.d("RowTag", "Set tag for row: " + student.getDocId());
+    }
+}
+
+
     
     private void toggleAllRows(boolean isChecked) {
     selectedRows.clear(); // Clear previous selections
@@ -273,9 +304,12 @@ private void addRowsToTable(List<Sections> students) {
 
 
  private void deleteSelectedRows() {
-        playSound("click.mp3");
-        
-    for (TableRow row : selectedRows) {
+    playSound("click.mp3");
+    
+    List<TableRow> rowsToRemove = new ArrayList<>(selectedRows); // Create a copy to avoid modification errors
+    selectedRows.clear(); // Clear selections after deletion
+
+    for (TableRow row : rowsToRemove) {
         String docId = (String) row.getTag();
 
         db.collection("Accounts")
@@ -305,7 +339,9 @@ private void addRowsToTable(List<Sections> students) {
                         .document(docId)
                         .delete()
                         .addOnSuccessListener(aVoid -> {
-                            tableLayout.removeView(row); // Remove row from TableLayout
+                            // Remove from UI
+                            tableLayout.removeView(row);
+                            rowCheckBoxes.remove(row.findViewById(R.id.rowCheckbox));
 
                             // Step 2: Remove section from the grade's sections list
                             db.collection("Sections")
@@ -320,28 +356,37 @@ private void addRowsToTable(List<Sections> students) {
                                             if (existingSections != null && existingSections.contains(sectionName)) {
                                                 existingSections.remove(sectionName); // Remove the section
 
-                                                // Prepare updated HashMap
-                                                HashMap<String, Object> updatedData = new HashMap<>();
-                                                updatedData.put("sections", existingSections);
-
-                                                // Step 3: Update Firestore with the new HashMap
-                                                db.collection("Sections")
-                                                    .document(selectedGrade)
-                                                    .set(updatedData)
-                                                    .addOnSuccessListener(aVoid2 -> {
-                                                        // Step 4: Delete the section from Student_Sections sub-collection
-                                                        sectionDocRef.delete()
-                                                            .addOnSuccessListener(aVoid3 -> {
-                                                                // Step 5: Delete students under this grade and section
-                                                                deleteStudents(selectedGrade, sectionName);
-                                                            })
-                                                            .addOnFailureListener(e -> {
-                                                                Toast.makeText(this, "Error deleting section from Student_Sections: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                                            });
-                                                    })
-                                                    .addOnFailureListener(e -> {
-                                                        Toast.makeText(this, "Error updating sections: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                                    });
+                                                if (existingSections.isEmpty()) {
+                                                    // If no more sections exist, delete the entire grade document
+                                                    db.collection("Sections")
+                                                        .document(selectedGrade)
+                                                        .delete()
+                                                        .addOnSuccessListener(aVoid3 -> {
+                                                            Log.d("Delete", "Grade removed as it had no more sections.");
+                                                        })
+                                                        .addOnFailureListener(e -> {
+                                                            Toast.makeText(this, "Error deleting empty grade: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                                        });
+                                                } else {
+                                                    // Update Firestore with the new sections list
+                                                    db.collection("Sections")
+                                                        .document(selectedGrade)
+                                                        .update("sections", existingSections)
+                                                        .addOnSuccessListener(aVoid2 -> {
+                                                            // Step 4: Delete the section from Student_Sections sub-collection
+                                                            sectionDocRef.delete()
+                                                                .addOnSuccessListener(aVoid3 -> {
+                                                                    // Step 5: Delete students under this grade and section
+                                                                    deleteStudents(selectedGrade, sectionName);
+                                                                })
+                                                                .addOnFailureListener(e -> {
+                                                                    Toast.makeText(this, "Error deleting section from Student_Sections: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                                                });
+                                                        })
+                                                        .addOnFailureListener(e -> {
+                                                            Toast.makeText(this, "Error updating sections: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                                        });
+                                                }
                                             }
                                         }
                                     }
@@ -360,15 +405,26 @@ private void addRowsToTable(List<Sections> students) {
             });
     }
 
-    selectedRows.clear(); // Clear the list after deletion
+    // Reset UI state
     isDeleteButtonSelected = false;
     allCheckBox.setVisibility(View.GONE);
     checkBtn.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.btn_green_off));
     checkBtn.setImageResource(R.drawable.ic_check);
     checkBtn.setVisibility(View.GONE);
     deleteBtn.setImageResource(R.drawable.ic_delete);
-    rowCheckbox.setVisibility(View.GONE);
+
+    // Remove checkboxes from rows
+    for (TableRow row : rowsToRemove) {
+        CheckBox rowCheckbox = row.findViewById(R.id.rowCheckbox);
+        if (rowCheckbox != null) {
+            rowCheckbox.setVisibility(View.GONE);
+        }
+    }
+
+    Log.d("Delete", "Selected rows deleted and UI updated.");
 }
+
+    
 private void deleteStudents(String grade, String section) {
     db.collection("Accounts")
         .document("Students")
