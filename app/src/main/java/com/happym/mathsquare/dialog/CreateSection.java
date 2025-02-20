@@ -32,6 +32,7 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.DialogFragment;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.happym.mathsquare.MainActivity;
 import com.happym.mathsquare.MultipleChoicePage;
@@ -50,6 +51,22 @@ public class CreateSection extends DialogFragment {
     private MediaPlayer bgMediaPlayer;
     private MediaPlayer soundEffectPlayer;
     private List<String> sectionList = new ArrayList<>();
+    private boolean isUpdated;
+    private SectionDialogListener listener;
+    
+    public interface SectionDialogListener {
+        void onUpdateSection(boolean shouldRepeat);
+    }
+    
+    public static CreateSection newInstance(boolean isUpdated) {
+        CreateSection dialog = new CreateSection();
+        dialog.isUpdated = isUpdated;
+        return dialog;
+    }
+    
+    public void setListener(SectionDialogListener listener) {
+        this.listener = listener;
+    }
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -134,6 +151,8 @@ numberDropdownPicker.setAdapter(adapterGrades);
                         HashMap<String, Object> teacherData = new HashMap<>();
                 teacherData.put("Grade", selectedGrade);
                 teacherData.put("Section", sections);
+               teacherData.put("timestamp", FieldValue.serverTimestamp());        
+                teacherData.put("DocumentKey", uuid);       
     
     sectionList.add(sections); // Add the new section to the list
 
@@ -169,6 +188,9 @@ numberDropdownPicker.setAdapter(adapterGrades);
                     .document(uuid) // Use random UUID as the document ID
                     .set(teacherData)
                     .addOnSuccessListener(aVoidTwo -> {
+                    if (listener != null) {    
+                    listener.onUpdateSection(true); // Pass true back to the activity
+                                     }
                         Toast.makeText(getContext(), "Section added successfully!", Toast.LENGTH_SHORT).show();
                         dismiss();
                     })
