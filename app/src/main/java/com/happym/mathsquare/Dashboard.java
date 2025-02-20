@@ -151,11 +151,11 @@ protected void onStart() {
                     String section = latestDocument.getString("Section");
 
                     // Update TextViews if data exists
-                    if (grade !v)= null) {
-                        gradeTextView.setText("Grade: " + grade);
+                    if (grade != null) {
+                        gradeTextView.setText(grade);
                     }
                     if (section != null) {
-                        sectionTextView.setText("Section: " + section);
+                        sectionTextView.setText(section);
                     }
                 } else {
                     Toast.makeText(this, "No sections found for this teacher.", Toast.LENGTH_SHORT).show();

@@ -117,6 +117,11 @@ playSound("click.mp3");
                 public void onClick(DialogInterface dialog, int which) {
                                playSound("click.mp3");
                     deleteSelectedRows();
+                                if (rowCheckbox != null) {
+            for (CheckBox checkBox : rowCheckBoxes) {
+    checkBox.setVisibility(View.GONE);
+}
+        }
                     }
                  })
             .setNegativeButton("No", new DialogInterface.OnClickListener() {
