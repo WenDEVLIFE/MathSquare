@@ -217,7 +217,8 @@ private List<String> usedOperations = new ArrayList<>();
         });
 
         String gameType = getIntent().getStringExtra("game_type");
-        
+        FrameLayout heart_choice = findViewById(R.id.heart_choice);
+       FrameLayout timer_choice = findViewById(R.id.timer_choice);
         quidId = getIntent().getStringExtra("quidId");
         worldType = getIntent().getStringExtra("passing_world");
         levelid = getIntent().getStringExtra("passing");
@@ -226,8 +227,16 @@ private List<String> usedOperations = new ArrayList<>();
         timerLimit = getIntent().getIntExtra("timerLimit", 5);
         questionLimits = getIntent().getIntExtra("questionLimit", 10);
 
-        updateHeartDisplay();
+        if("quiz".equals(gameType)){
+           heart_choice.setVisibility(View.GONE);
+           timer_choice.setVisibility(View.GONE);
+        }else{
+           
+            
+            updateHeartDisplay();
         startTimer(timerLimit * 60 * 1000);
+        }
+        
 
         
         operationText =
@@ -245,13 +254,20 @@ if (operationList == null || operationList.isEmpty()) {
                         ? getIntent().getStringExtra("difficulty")
                         : "";
 
-        if(operationList == null) {
+        if("quiz".equals(gameType)) {
             
-             if (operationText == null ) {
+            Toast.makeText(this, operationList.toString() , Toast.LENGTH_SHORT)
+                    .show();
+            
+           switchOperation(difficulty);
+            
+        } else{
+            
+            
+           if (operationText == null ) {
             Toast.makeText(this, "No Math Operation detected at the moment. :(", Toast.LENGTH_SHORT)
                     .show();
         } else {
-            
             operationTextView.setText(operationText);
             feedbackTextView.setText("Operation detected");
 
@@ -264,11 +280,6 @@ if (operationList == null || operationList.isEmpty()) {
             }
         }
             
-        } else{
-            Toast.makeText(this, operationList.toString() , Toast.LENGTH_SHORT)
-                    .show();
-            
-           switchOperation(difficulty);
           
         }
         
@@ -781,7 +792,7 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
 
     private void checkAnswer(int btnText, Button btnChoice, String gameType) {
     if (isGameOver) return;
-    playSound("click.mp3");
+    playEffectSound("click.mp3");
 
     int actualAnswer = problemSet.get(currentQuestionIndex).getAnswer();
     boolean isCorrect = (btnText == actualAnswer);
@@ -813,20 +824,30 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
 
     answeredQuestions.add(problemSet.get(currentQuestionIndex));
     currentQuestionIndex++;
-
-    // **Check if operation needs to switch every 5 questions**
-    if (currentQuestionIndex % 5 == 0 && operationList != null && !operationList.isEmpty()) {
+        
+        if("quiz".equals(gameType)){
+             // **Check if operation needs to switch every 5 questions**
+    if (currentQuestionIndex % 5 == 0 && !operationList.isEmpty()) {
         switchOperation(difficulty);  // Use difficulty when switching
     }
 
+        }
+   
     btnChoice.postDelayed(() -> {
         feedbackTextView.setText("");
-
-        if (currentQuestionIndex < 20) {
+                
+                if("quiz".equals(gameType)){
+                   if (currentQuestionIndex < 20) {
             generateNewQuestionList(currentQuestionIndex, problemSet);
         } else {
             Toast.makeText(this, "All Questions Completed!", Toast.LENGTH_SHORT).show();
         }
+                }else{
+                                       if (currentQuestionIndex < problemSet.size()) {
+                        generateNewQuestion(currentQuestionIndex, problemSet);
+                    }
+                }
+        
     }, 1000);
 }
 
@@ -859,10 +880,7 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
     }
 
 private void playEffectSound(String fileName) {
-    // Get AudioManager and set media volume to max
-    AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-    int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume, 0); // Set to max
+    
 
     // Stop any previous sound effect before playing a new one
     if (soundEffectPlayer != null) {
