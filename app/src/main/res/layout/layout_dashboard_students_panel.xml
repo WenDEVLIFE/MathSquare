@@ -156,7 +156,7 @@
         android:textColor="#204520"
         android:layout_weight="1"
         android:layout_gravity="end"
-        android:text="Game No."
+        android:text="Quiz No."
         android:textStyle="bold" />
 
     <TextView
