@@ -108,6 +108,7 @@ int selectedNumber = 0;
     private final int[] numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     private final int numberCount = 3; // Number of numbers per side
     
+    private String difficultySection;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,48 +116,72 @@ int selectedNumber = 0;
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.practice_levels);
 
+         // Initialize the levels
         AppCompatButton btnEnter = findViewById(R.id.btn_enter);
         
         heartChoice = findViewById(R.id.heart_choice);
         timerChoice = findViewById(R.id.timer_choice);
         
+        
         String operation = getIntent().getStringExtra("operation");
         difficulty = getIntent().getStringExtra("difficulty");
+        
+        ImageView operationDisplayIcon = findViewById(R.id.difficultyImage);
         
     // Set images based on the operation
     if ("Addition".equals(operation)) {
         operationDisplayIcon.setImageResource(R.drawable.ic_operation_add);
+        
     } else if ("Subtraction".equals(operation)) {
         operationDisplayIcon.setImageResource(R.drawable.ic_operation_subtract);
+        
     } else if ("Multiplication".equals(operation)) {
         operationDisplayIcon.setImageResource(R.drawable.ic_operation_multiply);
+        
     } else if ("Division".equals(operation)) {
         operationDisplayIcon.setImageResource(R.drawable.ic_operation_divide);
+        
     } else {
         operationDisplayIcon.setImageResource(R.drawable.btn_operation_add);
+        
     }
 
+         if ("grade_one".equals(difficulty)) {
+   difficultySection = "Easy";
+} else if ("grade_two".equals(difficulty)) {
+    difficultySection = "Easy";
+} else if ("grade_three".equals(difficulty)) {
+    difficultySection = "Medium";
+} else if ("grade_four".equals(difficulty)) {
+    difficultySection = "Medium";
+} else if ("grade_five".equals(difficulty)) {
+    difficultySection = "Medium";
+} else if ("grade_six".equals(difficulty)) {
+    difficultySection = "Hard";
+} else {
+    difficultySection = "Easy";
+}
 
         animateButtonFocus(btnEnter);
-
 
         
         heartTxt = findViewById(R.id.heart_txt);
         timerTxt = findViewById(R.id.timer_txt);
+        
         
         iconHeart = findViewById(R.id.icon_heart);
         iconClock = findViewById(R.id.icon_timer);
         
         btnEnter.setOnClickListener(v -> {
                 playSound("click.mp3");
-        
 // Create intent to start MultipleChoicePage
 Intent intent = new Intent(PracticeLevels.this, MultipleChoicePage.class);
 intent.putExtra("operation", operation);
-intent.putExtra("difficulty", difficulty);
+intent.putExtra("difficulty", difficultySection);
 intent.putExtra("game_type", "practice");
                 intent.putExtra("heartLimit", heartCount);
 intent.putExtra("timerLimit", timerCount);
+intent.putExtra("questionLimit", questionCount);
                 
 // Animate button click and stop animation
 animateButtonClick(btnEnter);
@@ -170,6 +195,7 @@ startActivity(intent);
  
         heartTxt.setText(String.valueOf(heartCount));
     timerTxt.setText(String.valueOf(timerCount));
+    
         
         // Set onClickListeners for each FrameLayout
         heartChoice.setOnClickListener(new View.OnClickListener() {
@@ -192,6 +218,7 @@ startActivity(intent);
             }
         });
 
+        
         animateButtonFocus(iconHeart);
         animateButtonFocus(iconClock);
         
