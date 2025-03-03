@@ -132,6 +132,7 @@ public class Difficulty extends AppCompatActivity {
                 String difficutlyType = null;
                 intent.putExtra("operation", operation);
                 intent.putExtra("difficulty", "grade_one");
+                playSound("click.mp3");
                 startActivity(intent);
                 
                 });

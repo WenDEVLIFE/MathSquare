@@ -74,7 +74,7 @@ public class Results extends AppCompatActivity {
     private List<MathProblem> problemSet = new ArrayList<>();
 private MediaPlayer soundEffectPlayer;
     private boolean saveSuccesfully = false;
-    
+    private int selHeart, selTimer;
     private FrameLayout numberContainer,backgroundFrame;
     private final Random random = new Random();
     private final int[] numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -88,6 +88,10 @@ private MediaPlayer soundEffectPlayer;
         setContentView(R.layout.activity_results);
 // Firestore instance
         db = FirebaseFirestore.getInstance();
+        
+       selHeart = getIntent().getIntExtra("heartLimit", 3);
+        selTimer = getIntent().getIntExtra("timerLimit", 10);
+        
         ImageButton imageButton = findViewById(R.id.imgBtn_home);
         imageButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -114,7 +118,8 @@ imageButton_pause.setOnClickListener(new View.OnClickListener() {
         Intent resultIntent = new Intent(Results.this, MultipleChoicePage.class);
         resultIntent.putExtra("operation", getOperationText);
         resultIntent.putExtra("difficulty", getDifficulty);
-
+resultIntent.putExtra("heartLimit", selHeart);
+                    resultIntent.putExtra("timerLimit",selTimer);
         startActivity(resultIntent);
                     finish();
     }
@@ -142,6 +147,7 @@ textView.setText("");
 int getScore = getIntent().getIntExtra("EXTRA_SCORE", 0);
 int getTotal = getIntent().getIntExtra("EXTRA_TOTAL", 0);
 
+        
 showResult = findViewById(R.id.textViewResult);
 showScore = findViewById(R.id.textViewScore);
 showMotive = findViewById(R.id.textViewMotive);

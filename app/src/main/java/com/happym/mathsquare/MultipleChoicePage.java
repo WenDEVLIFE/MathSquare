@@ -100,7 +100,7 @@ public class MultipleChoicePage extends AppCompatActivity
     private long timeLeftInMillis; // Stores remaining time
     private boolean isTimerRunning = false;
     private int score = 0;
-    private int num1, num2, heartLimit, timerLimit, questionLimits;
+    private int num1, num2, heartLimit, timerLimit, questionLimits, selHeart, selTimer;
 
     private int currentQuestionIndex = 0;
     private List<MathProblem> problemSet = new ArrayList<>();
@@ -224,7 +224,9 @@ private List<String> usedOperations = new ArrayList<>();
         levelid = getIntent().getStringExtra("passing");
         levelNext = getIntent().getStringExtra("passing_next_level");
         heartLimit = getIntent().getIntExtra("heartLimit", 3);
-        timerLimit = getIntent().getIntExtra("timerLimit", 5);
+        timerLimit = getIntent().getIntExtra("timerLimit", 10);
+        selHeart = getIntent().getIntExtra("heartLimit", 3);
+        selTimer = getIntent().getIntExtra("timerLimit", 10);
         questionLimits = getIntent().getIntExtra("questionLimit", 10);
 
         if("quiz".equals(gameType)){
@@ -951,7 +953,9 @@ private void playEffectSound(String fileName) {
 
     private void showGameOver(String gameType) {
         isGameOver = true;
-        countDownTimer.cancel();
+        if (countDownTimer != null) {
+            countDownTimer.cancel(); // Stop the timer
+        }
 
         Intent intent = new Intent(MultipleChoicePage.this, Results.class);
         int totalQuestions = problemSet.size();
@@ -974,7 +978,8 @@ private void playEffectSound(String fileName) {
                     intent.putExtra("leveltype", levelid);
                     intent.putExtra("passingworldtype",worldType);
                     intent.putExtra("gametype",gameType);
-        
+        intent.putExtra("heartLimit", selHeart);
+                    intent.putExtra("timerLimit",selTimer);
         intent.putExtra("EXTRA_SCORE", score);
         intent.putExtra("EXTRA_TOTAL", totalQuestions);
         intent.putExtra("EXTRA_OPERATIONTEXT", operationText);

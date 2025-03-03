@@ -4,13 +4,14 @@ import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.happym.mathsquare.GameType.Practice.PracticeLevels;
-import com.happym.mathsquare.GameType.Passing.passingWorldsSelection;
+import com.happym.mathsquare.GameType.Passing.passingStageSelection;
 import com.happym.mathsquare.GameType.OnTimer.OnTimerLevelSelection;
 import java.io.IOException;
 
@@ -70,7 +71,7 @@ import java.util.Random;
 
 public class MultipleChooser extends AppCompatActivity {
     private MediaPlayer soundEffectPlayer;
-    
+    private String difficultySection;
     private FrameLayout numberContainer,backgroundFrame;
     private final Random random = new Random();
     private final int[] numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -98,34 +99,66 @@ if ("Addition".equals(operation)) {
     // Default icon if no match is found
     operationDisplayIcon.setImageResource(R.drawable.btn_operation_add);
 }
+        
+        if ("grade_one".equals(gradeLevel)) {
+   difficultySection = "Easy";
+} else if ("grade_two".equals(gradeLevel)) {
+    difficultySection = "Easy";
+} else if ("grade_three".equals(gradeLevel)) {
+    difficultySection = "Medium";
+} else if ("grade_four".equals(gradeLevel)) {
+    difficultySection = "Medium";
+} else if ("grade_five".equals(gradeLevel)) {
+    difficultySection = "Medium";
+} else if ("grade_six".equals(gradeLevel)) {
+    difficultySection = "Hard";
+} else {
+    difficultySection = "Easy";
+}
 
         TextView operationDisplay = findViewById(R.id.selectedDifficulty);
         LinearLayout practicebtn = findViewById(R.id.btn_practice);
         LinearLayout passingBtn = findViewById(R.id.passing_btn);
         LinearLayout ontimerBtn = findViewById(R.id.ontimer_btn);
         
+        animateButtonFocus(practicebtn);
+        animateButtonFocus(passingBtn);
+        animateButtonFocus(ontimerBtn);
+        
         practicebtn.setOnClickListener(v -> {
             Intent intent = new Intent(MultipleChooser.this, PracticeLevels.class);
                 intent.putExtra("operation", operation);
     intent.putExtra("difficulty", gradeLevel);
                 playSound("click.mp3");
+                animateButtonClick(practicebtn);
+        stopButtonFocusAnimation(practicebtn);
             startActivity(intent);
             });
         
+        
+        
         passingBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(MultipleChooser.this, passingWorldsSelection.class);
+            Intent intent = new Intent(MultipleChooser.this, passingStageSelection.class);
                 intent.putExtra("operation", operation);
     intent.putExtra("difficulty", gradeLevel);
                 playSound("click.mp3");
+               animateButtonClick(passingBtn);
+        stopButtonFocusAnimation(passingBtn);
             startActivity(intent);
             });
         
         ontimerBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(MultipleChooser.this, OnTimerLevelSelection.class);
-                intent.putExtra("operation", operation);
-    intent.putExtra("difficulty", gradeLevel);
+            Intent intent = new Intent(MultipleChooser.this, MultipleChoicePage.class);
+    intent.putExtra("operation", operation);
+    intent.putExtra("difficulty",difficultySection);
+                intent.putExtra("game_type", "OnTimer");
+                intent.putExtra("heartLimit", 3);
+                intent.putExtra("timerLimit", 3);
                 playSound("click.mp3");
-            startActivity(intent);
+                animateButtonClick(ontimerBtn);
+        stopButtonFocusAnimation(ontimerBtn);
+                
+    startActivity(intent);
             });
         
         operationDisplay.setText(operation);
@@ -277,7 +310,58 @@ private void applyVignetteEffect() {
     // Set as background
     backgroundFrame.setBackground(new BitmapDrawable(getResources(), bitmap));
 }
+private void animateButtonClick(View button) {
+    ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.6f, 1.1f, 1f);
+    ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.6f, 1.1f, 1f);
 
+    // Set duration for the animations
+    scaleX.setDuration(1000);
+    scaleY.setDuration(1000);
+
+    // OvershootInterpolator for game-like snappy effect
+    OvershootInterpolator overshootInterpolator = new OvershootInterpolator(2f);
+    scaleX.setInterpolator(overshootInterpolator);
+    scaleY.setInterpolator(overshootInterpolator);
+
+    // Combine animations into a set
+    AnimatorSet animatorSet = new AnimatorSet();
+    animatorSet.playTogether(scaleX, scaleY);
+    animatorSet.start();
+}
+
+   // Function to animate button focus with a smooth pulsing bounce effect
+private void animateButtonFocus(View button) {
+    ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.06f, 1f);
+    ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 1.06f, 1f);
+
+    // Set duration for a slower, smoother pulsing bounce effect
+    scaleX.setDuration(1000);
+    scaleY.setDuration(1000);
+
+    // AccelerateDecelerateInterpolator for smooth pulsing
+    AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
+    scaleX.setInterpolator(interpolator);
+    scaleY.setInterpolator(interpolator);
+
+    // Set repeat count and mode on each ObjectAnimator
+    scaleX.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
+    scaleX.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
+    scaleY.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
+    scaleY.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
+
+    // Combine the animations into an AnimatorSet
+    AnimatorSet animatorSet = new AnimatorSet();
+    animatorSet.playTogether(scaleX, scaleY);
+    animatorSet.start();
+}
+
+// Stop Focus Animation
+private void stopButtonFocusAnimation(View button) {
+    AnimatorSet animatorSet = (AnimatorSet) button.getTag();
+    if (animatorSet != null) {
+        animatorSet.cancel();  // Stop the animation when focus is lost
+    }
+}
     
       private void playSound(String fileName) {
         // Stop any previous sound effect before playing a new one
