@@ -82,7 +82,7 @@ public class OnTimerLevelSelection extends AppCompatActivity {
     
     private MediaPlayer soundEffectPlayer;
     private FrameLayout ontimerone, ontimertwo, ontimerthree;
-    
+    private String difficultySection;
    private FrameLayout numberContainer,backgroundFrame;
     private final Random random = new Random();
     private final int[] numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -117,6 +117,23 @@ if ("Addition".equals(operation)) {
     // Default icon if no match is found
     operationDisplayIcon.setImageResource(R.drawable.btn_operation_add);
 }
+        
+        if ("grade_one".equals(difficulty)) {
+   difficultySection = "Easy";
+} else if ("grade_two".equals(difficulty)) {
+    difficultySection = "Easy";
+} else if ("grade_three".equals(difficulty)) {
+    difficultySection = "Medium";
+} else if ("grade_four".equals(difficulty)) {
+    difficultySection = "Medium";
+} else if ("grade_five".equals(difficulty)) {
+    difficultySection = "Medium";
+} else if ("grade_six".equals(difficulty)) {
+    difficultySection = "Harf";
+} else {
+    difficultySection = "Easy";
+}
+        
         FrameLayout[] levels = {
             ontimerone, ontimertwo, ontimerthree
             };
@@ -129,8 +146,10 @@ if ("Addition".equals(operation)) {
             
                 Intent intent = new Intent(OnTimerLevelSelection.this, MultipleChoicePage.class);
     intent.putExtra("operation", operation);
-    intent.putExtra("difficulty", "Easy");
+    intent.putExtra("difficulty", difficultySection);
                 intent.putExtra("game_type", "OnTimer");
+                intent.putExtra("heartLimit", 5);
+                intent.putExtra("timerLimit", 10);
                 playSound("click.mp3");
                 animateButtonClick(ontimerone);
         stopButtonFocusAnimation(ontimerone);
@@ -143,8 +162,10 @@ if ("Addition".equals(operation)) {
             
                 Intent intent = new Intent(OnTimerLevelSelection.this, MultipleChoicePage.class);
     intent.putExtra("operation", operation);
-    intent.putExtra("difficulty", "Medium");
+    intent.putExtra("difficulty",difficultySection);
                 intent.putExtra("game_type", "OnTimer");
+                intent.putExtra("heartLimit", 3);
+                intent.putExtra("timerLimit", 4);
                 playSound("click.mp3");
                 animateButtonClick(ontimertwo);
         stopButtonFocusAnimation(ontimertwo);
@@ -159,10 +180,11 @@ if ("Addition".equals(operation)) {
     intent.putExtra("operation", operation);
     intent.putExtra("difficulty", "Hard");
                 intent.putExtra("game_type", "OnTimer");
+                intent.putExtra("heartLimit", 2);
+                intent.putExtra("timerLimit", 2);
                 playSound("click.mp3");
                 animateButtonClick(ontimerthree);
         stopButtonFocusAnimation(ontimerthree);
-                
     startActivity(intent);
                 
         });
