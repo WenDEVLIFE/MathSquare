@@ -87,7 +87,7 @@ public class passingStageSelection extends AppCompatActivity {
     private ImageView flashone, flashtwo, flashthree, flashfour, flashfive,
             flashsix, flashseven, flasheight, flashnine, flashten;
     private MediaPlayer soundEffectPlayer;
-    
+    private String difficultySection;
     private FrameLayout numberContainer,backgroundFrame;
     private final Random random = new Random();
     private final int[] numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -100,6 +100,9 @@ public class passingStageSelection extends AppCompatActivity {
         setContentView(R.layout.passing_levels);
 
         // Initialize the levels
+        String operation = getIntent().getStringExtra("operation");
+       String difficulty = getIntent().getStringExtra("difficulty");
+        String passingWorldType = getIntent().getStringExtra("passing");
         
         AppCompatButton btnNext = findViewById(R.id.btn_next);
         AppCompatButton btnBack = findViewById(R.id.btn_back);
@@ -107,6 +110,23 @@ public class passingStageSelection extends AppCompatActivity {
         animateButtonFocus(btnNext);
         animateButtonFocus(btnBack);
         
+        if ("grade_one".equals(difficulty)) {
+   difficultySection = "Easy";
+} else if ("grade_two".equals(difficulty)) {
+    difficultySection = "Easy";
+} else if ("grade_three".equals(difficulty)) {
+    difficultySection = "Medium";
+} else if ("grade_four".equals(difficulty)) {
+    difficultySection = "Medium";
+} else if ("grade_five".equals(difficulty)) {
+    difficultySection = "Medium";
+} else if ("grade_six".equals(difficulty)) {
+    difficultySection = "Hard";
+} else {
+    difficultySection = "Easy";
+}
+        btnNext.setVisibility(View.GONE);
+        btnBack.setVisibility(View.GONE);
         
         btnNext.setOnClickListener(v -> {
                 
@@ -150,9 +170,6 @@ public class passingStageSelection extends AppCompatActivity {
         flashnine = findViewById(R.id.level_nine_flash_box);
         flashten = findViewById(R.id.level_ten_flash_box);
         
-        String operation = getIntent().getStringExtra("operation");
-       String difficulty = getIntent().getStringExtra("difficulty");
-        String passingWorldType = getIntent().getStringExtra("passing");
         
         ImageView operationDisplayIcon = findViewById(R.id.difficultyImage);
 
@@ -261,7 +278,7 @@ for (int i = 0; i < levels.length; i++) {
                
         Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
         intent.putExtra("operation", operation);
-        intent.putExtra("difficulty", difficulty);
+        intent.putExtra("difficulty", difficultySection);
         intent.putExtra("game_type", "passing_level");
         intent.putExtra("passing", levelName);           
 playSound("click.mp3");
@@ -309,19 +326,9 @@ playSound("click.mp3");
         intent.putExtra("operation", operation);
                         intent.putExtra("passing", levelName);
                 intent.putExtra("game_type", "passing_level");
-                       intent.putExtra("passing_world", passingWorldType);
+                       intent.putExtra("passing_world", "world_one");
                         intent.putExtra("passing_next_level", levelNameMustBeCompletedNext);
-                if(levelnumber > 4){
-                    
-                    intent.putExtra("difficulty", "Medium");
-                }else if(levelnumber > 8){
-                    
-                    intent.putExtra("difficulty", "Hard");
-                }else{
-                    
-                     
-                    intent.putExtra("difficulty", "Easy");
-                }
+                    intent.putExtra("difficulty",difficultySection);
         
 
         // Animate and stop button focus
