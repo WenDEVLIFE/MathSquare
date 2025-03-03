@@ -115,188 +115,41 @@ int selectedNumber = 0;
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.practice_levels);
 
-         // Initialize the levels
-        
-        AppCompatButton btnNext = findViewById(R.id.btn_next);
-        AppCompatButton btnBack = findViewById(R.id.btn_back);
         AppCompatButton btnEnter = findViewById(R.id.btn_enter);
-        
-        
-        levelone = findViewById(R.id.level_one);
-        leveltwo = findViewById(R.id.level_two);
-        levelthree = findViewById(R.id.level_three);
-        levelfour = findViewById(R.id.level_four);
         
         heartChoice = findViewById(R.id.heart_choice);
         timerChoice = findViewById(R.id.timer_choice);
-        questionChoice = findViewById(R.id.question_choice);
         
         String operation = getIntent().getStringExtra("operation");
         difficulty = getIntent().getStringExtra("difficulty");
         
-        ImageView operationDisplayIcon = findViewById(R.id.difficultyImage);
-    // Initialize operation images
-    imgone = findViewById(R.id.difficultyImageSrc);
-    imgtwo = findViewById(R.id.difficultyImageSrcTwo);
-    imgthree = findViewById(R.id.difficultyImageSrcThree);
-    imgfour = findViewById(R.id.difficultyImageSrcFour);
-        
     // Set images based on the operation
     if ("Addition".equals(operation)) {
         operationDisplayIcon.setImageResource(R.drawable.ic_operation_add);
-        imgone.setImageResource(R.drawable.ic_operation_add);
-        imgtwo.setImageResource(R.drawable.ic_operation_add);
-        imgthree.setImageResource(R.drawable.ic_operation_add);
-        imgfour.setImageResource(R.drawable.ic_operation_add);
     } else if ("Subtraction".equals(operation)) {
         operationDisplayIcon.setImageResource(R.drawable.ic_operation_subtract);
-        imgone.setImageResource(R.drawable.ic_operation_subtract);
-        imgtwo.setImageResource(R.drawable.ic_operation_subtract);
-        imgthree.setImageResource(R.drawable.ic_operation_subtract);
-        imgfour.setImageResource(R.drawable.ic_operation_subtract);
     } else if ("Multiplication".equals(operation)) {
         operationDisplayIcon.setImageResource(R.drawable.ic_operation_multiply);
-        imgone.setImageResource(R.drawable.ic_operation_multiply);
-        imgtwo.setImageResource(R.drawable.ic_operation_multiply);
-        imgthree.setImageResource(R.drawable.ic_operation_multiply);
-        imgfour.setImageResource(R.drawable.ic_operation_multiply);
     } else if ("Division".equals(operation)) {
         operationDisplayIcon.setImageResource(R.drawable.ic_operation_divide);
-        imgone.setImageResource(R.drawable.ic_operation_divide);
-        imgtwo.setImageResource(R.drawable.ic_operation_divide);
-        imgthree.setImageResource(R.drawable.ic_operation_divide);
-        imgfour.setImageResource(R.drawable.ic_operation_divide);
     } else {
         operationDisplayIcon.setImageResource(R.drawable.btn_operation_add);
-        imgone.setImageResource(R.drawable.btn_operation_add);
-        imgtwo.setImageResource(R.drawable.btn_operation_add);
-        imgthree.setImageResource(R.drawable.btn_operation_add);
-        imgfour.setImageResource(R.drawable.btn_operation_add);
     }
 
 
         animateButtonFocus(btnEnter);
-        animateButtonFocus(btnNext);
-        animateButtonFocus(btnBack);
-       
-        
-        btnNext.setOnClickListener(v -> {
-                
-                animateButtonClick(btnNext);
-        stopButtonFocusAnimation(btnNext);
-                animateButtonFocus(btnBack);
-                playSound("click.mp3");
-            btnNext.setVisibility(View.GONE);
-                btnBack.setVisibility(View.VISIBLE);
-        });
-        
-        btnBack.setOnClickListener(v -> {
-                
-                animateButtonClick(btnBack);
-        stopButtonFocusAnimation(btnBack);
-                animateButtonFocus(btnNext);
-                playSound("click.mp3");
-            btnNext.setVisibility(View.VISIBLE);
-                btnBack.setVisibility(View.GONE);
-        });
+
 
         
         heartTxt = findViewById(R.id.heart_txt);
         timerTxt = findViewById(R.id.timer_txt);
-        questionTxt = findViewById(R.id.question_txt);
-        
-      /*  
-        levelfour = findViewById(R.id.level_four);
-        levelfive = findViewById(R.id.level_five);
-        levelsix = findViewById(R.id.level_six);
-        levelseven = findViewById(R.id.level_seven);
-        leveleight = findViewById(R.id.level_eight);
-        levelnine = findViewById(R.id.level_nine);
-        levelten = findViewById(R.id.level_ten); */
         
         iconHeart = findViewById(R.id.icon_heart);
         iconClock = findViewById(R.id.icon_timer);
-        iconQuestion = findViewById(R.id.icon_question);
-
-        buttonOne = findViewById(R.id.level_one_switch);
-        buttonTwo = findViewById(R.id.level_two_switch);
-        buttonThree = findViewById(R.id.level_three_switch);
-        buttonFour = findViewById(R.id.level_four_switch);
-     /*   buttonTwo = findViewById(R.id.level_two_flash_box);
-        buttonThree = findViewById(R.id.level_three_flash_box);
-        buttonFour = findViewById(R.id.level_four_flash_box);
-        buttonFive = findViewById(R.id.level_five_flash_box);
-        buttonSix = findViewById(R.id.level_six_flash_box);
-        buttonSeven = findViewById(R.id.level_seven_flash_box);
-        buttonEight = findViewById(R.id.level_eight_flash_box);
-        buttonNine = findViewById(R.id.level_nine_flash_box);
-        buttonTen = findViewById(R.id.level_ten_flash_box); */
-
-// Set click listeners for the buttons
-levelone.setOnClickListener(v -> {
-                playSound("click.mp3");
-    isButtonOneOn = !isButtonOneOn; // Toggle the state
-    if (isButtonOneOn) {
-        selectedButtons.add(1); // Add the number to the set
-        buttonOne.setImageResource(R.drawable.button_on);
-    } else {
-        selectedButtons.remove(1); // Remove the number from the set
-        buttonOne.setImageResource(R.drawable.button_off);
-    }
-    updateSelectedNumber(); // Update the total
-});
-
-leveltwo.setOnClickListener(v -> {
-                playSound("click.mp3");
-    isButtonTwoOn = !isButtonTwoOn; // Toggle the state
-    if (isButtonTwoOn) {
-        selectedButtons.add(2); // Add the number to the set
-        buttonTwo.setImageResource(R.drawable.button_on);
-    } else {
-        selectedButtons.remove(2); // Remove the number from the set
-        buttonTwo.setImageResource(R.drawable.button_off);
-    }
-    updateSelectedNumber(); // Update the total
-});
-
-levelthree.setOnClickListener(v -> {
-                playSound("click.mp3");
-    isButtonThreeOn = !isButtonThreeOn; // Toggle the state
-    if (isButtonThreeOn) {
-        selectedButtons.add(3); // Add the number to the set
-        buttonThree.setImageResource(R.drawable.button_on);
-    } else {
-        selectedButtons.remove(3); // Remove the number from the set
-        buttonThree.setImageResource(R.drawable.button_off);
-    }
-    updateSelectedNumber(); // Update the total
-});
-
-levelfour.setOnClickListener(v -> {
-                playSound("click.mp3");
-    isButtonFourOn = !isButtonFourOn; // Toggle the state
-    if (isButtonFourOn) {
-        selectedButtons.add(4); // Add the number to the set
-        buttonFour.setImageResource(R.drawable.button_on);
-    } else {
-        selectedButtons.remove(4); // Remove the number from the set
-        buttonFour.setImageResource(R.drawable.button_off);
-    }
-    updateSelectedNumber(); // Update the total
-});
         
         btnEnter.setOnClickListener(v -> {
                 playSound("click.mp3");
-            // Determine difficulty based on selectedNumber
-Random random = new Random();
-if (selectedNumber > 4) {
-    // Randomly set difficulty to Medium or Hard
-    difficulty = random.nextBoolean() ? "Medium" : "Hard";
-} else {
-    // Randomly set difficulty to Easy or Medium
-    difficulty = random.nextBoolean() ? "Easy" : "Medium";
-}
-
+        
 // Create intent to start MultipleChoicePage
 Intent intent = new Intent(PracticeLevels.this, MultipleChoicePage.class);
 intent.putExtra("operation", operation);
@@ -304,7 +157,6 @@ intent.putExtra("difficulty", difficulty);
 intent.putExtra("game_type", "practice");
                 intent.putExtra("heartLimit", heartCount);
 intent.putExtra("timerLimit", timerCount);
-intent.putExtra("questionLimit", questionCount);
                 
 // Animate button click and stop animation
 animateButtonClick(btnEnter);
@@ -316,20 +168,8 @@ startActivity(intent);
         });
         
  
-        FrameLayout[] levels = {
-                levelone, leveltwo, levelthree, levelfour
-            /*levelfour, levelfive,
-                levelsix, levelseven, leveleight, levelnine, levelten*/
-        };
-        
-        // Apply animations to all levels and flash boxes
-    for (FrameLayout level : levels) {
-        animateButtonFocus(level);
-    }
-        
         heartTxt.setText(String.valueOf(heartCount));
     timerTxt.setText(String.valueOf(timerCount));
-    questionTxt.setText(String.valueOf(questionCount));
         
         // Set onClickListeners for each FrameLayout
         heartChoice.setOnClickListener(new View.OnClickListener() {
@@ -352,19 +192,8 @@ startActivity(intent);
             }
         });
 
-        questionChoice.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                    playSound("click.mp3");
-                    animateButtonClick(questionChoice);
-                questionCount++;
-                questionTxt.setText(String.valueOf(questionCount));
-            }
-        });
-        
         animateButtonFocus(iconHeart);
         animateButtonFocus(iconClock);
-        animateButtonFocus(iconQuestion);
         
     backgroundFrame = findViewById(R.id.main);
         numberContainer = findViewById(R.id.number_container); // Get FrameLayout from XML
