@@ -14,7 +14,7 @@
          android:id="@+id/number_container">
 
     </FrameLayout>
-    
+
     <LinearLayout
          android:layout_height="wrap_content"
          android:layout_width="match_parent"
@@ -85,7 +85,7 @@
                          android:gravity="center_horizontal"
                          android:layout_marginHorizontal="28dp"
                          android:shadowRadius="4"
-                         android:textSize="10sp"
+                         android:textSize="11sp"
                          android:fontFamily="@font/paytone_one"
                          android:textColor="@color/white"
                          android:shadowColor="#000000"
@@ -96,18 +96,18 @@
                 </LinearLayout>
 
                 <LinearLayout
-                     android:layout_height="80dp"
-                     android:layout_width="80dp"
+                     android:layout_height="100dp"
+                     android:layout_width="100dp"
                      android:gravity="center"
                      android:background="@drawable/btn_short_condition"
                      android:orientation="vertical"
                      android:id="@+id/btn_practice">
 
                     <ImageView
-                         android:layout_height="60dp"
-                         android:layout_width="60dp"
+                         android:layout_height="80dp"
+                         android:layout_width="80dp"
                          android:src="@drawable/ic_practice"
-                         android:padding="8dp"
+                         android:padding="12dp"
                          android:layout_gravity="center" />
 
                 </LinearLayout>
@@ -122,7 +122,7 @@
 
                 <LinearLayout
                      android:layout_height="25dp"
-                     android:layout_width="100dp"
+                     android:layout_width="120dp"
                      android:layout_marginBottom="6dp"
                      android:gravity="center"
                      android:background="@drawable/btn_long_condition_off"
@@ -134,29 +134,29 @@
                          android:gravity="center_horizontal"
                          android:layout_marginHorizontal="28dp"
                          android:shadowRadius="4"
-                         android:textSize="10sp"
+                         android:textSize="11sp"
                          android:fontFamily="@font/paytone_one"
                          android:textColor="@color/white"
                          android:shadowColor="#000000"
                          android:shadowDx="2"
                          android:shadowDy="2"
-                         android:text="Passing" />
+                         android:text="On Timer" />
 
                 </LinearLayout>
 
                 <LinearLayout
-                     android:layout_height="80dp"
-                     android:layout_width="80dp"
+                     android:layout_height="100dp"
+                     android:layout_width="100dp"
                      android:gravity="center"
                      android:background="@drawable/btn_short_condition"
                      android:orientation="vertical"
-                     android:id="@+id/passing_btn">
+                     android:id="@+id/ontimer_btn">
 
                     <ImageView
-                         android:layout_height="60dp"
-                         android:layout_width="60dp"
-                         android:src="@drawable/ic_passing"
-                         android:padding="8dp"
+                         android:layout_height="80dp"
+                         android:layout_width="80dp"
+                         android:src="@drawable/ic_ontimer"
+                         android:padding="12dp"
                          android:layout_gravity="center" />
 
                 </LinearLayout>
@@ -173,7 +173,7 @@
 
                 <LinearLayout
                      android:layout_height="25dp"
-                     android:layout_width="120dp"
+                     android:layout_width="100dp"
                      android:layout_marginBottom="6dp"
                      android:gravity="center"
                      android:background="@drawable/btn_long_condition_off"
@@ -185,29 +185,29 @@
                          android:gravity="center_horizontal"
                          android:layout_marginHorizontal="28dp"
                          android:shadowRadius="4"
-                         android:textSize="10sp"
+                         android:textSize="11sp"
                          android:fontFamily="@font/paytone_one"
                          android:textColor="@color/white"
                          android:shadowColor="#000000"
                          android:shadowDx="2"
                          android:shadowDy="2"
-                         android:text="On Timer" />
+                         android:text="Passing" />
 
                 </LinearLayout>
 
                 <LinearLayout
-                     android:layout_height="80dp"
-                     android:layout_width="80dp"
+                     android:layout_height="100dp"
+                     android:layout_width="100dp"
                      android:gravity="center"
                      android:background="@drawable/btn_short_condition"
                      android:orientation="vertical"
-                     android:id="@+id/ontimer_btn">
+                     android:id="@+id/passing_btn">
 
                     <ImageView
                          android:layout_height="60dp"
                          android:layout_width="60dp"
-                         android:src="@drawable/ic_ontimer"
-                         android:padding="4dp"
+                         android:src="@drawable/ic_passing"
+                         android:padding="12dp"
                          android:layout_gravity="center" />
 
                 </LinearLayout>
