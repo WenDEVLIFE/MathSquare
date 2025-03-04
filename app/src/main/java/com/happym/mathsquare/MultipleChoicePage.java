@@ -811,12 +811,17 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
         heartLimit--;
         updateHeartDisplay();
 
-        if (heartLimit == 0) {
+        if("quiz".equals(gameType)){   
+                //No Lives
+          }else{
+             if (heartLimit == 0) {
             playSound("failed.mp3");
             showGameOver(gameType);
             return;
         }
 
+          }      
+        
         if (heartLimit == 1) {
             startVignetteEffect();
         }
