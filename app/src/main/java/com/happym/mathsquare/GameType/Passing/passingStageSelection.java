@@ -279,7 +279,7 @@ for (int i = 0; i < levels.length; i++) {
         Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
         intent.putExtra("operation", operation);
         intent.putExtra("difficulty", difficultySection);
-        intent.putExtra("game_type", "passing_level");
+        intent.putExtra("game_type", "Passing");
         intent.putExtra("passing", levelName);           
 playSound("click.mp3");
         // Animate and stop button focus
@@ -325,7 +325,7 @@ playSound("click.mp3");
                         Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
         intent.putExtra("operation", operation);
                         intent.putExtra("passing", levelName);
-                intent.putExtra("game_type", "passing_level");
+                intent.putExtra("game_type", "Passing");
                        intent.putExtra("passing_world", "world_one");
                         intent.putExtra("passing_next_level", levelNameMustBeCompletedNext);
                     intent.putExtra("difficulty",difficultySection);
