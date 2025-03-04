@@ -150,6 +150,7 @@ numberDropdownPicker.setAdapter(adapterGrades);
                         String uuid = UUID.randomUUID().toString(); // Generate a random UUID
                         HashMap<String, Object> teacherData = new HashMap<>();
                 teacherData.put("Grade", selectedGrade);
+                  teacherData.put("Grade_Number", Integer.parseInt(selectedGrade));
                 teacherData.put("Section", sections);
                teacherData.put("timestamp", FieldValue.serverTimestamp());        
                 teacherData.put("DocumentKey", uuid);       
