@@ -140,11 +140,7 @@ private boolean isRedTransitionApplied = false; // Prevents unnecessary re-anima
  
 private List<String> usedOperations = new ArrayList<>();
 
-    public MultipleChoicePage(String numberRunlimit) {
-        this.numberRunlimit = numberRunlimit;
-    }
-
-
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -784,32 +780,14 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
                     }
 
                     public void onFinish() {
+                numberRunlimit = "0:00";
                         timerTxt.setText("0:00");
                         showPauseDialog();
                         isTimerRunning = false;
-                    }
-                }.start();
-
-        isTimerRunning = true;
-    }
-
-    private void resumeTimer() {
-        if (!isTimerRunning) {
-            startTimer(timeLeftInMillis); // Resume from remaining time
-        }
-    }
-
-    private void checkAnswer(int btnText, Button btnChoice, String gameType) {
-    if (isGameOver) return;
-    playEffectSound("click.mp3");
-
-    int actualAnswer = problemSet.get(currentQuestionIndex).getAnswer();
-    boolean isCorrect = (btnText == actualAnswer);
-     
-     
-     if("quiz".equals(gameType)){
+                
+                 if("quiz".equals(gameType)){
             //No Timer
-          }  else if ("0:00".equals(numberRunlimit)){
+          }  else {
             
        int totalQuestions = problemSet.size();
                     
@@ -831,6 +809,28 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
                     
                     startActivity(intent);
     }   
+                
+                    }
+                }.start();
+
+        isTimerRunning = true;
+    }
+
+    private void resumeTimer() {
+        if (!isTimerRunning) {
+            startTimer(timeLeftInMillis); // Resume from remaining time
+        }
+    }
+
+    private void checkAnswer(int btnText, Button btnChoice, String gameType) {
+    if (isGameOver) return;
+    playEffectSound("click.mp3");
+
+    int actualAnswer = problemSet.get(currentQuestionIndex).getAnswer();
+    boolean isCorrect = (btnText == actualAnswer);
+     
+     
+    
         
 
     if (isCorrect) {
@@ -1121,7 +1121,6 @@ private void playEffectSound(String fileName) {
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
         Intent intent = new Intent(MultipleChoicePage.this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
