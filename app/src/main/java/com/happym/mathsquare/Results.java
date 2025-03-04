@@ -160,7 +160,7 @@ showScore.setText(scoreDisplay);
  loadingDialog = new ProgressDialog(this);
     loadingDialog.setMessage("Saving Progress...");
     loadingDialog.setCancelable(false);
-    
+    loadingDialog.show();
        
 // Display Motivational message based on the result
 switch (getResult) {
@@ -387,9 +387,6 @@ private void applyVignetteEffect() {
  * @param OnTimerDifficulty The difficulty setting for OnTimer mode.
  */
 private void sendScoreResult(int Score, String quizid, String gametype, String levelNum, String nextlevel, String worldType, String OnTimerDifficulty) {
-
-    // Show a loading dialog to indicate a process is running.
-    loadingDialog.show();
 
     // Retrieve student-related information from shared preferences.
     String section = sharedPreferences.getSection(this);

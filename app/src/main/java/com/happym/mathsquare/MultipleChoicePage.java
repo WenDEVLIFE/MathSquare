@@ -798,12 +798,93 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
 
     int actualAnswer = problemSet.get(currentQuestionIndex).getAnswer();
     boolean isCorrect = (btnText == actualAnswer);
+     
+     
+     if("quiz".equals(gameType)){
+            //No Timer
+          }  else (timeLeftInMillis == 0){
+            
+       int totalQuestions = problemSet.size();
+                    
+                    //Pass Data to Results Activity
+                    Intent intent = new Intent(MultipleChoicePage.this, Results.class);
+                    
+                    intent.putExtra("EXTRA_RESULT", "Times Up!");
+                    intent.putExtra("quizid", quidId);
+                    intent.putExtra("passinglevelnext", levelNext);
+                    intent.putExtra("leveltype", levelid);
+                    intent.putExtra("passingworldtype",worldType);
+                    intent.putExtra("gametype",gameType);
+                    intent.putExtra("heartLimit", selHeart);
+                    intent.putExtra("timerLimit",selTimer);
+                    intent.putExtra("EXTRA_SCORE", score);
+                    intent.putExtra("EXTRA_TOTAL", totalQuestions);
+                    intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
+                    intent.putExtra("EXTRA_DIFFICULTY", difficulty);
+                    
+                    startActivity(intent);
+    }   
+        
 
     if (isCorrect) {
         score++;
         feedbackTextView.setText("Correct!");
         animateCorrectAnswer(btnChoice);
         playEffectSound("correct.mp3");
+            
+            
+            
+        if("quiz".equals(gameType)){
+           if (score == 21) {
+                    
+            int totalQuestions = problemSet.size();
+                    
+                    //Pass Data to Results Activity
+                    Intent intent = new Intent(MultipleChoicePage.this, Results.class);
+                    
+                    intent.putExtra("EXTRA_RESULT", "Congratulations");
+                    intent.putExtra("quizid", quidId);
+                    intent.putExtra("passinglevelnext", levelNext);
+                    intent.putExtra("leveltype", levelid);
+                    intent.putExtra("passingworldtype",worldType);
+                    intent.putExtra("gametype",gameType);
+                    intent.putExtra("heartLimit", selHeart);
+                    intent.putExtra("timerLimit",selTimer);
+                    intent.putExtra("EXTRA_SCORE", score);
+                    intent.putExtra("EXTRA_TOTAL", totalQuestions);
+                    intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
+                    intent.putExtra("EXTRA_DIFFICULTY", difficulty);
+                    
+                    startActivity(intent);
+                           
+            }
+        }else{
+           if (currentQuestionIndex == 11) {
+                int totalQuestions = problemSet.size();
+                    
+                    //Pass Data to Results Activity
+                    Intent intent = new Intent(MultipleChoicePage.this, Results.class);
+                    
+                    intent.putExtra("EXTRA_RESULT", "Congratulations");
+                    intent.putExtra("quizid", quidId);
+                    intent.putExtra("passinglevelnext", levelNext);
+                    intent.putExtra("leveltype", levelid);
+                    intent.putExtra("passingworldtype",worldType);
+                    intent.putExtra("gametype",gameType);
+                    intent.putExtra("heartLimit", selHeart);
+                    intent.putExtra("timerLimit",selTimer);
+                    intent.putExtra("EXTRA_SCORE", score);
+                    intent.putExtra("EXTRA_TOTAL", totalQuestions);
+                    intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
+                    intent.putExtra("EXTRA_DIFFICULTY", difficulty);
+                    
+                    startActivity(intent);
+            } 
+                
+        }
+            
+            
+            
     } else {
         feedbackTextView.setText("Wrong! The correct answer is " + actualAnswer);
         animateIncorrectAnswer(btnChoice);
@@ -813,6 +894,29 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
 
         if("quiz".equals(gameType)){   
                 //No Lives
+                
+           if (currentQuestionIndex > 21) {
+                int totalQuestions = problemSet.size();
+                    
+                    //Pass Data to Results Activity
+                    Intent intent = new Intent(MultipleChoicePage.this, Results.class);
+                    
+                    intent.putExtra("EXTRA_RESULT", "Congratulations");
+                    intent.putExtra("quizid", quidId);
+                    intent.putExtra("passinglevelnext", levelNext);
+                    intent.putExtra("leveltype", levelid);
+                    intent.putExtra("passingworldtype",worldType);
+                    intent.putExtra("gametype",gameType);
+                    intent.putExtra("heartLimit", selHeart);
+                    intent.putExtra("timerLimit",selTimer);
+                    intent.putExtra("EXTRA_SCORE", score);
+                    intent.putExtra("EXTRA_TOTAL", totalQuestions);
+                    intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
+                    intent.putExtra("EXTRA_DIFFICULTY", difficulty);
+                    
+                    startActivity(intent);
+            } 
+                
           }else{
              if (heartLimit == 0) {
             playSound("failed.mp3");
@@ -965,30 +1069,30 @@ private void playEffectSound(String fileName) {
         Intent intent = new Intent(MultipleChoicePage.this, Results.class);
         int totalQuestions = problemSet.size();
 
-        // Add result messages as before
-        if (score == totalQuestions) {
+        // Pass data to Results activity
+        
+        if (score == 20) {
             intent.putExtra("EXTRA_RESULT", "Congratulations");
-        } else if (score > totalQuestions * 0.75) {
+        } else if (score > 15) {
             intent.putExtra("EXTRA_RESULT", "Good Job!");
-        } else if (score > totalQuestions / 2) {
+        } else if (score > 5) {
             intent.putExtra("EXTRA_RESULT", "Nice Try!");
         } else {
             intent.putExtra("EXTRA_RESULT", "Failed");
         }
-
-        // Pass data to Results activity
-      
-                    intent.putExtra("quizid", quidId);
-                    intent.putExtra("passinglevelnext", levelNext);
-                    intent.putExtra("leveltype", levelid);
-                    intent.putExtra("passingworldtype",worldType);
-                    intent.putExtra("gametype",gameType);
+        
+        intent.putExtra("quizid", quidId);
+        intent.putExtra("passinglevelnext", levelNext);
+        intent.putExtra("leveltype", levelid);
+        intent.putExtra("passingworldtype",worldType);
+        intent.putExtra("gametype",gameType);
         intent.putExtra("heartLimit", selHeart);
-                    intent.putExtra("timerLimit",selTimer);
+        intent.putExtra("timerLimit",selTimer);
         intent.putExtra("EXTRA_SCORE", score);
         intent.putExtra("EXTRA_TOTAL", totalQuestions);
         intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
         intent.putExtra("EXTRA_DIFFICULTY", difficulty);
+        
         startActivity(intent);
     }
 
