@@ -74,7 +74,7 @@
             <ImageView
                  android:layout_height="60dp"
                  android:layout_width="60dp"
-                 android:src="@drawable/ic_check"
+                 android:src="@drawable/ic_delete"
                 android:layout_marginLeft="18dp"
                  android:background="@drawable/btn_green_off"
                  android:elevation="16dp"
