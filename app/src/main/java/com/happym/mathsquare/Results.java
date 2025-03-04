@@ -75,6 +75,7 @@ public class Results extends AppCompatActivity {
 private MediaPlayer soundEffectPlayer;
     private boolean saveSuccesfully = false;
     private int selHeart, selTimer;
+   private ArrayList<String> operationList;
     private FrameLayout numberContainer,backgroundFrame;
     private final Random random = new Random();
     private final int[] numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -91,7 +92,11 @@ private MediaPlayer soundEffectPlayer;
         
        selHeart = getIntent().getIntExtra("heartLimit", 3);
         selTimer = getIntent().getIntExtra("timerLimit", 10);
-        
+        String gameType = getIntent().getStringExtra("gametype");
+        String getQuiz = getIntent().getStringExtra("quizid");
+        String getOperationText = getIntent().getStringExtra("EXTRA_OPERATIONTEXT");
+        String getDifficulty = getIntent().getStringExtra("EXTRA_DIFFICULTY");
+        operationList = getIntent().getStringArrayListExtra("operationList");
         ImageButton imageButton = findViewById(R.id.imgBtn_home);
         imageButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -110,13 +115,20 @@ imageButton_pause.setOnClickListener(new View.OnClickListener() {
     public void onClick(View v) {
                     playSound("click.mp3");
         // Get current data
-        String getOperationText = getIntent().getStringExtra("EXTRA_OPERATIONTEXT");
-        String getDifficulty = getIntent().getStringExtra("EXTRA_DIFFICULTY");
+        
         ArrayList<MathProblem> answeredQuestions = getIntent().getParcelableArrayListExtra("EXTRA_ANSWERED_QUESTIONS");
 
         // Create an intent to return to MultipleChoicePage
         Intent resultIntent = new Intent(Results.this, MultipleChoicePage.class);
-        resultIntent.putExtra("operation", getOperationText);
+                    
+        resultIntent.putExtra("game_type", gameType);  
+                    if("quiz".equals(gameType)) {
+                       resultIntent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));       
+                       resultIntent.putExtra("quizId", getQuiz);                  
+                    }else{
+                       resultIntent.putExtra("operation", getOperationText);
+                    }
+        
         resultIntent.putExtra("difficulty", getDifficulty);
 resultIntent.putExtra("heartLimit", selHeart);
                     resultIntent.putExtra("timerLimit",selTimer);
@@ -142,8 +154,8 @@ textView.setText("");
         String levelType = getIntent().getStringExtra("leveltype");
         String difficulty = getIntent().getStringExtra("EXTRA_DIFFICULTY");
        String levelNext = getIntent().getStringExtra("passinglevelnext");
-        String getQuiz = getIntent().getStringExtra("quizid");
-            String gameType = getIntent().getStringExtra("gametype");
+        
+            
 int getScore = getIntent().getIntExtra("EXTRA_SCORE", 0);
 int getTotal = getIntent().getIntExtra("EXTRA_TOTAL", 0);
 
@@ -160,7 +172,7 @@ showScore.setText(scoreDisplay);
  loadingDialog = new ProgressDialog(this);
     loadingDialog.setMessage("Saving Progress...");
     loadingDialog.setCancelable(false);
-    loadingDialog.show();
+    
        
 // Display Motivational message based on the result
 switch (getResult) {

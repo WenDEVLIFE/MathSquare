@@ -318,7 +318,7 @@ if (operationList == null || operationList.isEmpty()) {
 
 private void switchOperation(String difficulty) {
     if (operationList.isEmpty()) {
-        Toast.makeText(this, "No more operations available!", Toast.LENGTH_SHORT).show();
+        
         return;
     }
 
@@ -443,7 +443,35 @@ private void generateNewQuestionList(int currentQIndex, List<MathProblem> source
 
         questionProgressTextView.setText((currentQIndex + 1) + "/20");
     } else {
-        Toast.makeText(this, "All questions completed.", Toast.LENGTH_SHORT).show();
+       
+      int totalQuestions = problemSet.size();
+                    
+                    //Pass Data to Results Activity
+                    Intent intent = new Intent(MultipleChoicePage.this, Results.class);
+                    
+                    if (score == 20) {
+            intent.putExtra("EXTRA_RESULT", "Congratulations");
+        } else if (score > 15) {
+            intent.putExtra("EXTRA_RESULT", "Good Job!");
+        } else if (score > 5) {
+            intent.putExtra("EXTRA_RESULT", "Nice Try!");
+        } else {
+            intent.putExtra("EXTRA_RESULT", "Failed");
+        }
+                    intent.putExtra("quizid", quidId);
+            intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));  
+                    intent.putExtra("passinglevelnext", levelNext);
+                    intent.putExtra("leveltype", levelid);
+                    intent.putExtra("passingworldtype",worldType);
+                    intent.putExtra("gametype",gametypeGame);
+                    intent.putExtra("heartLimit", selHeart);
+                    intent.putExtra("timerLimit",selTimer);
+                    intent.putExtra("EXTRA_SCORE", score);
+                    intent.putExtra("EXTRA_TOTAL", totalQuestions);
+                    intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
+                    intent.putExtra("EXTRA_DIFFICULTY", difficulty);
+                    
+                    startActivity(intent);
     }
 }
 
@@ -850,9 +878,18 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
                     //Pass Data to Results Activity
                     Intent intent = new Intent(MultipleChoicePage.this, Results.class);
                     
-                    intent.putExtra("EXTRA_RESULT", "Congratulations");
+                      if (score == 20) {
+            intent.putExtra("EXTRA_RESULT", "Congratulations");
+        } else if (score > 15) {
+            intent.putExtra("EXTRA_RESULT", "Good Job!");
+        } else if (score > 5) {
+            intent.putExtra("EXTRA_RESULT", "Nice Try!");
+        } else {
+            intent.putExtra("EXTRA_RESULT", "Failed");
+        }
                     intent.putExtra("quizid", quidId);
                     intent.putExtra("passinglevelnext", levelNext);
+                    intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));  
                     intent.putExtra("leveltype", levelid);
                     intent.putExtra("passingworldtype",worldType);
                     intent.putExtra("gametype",gameType);
@@ -873,7 +910,15 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
                     //Pass Data to Results Activity
                     Intent intent = new Intent(MultipleChoicePage.this, Results.class);
                     
-                    intent.putExtra("EXTRA_RESULT", "Congratulations");
+                      if (score == 10) {
+            intent.putExtra("EXTRA_RESULT", "Congratulations");
+        } else if (score > 8) {
+            intent.putExtra("EXTRA_RESULT", "Good Job!");
+        } else if (score > 3) {
+            intent.putExtra("EXTRA_RESULT", "Nice Try!");
+        } else {
+            intent.putExtra("EXTRA_RESULT", "Failed");
+        }
                     intent.putExtra("quizid", quidId);
                     intent.putExtra("passinglevelnext", levelNext);
                     intent.putExtra("leveltype", levelid);
@@ -909,7 +954,16 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
                     //Pass Data to Results Activity
                     Intent intent = new Intent(MultipleChoicePage.this, Results.class);
                     
-                    intent.putExtra("EXTRA_RESULT", "Congratulations");
+                      if (score == 20) {
+            intent.putExtra("EXTRA_RESULT", "Congratulations");
+        } else if (score > 15) {
+            intent.putExtra("EXTRA_RESULT", "Good Job!");
+        } else if (score > 5) {
+            intent.putExtra("EXTRA_RESULT", "Nice Try!");
+        } else {
+            intent.putExtra("EXTRA_RESULT", "Failed");
+        }
+                    intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));  
                     intent.putExtra("quizid", quidId);
                     intent.putExtra("passinglevelnext", levelNext);
                     intent.putExtra("leveltype", levelid);
@@ -1088,7 +1142,7 @@ private void playEffectSound(String fileName) {
         } else {
             intent.putExtra("EXTRA_RESULT", "Failed");
         }
-        
+        intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));  
         intent.putExtra("quizid", quidId);
         intent.putExtra("passinglevelnext", levelNext);
         intent.putExtra("leveltype", levelid);
