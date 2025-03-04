@@ -131,7 +131,7 @@ public class MultipleChoicePage extends AppCompatActivity
     private FrameLayout backgroundFrame;
     private ArrayList<String> operationList;
     private ConstraintLayout gameView;
-    
+    private final String numberRunlimit;
     private final Random random = new Random();
     private final int[] numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     private final int numberCount = 3; // Number of numbers per side
@@ -773,7 +773,10 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
                         int seconds = (int) (millisUntilFinished / 1000);
                         int minutes = seconds / 60;
                         seconds = seconds % 60;
-                        timerTxt.setText(String.format("%d:%02d", minutes, seconds));
+                
+                        numberRunlimit = String.format("%d:%02d", minutes, seconds);
+    timerTxt.setText(numberRunlimit);
+                
                     }
 
                     public void onFinish() {
@@ -802,7 +805,7 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
      
      if("quiz".equals(gameType)){
             //No Timer
-          }  else (timeLeftInMillis == 0){
+          }  else if ("0:00".equals(numberRunlimit)){
             
        int totalQuestions = problemSet.size();
                     
