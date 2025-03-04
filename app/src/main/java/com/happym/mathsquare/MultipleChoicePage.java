@@ -131,7 +131,7 @@ public class MultipleChoicePage extends AppCompatActivity
     private FrameLayout backgroundFrame;
     private ArrayList<String> operationList;
     private ConstraintLayout gameView;
-    private final String numberRunlimit;
+    private String numberRunlimit;
     private final Random random = new Random();
     private final int[] numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     private final int numberCount = 3; // Number of numbers per side
@@ -140,7 +140,11 @@ private boolean isRedTransitionApplied = false; // Prevents unnecessary re-anima
  
 private List<String> usedOperations = new ArrayList<>();
 
-    
+    public MultipleChoicePage(String numberRunlimit) {
+        this.numberRunlimit = numberRunlimit;
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -1117,6 +1121,7 @@ private void playEffectSound(String fileName) {
 
     @Override
     public void onBackPressed() {
+        super.onBackPressed();
         Intent intent = new Intent(MultipleChoicePage.this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
