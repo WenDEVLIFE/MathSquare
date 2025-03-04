@@ -108,7 +108,7 @@ public class MultipleChoicePage extends AppCompatActivity
 
     private ImageButton imgBtn_pause;
 
-    private String operationText, difficulty, gametype, quidId, levelid, levelNext, worldType;
+    private String operationText, gametypeGame,difficulty, gametype, quidId, levelid, levelNext, worldType;
     private TextView givenOneTextView,
             givenTwoTextView,
             operationTextView,
@@ -217,6 +217,7 @@ private List<String> usedOperations = new ArrayList<>();
         });
 
         String gameType = getIntent().getStringExtra("game_type");
+        gametypeGame = getIntent().getStringExtra("game_type");
         FrameLayout heart_choice = findViewById(R.id.heart_choice);
        FrameLayout timer_choice = findViewById(R.id.timer_choice);
         quidId = getIntent().getStringExtra("quizId");
@@ -785,7 +786,7 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
                         showPauseDialog();
                         isTimerRunning = false;
                 
-                 if("quiz".equals(gameType)){
+                 if("quiz".equals(gametypeGame)){
             //No Timer
           }  else {
             
@@ -799,7 +800,7 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
                     intent.putExtra("passinglevelnext", levelNext);
                     intent.putExtra("leveltype", levelid);
                     intent.putExtra("passingworldtype",worldType);
-                    intent.putExtra("gametype",gameType);
+                    intent.putExtra("gametype",gametypeGame);
                     intent.putExtra("heartLimit", selHeart);
                     intent.putExtra("timerLimit",selTimer);
                     intent.putExtra("EXTRA_SCORE", score);
