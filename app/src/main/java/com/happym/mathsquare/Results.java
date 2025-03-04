@@ -417,6 +417,7 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
     OnTimerData.put("lastName", lastName);
     OnTimerData.put("section", section);
     OnTimerData.put("grade", grade);
+       OnTimerData.put("quizno", "OnTimer");
      OnTimerData.put("timestamp", FieldValue.serverTimestamp());             
     OnTimerData.put("ontimer_difficulty", OnTimerDifficulty);
     OnTimerData.put("ontimer_score", String.valueOf(Score));
@@ -427,6 +428,7 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
     PracticeData.put("lastName", lastName);
     PracticeData.put("section", section);
     PracticeData.put("grade", grade);
+       PracticeData.put("quizno", "Practice");
        PracticeData.put("timestamp", FieldValue.serverTimestamp());           
     PracticeData.put("practice_difficulty", OnTimerDifficulty);
     PracticeData.put("practice_score", String.valueOf(Score));
@@ -437,6 +439,7 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
     passingData.put("lastName", lastName);
     passingData.put("section", section);
     passingData.put("grade", grade);
+        passingData.put("quizno", "Passing");
        passingData.put("timestamp", FieldValue.serverTimestamp());           
     passingData.put("passing_level_must_complete", nextlevel);
     passingData.put("passing_level", levelNum);
@@ -455,7 +458,7 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
     }
 
     // Process based on the type of game.
-    if ("passing_level".equals(gametype)) {
+    if ("Passing".equals(gametype)) {
         // Reference the Firebase collection for MathSquare students.
         CollectionReference collectionRef = db.collection("Accounts")
             .document("Students")
@@ -635,7 +638,6 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
         // Query for an existing OnTimer record matching the student's difficulty level.
         collectionRef.whereEqualTo("firstName", firstName)
             .whereEqualTo("lastName", lastName)
-            .whereEqualTo("ontimer_difficulty", OnTimerDifficulty)
             .get()
             .addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {

@@ -204,7 +204,7 @@ private void listenToTeacherSections(String teacherEmail) {
             .collection(teacherEmail)
             .document("MathSquare")
             .collection("MySections")
-       .orderBy("timestamp", Query.Direction.DESCENDING)
+            .orderBy("Grade_Number", Query.Direction.ASCENDING) // Sort by Grade_Number in ascending order
             .addSnapshotListener((queryDocumentSnapshots, e) -> {
                 if (e != null) {
                     Toast.makeText(this, "Error fetching data: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -229,12 +229,13 @@ private void listenToTeacherSections(String teacherEmail) {
                             }
                         }
                     }
-                   addRowsToTable(newSections);
+                    addRowsToTable(newSections);
                 } else {
                     Toast.makeText(this, "No sections found for this teacher.", Toast.LENGTH_SHORT).show();
                 }
             });
 }
+
 
 
     
@@ -263,6 +264,8 @@ private void addRowsToTable(List<Sections> students) {
             playSound("click.mp3");
             if (isChecked) {
                 selectedRows.add(row);
+               checkBtn.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.btn_condition_create));
+ checkBtn.setImageResource(R.drawable.ic_delete);        
             } else {
                 selectedRows.remove(row);
 
@@ -296,7 +299,8 @@ private void addRowsToTable(List<Sections> students) {
 
     for (int i = 0; i < rowCheckBoxes.size(); i++) {
         CheckBox checkbox = rowCheckBoxes.get(i);
-
+            checkBtn.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.btn_condition_create));
+ checkBtn.setImageResource(R.drawable.ic_delete);
         checkbox.setChecked(isChecked); // Update each checkbox
 
         // If checked, add the corresponding row to the selected rows

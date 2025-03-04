@@ -73,6 +73,8 @@ deleteBtn.setOnClickListener(v -> {
         isCanceled = false;
         allCheckBox.setVisibility(View.VISIBLE);
         checkBtn.setVisibility(View.VISIBLE);
+                    
+                    
         deleteBtn.setImageResource(R.drawable.ic_cancel);
 
         if (rowCheckbox != null) {
@@ -329,12 +331,16 @@ private void addRowsToTable(List<Student> students) {
                        playSound("click.mp3");
                 if (isChecked) {
                     selectedRows.add(row);
+                   checkBtn.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.btn_condition_create));
+ checkBtn.setImageResource(R.drawable.ic_delete);
                 } else {
                     selectedRows.remove(row);
                     // Uncheck the "Select All" checkbox if any row is deselected
                     allCheckBox.setOnCheckedChangeListener(null); // Temporarily remove listener
                     allCheckBox.setChecked(false);
                     allCheckBox.setOnCheckedChangeListener((buttonView1, isChecked1) -> {
+                         checkBtn.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.btn_condition_create));
+ checkBtn.setImageResource(R.drawable.ic_delete);          
                         toggleAllRows(isChecked1);
                     });
                 }
@@ -354,7 +360,10 @@ private void addRowsToTable(List<Student> students) {
 
     for (int i = 0; i < rowCheckBoxes.size(); i++) {
         CheckBox checkbox = rowCheckBoxes.get(i);
-
+            
+       checkBtn.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.btn_condition_create));
+ checkBtn.setImageResource(R.drawable.ic_delete);
+                
         checkbox.setChecked(isChecked); // Update each checkbox
 
         // If checked, add the corresponding row to the selected rows
