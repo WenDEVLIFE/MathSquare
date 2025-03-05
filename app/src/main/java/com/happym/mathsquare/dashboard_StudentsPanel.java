@@ -252,7 +252,7 @@ private void initializeSwitchListeners() {
             db.collection("Accounts")
                 .document("Students")
                 .collection("MathSquare") // Access the "MathSquare" collection
-           .orderBy("timestamp", Query.Direction.DESCENDING)
+                .orderBy("quizno_int", Query.Direction.ASCENDING)
                 .get()
                 .addOnCompleteListener(task -> {
                     try {

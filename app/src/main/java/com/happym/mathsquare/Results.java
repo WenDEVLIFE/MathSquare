@@ -76,6 +76,8 @@ private MediaPlayer soundEffectPlayer;
     private boolean saveSuccesfully = false;
     private int selHeart, selTimer;
    private ArrayList<String> operationList;
+   private String quizIds;
+      private int number;    
     private FrameLayout numberContainer,backgroundFrame;
     private final Random random = new Random();
     private final int[] numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -406,8 +408,31 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
     String firstName = sharedPreferences.getFirstN(this);
     String lastName = sharedPreferences.getLastN(this);
     
-    // Create a quiz name based on quizid and generate a random UUID (if needed later).
-    String quizname = "Quiz " + quizid;
+    
+    // Cre;ate a quiz name based on quizid and generate a random UUID (if needed later).
+    if("quiz_1".equals(quizid)){
+        quizIds = "Quiz 1";
+           number = 1;
+    }else if("quiz_2".equals(quizid)){
+        quizIds = "Quiz 2";
+           number = 2;
+    }else if("quiz_3".equals(quizid)){
+        quizIds = "Quiz 3";
+           number = 3;
+    }else if("quiz_4".equals(quizid)){
+        quizIds = "Quiz 4";
+           number = 4;
+    } else if("quiz_5".equals(quizid)){
+        quizIds = "Quiz 5";
+            number = 5;
+    }else if("quiz_6".equals(quizid)){
+        quizIds = "Quiz 6";
+           number = 6;
+    }else{
+       number = 1;
+    }
+        
+    String quizname = quizIds;
     String uuid = UUID.randomUUID().toString(); // Generate a random UUID
 
     // Create a HashMap to store quiz-related data.
@@ -418,6 +443,7 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
     studentDataQuiz.put("grade", grade);
        studentDataQuiz.put("timestamp", FieldValue.serverTimestamp());           
     studentDataQuiz.put("quizno", quizname);
+    studentDataQuiz.put("quizno_int", number);    
     studentDataQuiz.put("quizscore", String.valueOf(Score));
 
     // Create a HashMap to store OnTimer mode data.
@@ -427,6 +453,7 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
     OnTimerData.put("section", section);
     OnTimerData.put("grade", grade);
        OnTimerData.put("quizno", "OnTimer");
+        OnTimerData.put("quizno_int", number); 
      OnTimerData.put("timestamp", FieldValue.serverTimestamp());             
     OnTimerData.put("ontimer_difficulty", OnTimerDifficulty);
     OnTimerData.put("ontimer_score", String.valueOf(Score));
@@ -437,6 +464,7 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
     PracticeData.put("lastName", lastName);
     PracticeData.put("section", section);
     PracticeData.put("grade", grade);
+       PracticeData.put("quizno_int", number); 
        PracticeData.put("quizno", "Practice");
        PracticeData.put("timestamp", FieldValue.serverTimestamp());           
     PracticeData.put("practice_difficulty", OnTimerDifficulty);
@@ -448,6 +476,7 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
     passingData.put("lastName", lastName);
     passingData.put("section", section);
     passingData.put("grade", grade);
+       passingData.put("quizno_int", number); 
         passingData.put("quizno", "Passing");
        passingData.put("timestamp", FieldValue.serverTimestamp());           
     passingData.put("passing_level_must_complete", nextlevel);
