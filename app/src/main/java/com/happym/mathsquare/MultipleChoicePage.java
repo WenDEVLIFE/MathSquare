@@ -266,6 +266,7 @@ if (operationList == null || operationList.isEmpty()) {
             
         } else{
             
+            operationDisplay.setVisibility(View.GONE);
             
            if (operationText == null ) {
             Toast.makeText(this, "No Math Operation detected at the moment. :(", Toast.LENGTH_SHORT)
@@ -852,176 +853,154 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
     }
 
     private void checkAnswer(int btnText, Button btnChoice, String gameType) {
+    // If the game is over (e.g., after a win or loss) then ignore further inputs.
     if (isGameOver) return;
+
+    // Play a sound effect for the click.
     playEffectSound("click.mp3");
 
+    // Check if the currentQuestionIndex is valid within the problemSet.
+    if (currentQuestionIndex >= problemSet.size()) {
+        // All questions have been processed.
+        launchResultsActivity(gameType);
+        return;
+    }
+
+    // Retrieve the correct answer for the current question.
     int actualAnswer = problemSet.get(currentQuestionIndex).getAnswer();
     boolean isCorrect = (btnText == actualAnswer);
-     
-     
-    
-        
 
     if (isCorrect) {
+        // Increase the score on a correct answer.
         score++;
         feedbackTextView.setText("Correct!");
         animateCorrectAnswer(btnChoice);
         playEffectSound("correct.mp3");
-            
-            
-            
-        if("quiz".equals(gameType)){
-           if (score == 21) {
-                    
-            int totalQuestions = problemSet.size();
-                    
-                    //Pass Data to Results Activity
-                    Intent intent = new Intent(MultipleChoicePage.this, Results.class);
-                    
-                      if (score == 20) {
-            intent.putExtra("EXTRA_RESULT", "Congratulations");
-        } else if (score > 15) {
-            intent.putExtra("EXTRA_RESULT", "Good Job!");
-        } else if (score > 5) {
-            intent.putExtra("EXTRA_RESULT", "Nice Try!");
-        } else {
-            intent.putExtra("EXTRA_RESULT", "Failed");
-        }
-                    intent.putExtra("quizid", quidId);
-                    intent.putExtra("passinglevelnext", levelNext);
-                    intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));  
-                    intent.putExtra("leveltype", levelid);
-                    intent.putExtra("passingworldtype",worldType);
-                    intent.putExtra("gametype",gameType);
-                    intent.putExtra("heartLimit", selHeart);
-                    intent.putExtra("timerLimit",selTimer);
-                    intent.putExtra("EXTRA_SCORE", score);
-                    intent.putExtra("EXTRA_TOTAL", totalQuestions);
-                    intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
-                    intent.putExtra("EXTRA_DIFFICULTY", difficulty);
-                    
-                    startActivity(intent);
-                           
+
+        // For quiz type games, check if the score or question index reaches a threshold
+        if ("quiz".equals(gameType)) {
+            // If the score has reached 21, or if you want to trigger at the end of the quiz.
+            if (score == 21) {
+                // Launch the results activity when the quiz condition is met.
+                launchResultsActivity(gameType);
+                return;
             }
-        }else{
-           if (currentQuestionIndex == 11) {
-                int totalQuestions = problemSet.size();
-                    
-                    //Pass Data to Results Activity
-                    Intent intent = new Intent(MultipleChoicePage.this, Results.class);
-                    
-                      if (score == 10) {
-            intent.putExtra("EXTRA_RESULT", "Congratulations");
-        } else if (score > 8) {
-            intent.putExtra("EXTRA_RESULT", "Good Job!");
-        } else if (score > 3) {
-            intent.putExtra("EXTRA_RESULT", "Nice Try!");
         } else {
-            intent.putExtra("EXTRA_RESULT", "Failed");
+            // For non-quiz game types, check if the question index has reached the limit.
+            if (currentQuestionIndex == 11) {
+                launchResultsActivity(gameType);
+                return;
+            }
         }
-                    intent.putExtra("quizid", quidId);
-                    intent.putExtra("passinglevelnext", levelNext);
-                    intent.putExtra("leveltype", levelid);
-                    intent.putExtra("passingworldtype",worldType);
-                    intent.putExtra("gametype",gameType);
-                    intent.putExtra("heartLimit", selHeart);
-                    intent.putExtra("timerLimit",selTimer);
-                    intent.putExtra("EXTRA_SCORE", score);
-                    intent.putExtra("EXTRA_TOTAL", totalQuestions);
-                    intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
-                    intent.putExtra("EXTRA_DIFFICULTY", difficulty);
-                    
-                    startActivity(intent);
-            } 
-                
-        }
-            
-            
-            
-    } else {
+    } else {  // For an incorrect answer.
         feedbackTextView.setText("Wrong! The correct answer is " + actualAnswer);
         animateIncorrectAnswer(btnChoice);
         playEffectSound("wrong.mp3");
-        heartLimit--;
+        heartLimit--; // Reduce a life.
         updateHeartDisplay();
 
-        if("quiz".equals(gameType)){   
-                //No Lives
-                
-           if (currentQuestionIndex > 21) {
-                int totalQuestions = problemSet.size();
-                    
-                    //Pass Data to Results Activity
-                    Intent intent = new Intent(MultipleChoicePage.this, Results.class);
-                    
-                      if (score == 20) {
-            intent.putExtra("EXTRA_RESULT", "Congratulations");
-        } else if (score > 15) {
-            intent.putExtra("EXTRA_RESULT", "Good Job!");
-        } else if (score > 5) {
-            intent.putExtra("EXTRA_RESULT", "Nice Try!");
+        // For quiz type games, if too many questions have been processed.
+        if ("quiz".equals(gameType)) {
+            if (currentQuestionIndex > 21) {
+                launchResultsActivity(gameType);
+                return;
+            }
         } else {
-            intent.putExtra("EXTRA_RESULT", "Failed");
-        }
-                    intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));  
-                    intent.putExtra("quizid", quidId);
-                    intent.putExtra("passinglevelnext", levelNext);
-                    intent.putExtra("leveltype", levelid);
-                    intent.putExtra("passingworldtype",worldType);
-                    intent.putExtra("gametype",gameType);
-                    intent.putExtra("heartLimit", selHeart);
-                    intent.putExtra("timerLimit",selTimer);
-                    intent.putExtra("EXTRA_SCORE", score);
-                    intent.putExtra("EXTRA_TOTAL", totalQuestions);
-                    intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
-                    intent.putExtra("EXTRA_DIFFICULTY", difficulty);
-                    
-                    startActivity(intent);
-            } 
-                
-          }else{
-             if (heartLimit == 0) {
-            playSound("failed.mp3");
-            showGameOver(gameType);
-            return;
+            // In non-quiz game types, check if no lives remain.
+            if (heartLimit == 0) {
+                playSound("failed.mp3");
+                showGameOver(gameType);
+                return;
+            }
         }
 
-          }      
-        
+        // If only one heart is left, you may want to add a visual effect.
         if (heartLimit == 1) {
             startVignetteEffect();
         }
 
+        // Highlight the correct answer for user feedback.
         highlightCorrectAnswer(actualAnswer);
     }
 
+    // Record the answered question.
     answeredQuestions.add(problemSet.get(currentQuestionIndex));
+    // Move on to the next question.
     currentQuestionIndex++;
-        
-        if("quiz".equals(gameType)){
-             // **Check if operation needs to switch every 5 questions**
-    if (currentQuestionIndex % 5 == 0 && !operationList.isEmpty()) {
-        switchOperation(difficulty);  // Use difficulty when switching
+
+    // Check if we have reached the end of the problemSet.
+    if (currentQuestionIndex >= problemSet.size()) {
+        // All questions have been answered, so launch the results screen.
+        launchResultsActivity(gameType);
+        return;
     }
 
+    // For quiz games: switch operations every 5 questions.
+    if ("quiz".equals(gameType)) {
+        if (currentQuestionIndex % 5 == 0 && !operationList.isEmpty()) {
+            switchOperation(difficulty);  // Use the current difficulty level when switching.
         }
-   
+    }
+
+    // Post a delay before generating the new question, allowing animations or feedback to complete.
     btnChoice.postDelayed(() -> {
+        // Clear any feedback message.
         feedbackTextView.setText("");
-                
-                if("quiz".equals(gameType)){
-                   if (currentQuestionIndex < 20) {
-            generateNewQuestionList(currentQuestionIndex, problemSet);
+
+        if ("quiz".equals(gameType)) {
+            // For quiz mode, check if there are more questions to generate.
+            if (currentQuestionIndex < 20) {
+                generateNewQuestionList(currentQuestionIndex, problemSet);
+            } else {
+                Toast.makeText(this, "All Questions Completed!", Toast.LENGTH_SHORT).show();
+            }
         } else {
-            Toast.makeText(this, "All Questions Completed!", Toast.LENGTH_SHORT).show();
+            // For non-quiz mode, generate the next question if available.
+            if (currentQuestionIndex < problemSet.size()) {
+                generateNewQuestion(currentQuestionIndex, problemSet);
+            }
         }
-                }else{
-                                       if (currentQuestionIndex < problemSet.size()) {
-                        generateNewQuestion(currentQuestionIndex, problemSet);
-                    }
-                }
-        
     }, 1000);
+}
+
+/**
+ * Helper method to prepare and launch the Results Activity.
+ * This method creates an intent, adds all necessary extras,
+ * and then starts the new activity. Adjust the threshold and extras as needed.
+ */
+private void launchResultsActivity(String gameType) {
+    int totalQuestions = problemSet.size();
+    Intent intent = new Intent(MultipleChoicePage.this, Results.class);
+
+    // Provide feedback messages based on the score.
+    if (("quiz".equals(gameType) && score == 20) || (!"quiz".equals(gameType) && score == 10)) {
+        intent.putExtra("EXTRA_RESULT", "Congratulations");
+    } else if (score > 15 || score > 8) {
+        intent.putExtra("EXTRA_RESULT", "Good Job!");
+    } else if (score > 5 || score > 3) {
+        intent.putExtra("EXTRA_RESULT", "Nice Try!");
+    } else {
+        intent.putExtra("EXTRA_RESULT", "Failed");
+    }
+    
+    // Pass necessary extras to the Results activity.
+    if ("quiz".equals(gameType)) {
+        intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));
+    }
+    intent.putExtra("quizid", quidId);
+    intent.putExtra("passinglevelnext", levelNext);
+    intent.putExtra("leveltype", levelid);
+    intent.putExtra("passingworldtype", worldType);
+    intent.putExtra("gametype", gameType);
+    intent.putExtra("heartLimit", selHeart);
+    intent.putExtra("timerLimit", selTimer);
+    intent.putExtra("EXTRA_SCORE", score);
+    intent.putExtra("EXTRA_TOTAL", totalQuestions);
+    intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
+    intent.putExtra("EXTRA_DIFFICULTY", difficulty);
+
+    // Start the Results activity.
+    startActivity(intent);
 }
 
     
