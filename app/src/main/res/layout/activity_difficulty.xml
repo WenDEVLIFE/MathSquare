@@ -56,10 +56,10 @@
              android:background="@drawable/btn_long_condition_green"
              android:textAlignment="gravity"
              android:fontFamily="@font/paytone_one"
-             android:paddingBottom="10dp"
+             android:paddingBottom="5dp"
              app:cornerRadius="2sp"
              android:id="@+id/btn_easy"
-             android:paddingTop="10dp"
+             android:paddingTop="5dp"
              android:text="Grade 1" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -71,10 +71,10 @@
              android:background="@drawable/btn_long_condition_green"
              android:textAlignment="gravity"
              android:fontFamily="@font/paytone_one"
-             android:paddingBottom="10dp"
+             android:paddingBottom="5dp"
              app:cornerRadius="2sp"
              android:id="@+id/btn_easy_two"
-             android:paddingTop="10dp"
+             android:paddingTop="5dp"
              android:text="Grade 2" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -86,10 +86,10 @@
              android:background="@drawable/btn_long_condition_green"
              android:textAlignment="gravity"
              android:fontFamily="@font/paytone_one"
-             android:paddingBottom="10dp"
+             android:paddingBottom="5dp"
              app:cornerRadius="2sp"
              android:id="@+id/btn_easy_three"
-             android:paddingTop="10dp"
+             android:paddingTop="5dp"
              android:text="Grade 3" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -98,12 +98,12 @@
              android:background="@drawable/btn_long_condition"
              android:textAlignment="gravity"
              android:fontFamily="@font/paytone_one"
-             android:paddingBottom="10dp"
+             android:paddingBottom="5dp"
              android:textSize="23sp"
              app:cornerRadius="2sp"
              android:textColor="#FFFFFF"
              android:id="@+id/btn_next"
-             android:paddingTop="10dp"
+             android:paddingTop="5dp"
              android:text="Next" />
 
     </LinearLayout>
@@ -130,10 +130,10 @@
              android:background="@drawable/btn_long_condition_green"
              android:textAlignment="gravity"
              android:fontFamily="@font/paytone_one"
-             android:paddingBottom="10dp"
+             android:paddingBottom="5dp"
              app:cornerRadius="2sp"
              android:id="@+id/btn_medium"
-             android:paddingTop="10dp"
+             android:paddingTop="5dp"
              android:text="Grade 4" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -145,10 +145,10 @@
              android:background="@drawable/btn_long_condition_green"
              android:textAlignment="gravity"
              android:fontFamily="@font/paytone_one"
-             android:paddingBottom="10dp"
+             android:paddingBottom="5dp"
              app:cornerRadius="2sp"
              android:id="@+id/btn_hard"
-             android:paddingTop="10dp"
+             android:paddingTop="5dp"
              android:text="Grade 5" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -160,10 +160,10 @@
              android:background="@drawable/btn_long_condition_green"
              android:textAlignment="gravity"
              android:fontFamily="@font/paytone_one"
-             android:paddingBottom="10dp"
+             android:paddingBottom="5dp"
              app:cornerRadius="2sp"
              android:id="@+id/btn_superhard"
-             android:paddingTop="10dp"
+             android:paddingTop="5dp"
              android:text="Grade 6" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -172,12 +172,12 @@
              android:background="@drawable/btn_long_condition"
              android:textAlignment="gravity"
              android:fontFamily="@font/paytone_one"
-             android:paddingBottom="10dp"
+             android:paddingBottom="5dp"
              android:textSize="23sp"
              app:cornerRadius="2sp"
              android:textColor="#FFFFFF"
              android:id="@+id/btn_back"
-             android:paddingTop="10dp"
+             android:paddingTop="5dp"
              android:text="Back" />
 
     </LinearLayout>

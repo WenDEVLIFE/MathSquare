@@ -36,7 +36,7 @@
                  android:layout_height="wrap_content"
                  android:layout_width="match_parent"
                  android:gravity="center_horizontal"
-                 android:layout_marginHorizontal="28dp"
+                 android:layout_marginHorizontal="20dp"
                  android:shadowRadius="4"
                  android:textSize="23sp"
                  android:fontFamily="@font/paytone_one"
@@ -70,10 +70,10 @@
                  android:background="@drawable/btn_addition_tuts"
                  android:textAlignment="gravity"
                  android:fontFamily="@font/paytone_one"
-                 android:paddingBottom="10dp"
+                 android:paddingBottom="5dp"
                  app:cornerRadius="2sp"
                  android:id="@+id/btn_tut_addition"
-                 android:paddingTop="10dp"
+                 android:paddingTop="5dp"
                  android:text="Addition" />
 
             <androidx.appcompat.widget.AppCompatButton
@@ -85,10 +85,10 @@
                  android:background="@drawable/btn_multiplication_tuts"
                  android:textAlignment="gravity"
                  android:fontFamily="@font/paytone_one"
-                 android:paddingBottom="10dp"
+                 android:paddingBottom="5dp"
                  app:cornerRadius="2sp"
                  android:id="@+id/btn_tut_multiplication"
-                 android:paddingTop="10dp"
+                 android:paddingTop="5dp"
                  android:text="Multiplication" />
 
             <androidx.appcompat.widget.AppCompatButton
@@ -100,10 +100,10 @@
                  android:background="@drawable/btn_division_tuts"
                  android:textAlignment="gravity"
                  android:fontFamily="@font/paytone_one"
-                 android:paddingBottom="10dp"
+                 android:paddingBottom="5dp"
                  app:cornerRadius="2sp"
                  android:id="@+id/btn_tut_division"
-                 android:paddingTop="10dp"
+                 android:paddingTop="5dp"
                  android:text="Division" />
 
             <androidx.appcompat.widget.AppCompatButton
@@ -115,10 +115,10 @@
                  android:background="@drawable/btn_subtraction_tuts"
                  android:textAlignment="gravity"
                  android:fontFamily="@font/paytone_one"
-                 android:paddingBottom="10dp"
+                 android:paddingBottom="5dp"
                  app:cornerRadius="2sp"
                  android:id="@+id/btn_tut_subtraction"
-                 android:paddingTop="10dp"
+                 android:paddingTop="5dp"
                  android:text="Subtraction" />
 
         </LinearLayout>

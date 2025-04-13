@@ -174,7 +174,6 @@
                                      android:layout_height="match_parent"
                                      android:layout_width="match_parent"
                                      android:gravity="center"
-                                     android:background="@drawable/btn_short_condition_off"
                                      android:orientation="vertical"
                                      android:id="@+id/level_two_box">
 
@@ -200,7 +199,7 @@
                                  android:layout_width="match_parent"
                                  android:src="@drawable/ic_star_none"
                                  android:translationY="-90dp"
-                                 android:id="@+id/ic_stars_two"
+                                 android:id="@+id/level_two_stars"
                                  android:layout_gravity="center" />
 
                             <ImageView
@@ -239,7 +238,6 @@
                                      android:layout_height="match_parent"
                                      android:layout_width="match_parent"
                                      android:gravity="center"
-                                     android:background="@drawable/btn_short_condition_off"
                                      android:orientation="vertical">
 
                                     <TextView
@@ -313,7 +311,6 @@
                                  android:layout_height="match_parent"
                                  android:layout_width="match_parent"
                                  android:gravity="center"
-                                 android:background="@drawable/btn_short_condition_off"
                                  android:orientation="vertical">
 
                                 <TextView
@@ -379,7 +376,6 @@
                                  android:layout_height="match_parent"
                                  android:layout_width="match_parent"
                                  android:gravity="center"
-                                 android:background="@drawable/btn_short_condition_off"
                                  android:orientation="vertical">
 
                                 <TextView
@@ -444,7 +440,6 @@
                                  android:layout_height="match_parent"
                                  android:layout_width="match_parent"
                                  android:gravity="center"
-                                 android:background="@drawable/btn_short_condition_off"
                                  android:orientation="vertical">
 
                                 <TextView
@@ -521,7 +516,6 @@
                              android:layout_height="match_parent"
                              android:layout_width="match_parent"
                              android:gravity="center"
-                             android:background="@drawable/btn_short_condition_off"
                              android:orientation="vertical">
 
                             <TextView
@@ -587,7 +581,6 @@
                              android:layout_height="match_parent"
                              android:layout_width="match_parent"
                              android:gravity="center"
-                             android:background="@drawable/btn_short_condition_off"
                              android:orientation="vertical">
 
                             <TextView
@@ -651,7 +644,6 @@
                              android:layout_height="match_parent"
                              android:layout_width="match_parent"
                              android:gravity="center"
-                             android:background="@drawable/btn_short_condition_off"
                              android:orientation="vertical">
 
                             <TextView
@@ -725,7 +717,6 @@
                              android:layout_height="match_parent"
                              android:layout_width="match_parent"
                              android:gravity="center"
-                             android:background="@drawable/btn_short_condition_off"
                              android:orientation="vertical">
 
                             <TextView
