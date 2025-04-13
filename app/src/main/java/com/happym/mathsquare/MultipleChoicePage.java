@@ -913,11 +913,16 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
                 return;
             }
         }
-
-        // If only one heart is left, you may want to add a visual effect.
+        
+        if ("quiz".equals(gameType)) {
+            
+            }else{
+                 // If only one heart is left, you may want to add a visual effect.
         if (heartLimit == 1) {
             startVignetteEffect();
         }
+            }
+       
 
         // Highlight the correct answer for user feedback.
         highlightCorrectAnswer(actualAnswer);

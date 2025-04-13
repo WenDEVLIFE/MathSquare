@@ -20,8 +20,11 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import android.animation.Animator;
@@ -77,6 +80,7 @@ private MediaPlayer soundEffectPlayer;
     private int selHeart, selTimer;
    private ArrayList<String> operationList;
    private String quizIds;
+   private String starRating;
       private int number;    
     private FrameLayout numberContainer,backgroundFrame;
     private final Random random = new Random();
@@ -178,8 +182,8 @@ showScore.setText(scoreDisplay);
        
 // Display Motivational message based on the result
 switch (getResult) {
-    case "Congratulations!":
-            
+    case "Congratulations":
+     playSound("victory.mp3");       
             if(sharedPreferences.StudentIsLoggedIn(this)){
                 
                    sendScoreResult(getScore,getQuiz,gameType,levelType,levelNext,worldType,difficulty);
@@ -189,6 +193,7 @@ switch (getResult) {
         showMotive.setText("Excellent!");
         break;
     case "Good Job!":
+    playSound("victory.mp3");      
             if(sharedPreferences.StudentIsLoggedIn(this)){
                    sendScoreResult(getScore,getQuiz,gameType,levelType,levelNext,worldType,difficulty);
                 
@@ -197,6 +202,7 @@ switch (getResult) {
         showMotive.setText("Keep it Up!");
         break;
     case "Nice Try!":
+    playSound("victory.mp3");      
             if(sharedPreferences.StudentIsLoggedIn(this)){
                    sendScoreResult(getScore,getQuiz,gameType,levelType,levelNext,worldType,difficulty);
                 
@@ -440,6 +446,7 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
     studentDataQuiz.put("firstName", firstName);
     studentDataQuiz.put("lastName", lastName);
     studentDataQuiz.put("section", section);
+    studentDataQuiz.put("gameType", "Quiz");
     studentDataQuiz.put("grade", grade);
        studentDataQuiz.put("timestamp", FieldValue.serverTimestamp());           
     studentDataQuiz.put("quizno", quizname);
@@ -452,164 +459,184 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
     OnTimerData.put("lastName", lastName);
     OnTimerData.put("section", section);
     OnTimerData.put("grade", grade);
+    OnTimerData.put("gameType", "OnTimer");
        OnTimerData.put("quizno", "OnTimer");
         OnTimerData.put("quizno_int", number); 
      OnTimerData.put("timestamp", FieldValue.serverTimestamp());             
     OnTimerData.put("ontimer_difficulty", OnTimerDifficulty);
-    OnTimerData.put("ontimer_score", String.valueOf(Score));
+    OnTimerData.put("quizscore", String.valueOf(Score));
 
     // Create a HashMap to store Practice mode data.
     HashMap<String, Object> PracticeData = new HashMap<>();
     PracticeData.put("firstName", firstName);
     PracticeData.put("lastName", lastName);
     PracticeData.put("section", section);
+    PracticeData.put("gameType", "Practice");
     PracticeData.put("grade", grade);
        PracticeData.put("quizno_int", number); 
        PracticeData.put("quizno", "Practice");
        PracticeData.put("timestamp", FieldValue.serverTimestamp());           
     PracticeData.put("practice_difficulty", OnTimerDifficulty);
-    PracticeData.put("practice_score", String.valueOf(Score));
+    PracticeData.put("quizscore", String.valueOf(Score));
 
-    // Create a HashMap for passing level data.
-    HashMap<String, Object> passingData = new HashMap<>();
-    passingData.put("firstName", firstName);
-    passingData.put("lastName", lastName);
-    passingData.put("section", section);
-    passingData.put("grade", grade);
-       passingData.put("quizno_int", number); 
-        passingData.put("quizno", "Passing");
-       passingData.put("timestamp", FieldValue.serverTimestamp());           
-    passingData.put("passing_level_must_complete", nextlevel);
-    passingData.put("passing_level", levelNum);
-    passingData.put("passing_" + levelNum + "_score", String.valueOf(Score));
+  // Create a HashMap for passing level data.
+HashMap<String, Object> passingData = new HashMap<>();
+passingData.put("firstName", firstName);
+passingData.put("gameType", "Passing");
+passingData.put("lastName", lastName);
+passingData.put("section", section);
+passingData.put("grade", grade);
+passingData.put("quizno_int", number); 
+passingData.put("quizno", "Passing_" + levelNum);
+passingData.put("timestamp", FieldValue.serverTimestamp());
+passingData.put("passing_level_must_complete", nextlevel);
+passingData.put("quizscore", String.valueOf(Score));
 
-    // Determine star rating based on the score and update passingData accordingly.
-    if (Score >= 1 && Score <= 4) {
-        passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));
-        passingData.put("passing_" + levelNum, "1 Star");
-    } else if (Score >= 5 && Score <= 9) {
-        passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));
-        passingData.put("passing_" + levelNum, "2 Stars");
-    } else if (Score > 10) {
-        passingData.put("passing_" + levelNum + "_" + worldType, String.valueOf(Score));
-        passingData.put("passing_" + levelNum, "3 Stars");
-    }
+// Determine star rating based on the score
+String scoreStr = String.valueOf(Score);
+switch (scoreStr) {
+    case "1": case "2": case "3": case "4":
+        starRating = "1 Stars";
+        break;
+    case "5": case "6": case "7": case "8": case "9":
+        starRating = "2 Stars";
+        break;
+    default:
+        starRating = "3 Stars";
+        break;
+}
 
-    // Process based on the type of game.
-    if ("Passing".equals(gametype)) {
-        // Reference the Firebase collection for MathSquare students.
-        CollectionReference collectionRef = db.collection("Accounts")
-            .document("Students")
-            .collection("MathSquare");
+// Prepare the new stars entry for the current level.
+String newStarsEntry = levelNum + "_" + starRating;
+// Create an initial starsHistory list with the new entry.
+List<String> starsHistory = new ArrayList<>();
+starsHistory.add(newStarsEntry);
 
-        // Query for a document matching the student's first name, last name,
-        // and the next level that must be completed.
-        collectionRef.whereEqualTo("firstName", firstName)
-            .whereEqualTo("lastName", lastName)
-            .whereEqualTo("passing_level_must_complete", nextlevel)
-            .get()
-            .addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    if (!task.getResult().isEmpty()) {
-                        // If a matching document exists, update it.
-                        for (DocumentSnapshot document : task.getResult()) {
-                            DocumentReference docRef = collectionRef.document(document.getId());
+// Put the final starRating back into passingData
+passingData.put("stars_passing_" + levelNum, starRating);
+passingData.put("stars_list", starsHistory);
 
-                            // Determine which fields to update based on the worldType.
-                            if (worldType.equals("world_one")) {
-                                completedLevelsField = "passing_completed_world_one_levels";
-                                worldCompletedField = "passing_world_one_completed";
-                            } else if (worldType.equals("world_two")) {
-                                completedLevelsField = "passing_completed_world_two_levels";
-                                worldCompletedField = "passing_world_two_completed";
-                            } else if (worldType.equals("world_three")) {
-                                completedLevelsField = "passing_completed_world_three_levels";
-                                worldCompletedField = "passing_world_three_completed";
-                            } else if (worldType.equals("world_four")) {
-                                completedLevelsField = "passing_completed_world_four_levels";
-                                worldCompletedField = "passing_world_four_completed";
-                            } else if (worldType.equals("world_five")) {
-                                completedLevelsField = "passing_completed_world_five_levels";
-                                worldCompletedField = "passing_world_five_completed";
-                            }
+if ("Passing".equals(gametype)) {
+    CollectionReference collectionRef = db.collection("Accounts")
+        .document("Students")
+        .collection("MathSquare");
 
-                            // Update the array of completed levels.
-                            if (!completedLevelsField.isEmpty()) {
-                                docRef.get().addOnSuccessListener(snapshot -> {
-                                    if (snapshot.exists()) {
-                                        // Retrieve the current list of completed levels.
-                                        List<String> completedLevels = (List<String>) snapshot.get(completedLevelsField);
-                                        if (completedLevels == null) {
-                                            // If the array does not exist, create it with the current level.
-                                            docRef.update(completedLevelsField, Arrays.asList(levelNum))
-                                                .addOnSuccessListener(aVoid -> {
-                                                    loadingDialog.dismiss();
-                                                    Toast.makeText(this, "New level tracking created", Toast.LENGTH_SHORT).show();
-                                                })
-                                                .addOnFailureListener(e -> {
-                                                    loadingDialog.dismiss();
-                                                    Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                                });
-                                        } else {
-                                            // If the array exists, add the new level without overwriting existing data.
-                                            docRef.update(completedLevelsField, FieldValue.arrayUnion(levelNum))
-                                                .addOnSuccessListener(aVoid -> {
-                                                    loadingDialog.dismiss();
-                                                    Toast.makeText(this, "Level updated successfully", Toast.LENGTH_SHORT).show();
-                                                })
-                                                .addOnFailureListener(e -> {
-                                                    loadingDialog.dismiss();
-                                                    Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                                });
-                                        }
-                                    }
-                                });
-                            }
+    collectionRef.whereEqualTo("firstName", firstName)
+      .whereEqualTo("lastName", lastName)
+      .whereEqualTo("gameType", "Passing")
+      .get()
+      .addOnCompleteListener(task -> {
+          if (!task.isSuccessful()) {
+              loadingDialog.dismiss();
+              Toast.makeText(this, "Error fetching data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+              return;
+          }
 
-                            // If the level completed is "level_10", update the world completion status.
-                            if (levelNum.equals("level_10")) {
-                                docRef.update(worldCompletedField, worldType)
-                                    .addOnSuccessListener(aVoid -> {
-                                        loadingDialog.dismiss();
-                                        Toast.makeText(this, worldType + " completed!", Toast.LENGTH_SHORT).show();
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        loadingDialog.dismiss();
-                                        Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                    });
+          if (!task.getResult().isEmpty()) {
+              // Existing student
+              for (DocumentSnapshot document : task.getResult()) {
+                  DocumentReference docRef = collectionRef.document(document.getId());
 
-                                // Determine the next world based on the current world.
-                                String nextWorld = "";
-                                if (worldType.equals("world_one")) nextWorld = "world_two";
-                                else if (worldType.equals("world_two")) nextWorld = "world_three";
-                                else if (worldType.equals("world_three")) nextWorld = "world_four";
-                                else if (worldType.equals("world_four")) nextWorld = "world_five";
-                                else if (worldType.equals("world_five")) nextWorld = "world_soon";
+                  docRef.get().addOnSuccessListener(snapshot -> {
+                      if (!snapshot.exists()) return;
 
-                                // Update the next world field in the document.
-                                docRef.update("passing_next_world", nextWorld);
-                            }
-                        }
-                    } else {
-                        // If no matching document exists, add a new document with passingData.
-                        collectionRef.add(passingData)
-                            .addOnSuccessListener(aVoid -> {
-                                loadingDialog.dismiss();
-                                Toast.makeText(this, "New record added", Toast.LENGTH_SHORT).show();
-                            })
-                            .addOnFailureListener(e -> {
-                                loadingDialog.dismiss();
-                                Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            });
-                    }
-                }
-            })
-            .addOnFailureListener(e -> {
-                loadingDialog.dismiss();
-                Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            });
+                      // Retrieve the current completed levels
+                      List<String> completedLevels = (List<String>) snapshot.get("passing_completed_levels");
+                      if (completedLevels == null) completedLevels = new ArrayList<>();
 
-    } else if ("quiz".equals(gametype)) {
+                      // Merge the stars_list: get the existing list then update with the new entry.
+                      List<String> existingStarsList = (List<String>) snapshot.get("stars_list");
+                      if (existingStarsList == null) {
+                          existingStarsList = new ArrayList<>();
+                      }
+                      // Remove any existing entry for the current level
+                      Iterator<String> iterator = existingStarsList.iterator();
+                      while (iterator.hasNext()) {
+                          String entry = iterator.next();
+                          if (entry.startsWith(levelNum + "_")) {
+                              iterator.remove();
+                          }
+                      }
+                      // Add the new entry
+                      existingStarsList.add(newStarsEntry);
+                      // Sort the list numerically based on the numeric part of the level string
+                      Collections.sort(existingStarsList, (a, b) -> {
+                          int numA = Integer.parseInt(a.replaceAll("\\D+", ""));
+                          int numB = Integer.parseInt(b.replaceAll("\\D+", ""));
+                          return Integer.compare(numA, numB);
+                      });
+
+                      // Update the main record if this level isn't already marked complete.
+                      if (!completedLevels.contains(levelNum)) {
+                          completedLevels.add(levelNum);
+                          Collections.sort(completedLevels, (a, b) -> {
+                              int na = Integer.parseInt(a.replaceAll("\\D+", ""));
+                              int nb = Integer.parseInt(b.replaceAll("\\D+", ""));
+                              return Integer.compare(na, nb);
+                          });
+                          docRef.update(
+                              "passing_completed_levels", completedLevels,
+                              "stars_list", existingStarsList,
+                              "passing_level_must_complete", nextlevel
+                          )
+                          .addOnSuccessListener(aVoid ->
+                              Toast.makeText(this, "Main record updated", Toast.LENGTH_SHORT).show()
+                          )
+                          .addOnFailureListener(e ->
+                              Toast.makeText(this, "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                          );
+                      }
+
+                      // Create a new PassingHistory entry that contains the new stars entry.
+                      Map<String, Object> historyData = new HashMap<>();
+                      historyData.put("level", levelNum);
+                      historyData.put("score", Score);
+                      historyData.put("stars", starRating);
+                      historyData.put("timestamp", FieldValue.serverTimestamp());
+
+                      docRef.collection("PassingHistory")
+                          .add(historyData)
+                          .addOnSuccessListener(aVoid -> {
+                              loadingDialog.dismiss();
+                              Toast.makeText(this, "Passing history saved", Toast.LENGTH_SHORT).show();
+                          })
+                          .addOnFailureListener(e -> {
+                              loadingDialog.dismiss();
+                              Toast.makeText(this, "History save failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                          });
+                  });
+              }
+          } else {
+              // New student: create main record + first history entry
+              passingData.put("passing_completed_levels", Arrays.asList(levelNum));
+
+              collectionRef.add(passingData)
+                  .addOnSuccessListener(docRef -> {
+                      // Build first history entry
+                      Map<String, Object> historyData = new HashMap<>();
+                      historyData.put("level", levelNum);
+                      historyData.put("score", Score);
+                      historyData.put("stars", starRating);
+                      historyData.put("timestamp", FieldValue.serverTimestamp());
+
+                      docRef.collection("PassingHistory")
+                          .add(historyData)
+                          .addOnSuccessListener(aVoid -> {
+                              loadingDialog.dismiss();
+                              Toast.makeText(this, "Student and history created", Toast.LENGTH_SHORT).show();
+                          })
+                          .addOnFailureListener(e -> {
+                              loadingDialog.dismiss();
+                              Toast.makeText(this, "Failed saving history: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                          });
+                  })
+                  .addOnFailureListener(e -> {
+                      loadingDialog.dismiss();
+                      Toast.makeText(this, "Error creating student: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                  });
+          }
+      });
+} else if ("quiz".equals(gametype)) {
         // Process for quiz game type.
         CollectionReference collectionRef = db.collection("Accounts")
             .document("Students")
@@ -618,7 +645,7 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
         // Query for an existing quiz record with "quizno" set to "N/A".
         collectionRef.whereEqualTo("firstName", firstName)
             .whereEqualTo("lastName", lastName)
-            .whereEqualTo("quizno", "N/A")
+             .whereEqualTo("quizno", "N/A")
             .get()
             .addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
@@ -676,6 +703,7 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
         // Query for an existing OnTimer record matching the student's difficulty level.
         collectionRef.whereEqualTo("firstName", firstName)
             .whereEqualTo("lastName", lastName)
+            .whereEqualTo("gameType", "OnTimer")
             .get()
             .addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
@@ -725,7 +753,7 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
         // Query for an existing Practice record where practice_score is set to "None".
         collectionRef.whereEqualTo("firstName", firstName)
             .whereEqualTo("lastName", lastName)
-            .whereEqualTo("practice_score", "None")
+            .whereEqualTo("gameType", "Practice")
             .get()
             .addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
