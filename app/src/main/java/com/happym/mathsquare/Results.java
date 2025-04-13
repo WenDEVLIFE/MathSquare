@@ -414,44 +414,32 @@ private void sendScoreResult(int Score, String quizid, String gametype, String l
     String firstName = sharedPreferences.getFirstN(this);
     String lastName = sharedPreferences.getLastN(this);
     
-    
-    // Cre;ate a quiz name based on quizid and generate a random UUID (if needed later).
-    if("quiz_1".equals(quizid)){
-        quizIds = "Quiz 1";
-           number = 1;
-    }else if("quiz_2".equals(quizid)){
-        quizIds = "Quiz 2";
-           number = 2;
-    }else if("quiz_3".equals(quizid)){
-        quizIds = "Quiz 3";
-           number = 3;
-    }else if("quiz_4".equals(quizid)){
-        quizIds = "Quiz 4";
-           number = 4;
-    } else if("quiz_5".equals(quizid)){
-        quizIds = "Quiz 5";
-            number = 5;
-    }else if("quiz_6".equals(quizid)){
-        quizIds = "Quiz 6";
-           number = 6;
-    }else{
-       number = 1;
-    }
-        
-    String quizname = quizIds;
-    String uuid = UUID.randomUUID().toString(); // Generate a random UUID
+    // Determine quiz name & number
+int number;
+switch (quizid) {
+    case "quiz_1": quizIds = "Quiz 1"; number = 1; break;
+    case "quiz_2": quizIds = "Quiz 2"; number = 2; break;
+    case "quiz_3": quizIds = "Quiz 3"; number = 3; break;
+    case "quiz_4": quizIds = "Quiz 4"; number = 4; break;
+    case "quiz_5": quizIds = "Quiz 5"; number = 5; break;
+    case "quiz_6": quizIds = "Quiz 6"; number = 6; break;
+    default:       quizIds = "Quiz 1"; number = 1; break;
+}
 
-    // Create a HashMap to store quiz-related data.
-    HashMap<String, Object> studentDataQuiz = new HashMap<>();
-    studentDataQuiz.put("firstName", firstName);
-    studentDataQuiz.put("lastName", lastName);
-    studentDataQuiz.put("section", section);
-    studentDataQuiz.put("gameType", "Quiz");
-    studentDataQuiz.put("grade", grade);
-       studentDataQuiz.put("timestamp", FieldValue.serverTimestamp());           
-    studentDataQuiz.put("quizno", quizname);
-    studentDataQuiz.put("quizno_int", number);    
-    studentDataQuiz.put("quizscore", String.valueOf(Score));
+quizname = quizIds;
+String uuid     = UUID.randomUUID().toString();
+
+// Common data map
+Map<String, Object> studentDataQuiz = new HashMap<>();
+studentDataQuiz.put("firstName", firstName);
+studentDataQuiz.put("lastName", lastName);
+studentDataQuiz.put("section", section);
+studentDataQuiz.put("gameType", "Quiz");
+studentDataQuiz.put("grade", grade);
+studentDataQuiz.put("timestamp", FieldValue.serverTimestamp());
+studentDataQuiz.put("quizno", quizname);
+studentDataQuiz.put("quizno_int", number);
+studentDataQuiz.put("quizscore", String.valueOf(Score));
 
     // Create a HashMap to store OnTimer mode data.
     HashMap<String, Object> OnTimerData = new HashMap<>();
@@ -637,62 +625,61 @@ if ("Passing".equals(gametype)) {
           }
       });
 } else if ("quiz".equals(gametype)) {
-        // Process for quiz game type.
-        CollectionReference collectionRef = db.collection("Accounts")
-            .document("Students")
-            .collection("MathSquare");
+    
+CollectionReference collectionRef = db
+    .collection("Accounts")
+    .document("Students")
+    .collection("MathSquare");
 
-        // Query for an existing quiz record with "quizno" set to "N/A".
-        collectionRef.whereEqualTo("firstName", firstName)
-            .whereEqualTo("lastName", lastName)
-             .whereEqualTo("quizno", "N/A")
-            .get()
-            .addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    if (!task.getResult().isEmpty()) {
-                        // If an existing record is found, replace it with the new quiz data.
-                        for (DocumentSnapshot document : task.getResult()) {
-                            collectionRef.document(document.getId())
-                                .set(studentDataQuiz)
-                                .addOnSuccessListener(aVoid -> {
-                                    loadingDialog.dismiss();
-                                    Toast.makeText(this, "Quiz updated successfully", Toast.LENGTH_SHORT).show();
-                                })
-                                .addOnFailureListener(e -> {
-                                    loadingDialog.dismiss();
-                                    Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                });
-                        }
-                    } else {
-                        // If no record exists, add a new quiz record.
-                        collectionRef.add(studentDataQuiz)
-                            .addOnSuccessListener(aVoid -> {
-                                loadingDialog.dismiss();
-                                Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show();
-                            })
-                            .addOnFailureListener(e -> {
-                                loadingDialog.dismiss();
-                                Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            });
-                    }
-                } else {
-                    // In case of query failure, attempt to add a new document.
-                    Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                    collectionRef.add(studentDataQuiz)
-                        .addOnSuccessListener(aVoid -> {
-                            loadingDialog.dismiss();
-                            Toast.makeText(this, "New quiz record added", Toast.LENGTH_SHORT).show();
-                        })
-                        .addOnFailureListener(e -> {
-                            loadingDialog.dismiss();
-                            Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        });
-                }
-            })
-            .addOnFailureListener(e -> {
-                loadingDialog.dismiss();
-                Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            });
+// Query for an existing quiz by integer quiz number
+collectionRef
+    .whereEqualTo("firstName", firstName)
+    .whereEqualTo("lastName", lastName)
+    .whereEqualTo("quizno_int", number)
+    .get()
+    .addOnCompleteListener(task -> {
+        loadingDialog.dismiss();
+        if (!task.isSuccessful()) {
+            Toast.makeText(this, 
+                "Error checking student data: " + task.getException().getMessage(),
+                Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (!task.getResult().isEmpty()) {
+            // Update existing record(s)
+            for (DocumentSnapshot doc : task.getResult()) {
+                DocumentReference docRef = collectionRef.document(doc.getId());
+                Map<String, Object> updates = new HashMap<>();
+                updates.put("quizscore", String.valueOf(Score));
+                updates.put("quizno_int", number);
+                updates.put("timestamp", FieldValue.serverTimestamp());
+                // If you also want to update quizno or other fields, add them here
+
+                docRef.update(updates)
+                    .addOnSuccessListener(aVoid ->
+                        Toast.makeText(this, "Quiz updated successfully", 
+                                       Toast.LENGTH_SHORT).show())
+                    .addOnFailureListener(e ->
+                        Toast.makeText(this, "Error updating: " + e.getMessage(),
+                                       Toast.LENGTH_LONG).show());
+            }
+        } else {
+            // No existing quiz, so add new document
+            collectionRef.add(studentDataQuiz)
+                .addOnSuccessListener(aVoid ->
+                    Toast.makeText(this, "New quiz record added", 
+                                   Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e ->
+                    Toast.makeText(this, "Error adding: " + e.getMessage(),
+                                   Toast.LENGTH_LONG).show());
+        }
+    })
+    .addOnFailureListener(e -> {
+        loadingDialog.dismiss();
+        Toast.makeText(this, "Error fetching student data: " + e.getMessage(),
+                       Toast.LENGTH_LONG).show();
+    });
 
     } else if ("OnTimer".equals(gametype)) {
         // Process for OnTimer game type.
