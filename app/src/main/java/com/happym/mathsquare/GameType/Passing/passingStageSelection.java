@@ -23,6 +23,7 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.view.WindowCompat;
 
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.happym.mathsquare.MusicManager;
 import com.happym.mathsquare.dashboard_StudentsPanel;
@@ -72,7 +73,10 @@ import android.animation.ObjectAnimator;
 import android.animation.AnimatorSet;
 import android.view.animation.BounceInterpolator;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -86,8 +90,12 @@ public class passingStageSelection extends AppCompatActivity {
             levelsix, levelseven, leveleight, levelnine, levelten;
     private ImageView flashone, flashtwo, flashthree, flashfour, flashfive,
             flashsix, flashseven, flasheight, flashnine, flashten;
+    private ImageView levelOneStar, levelTwoStar, levelThreeStar,
+        levelFourStar, levelFiveStar, levelSixStar,
+        levelSevenStar, levelEightStar, levelNineStar, levelTenStar;
+
     private MediaPlayer soundEffectPlayer;
-    private String difficultySection;
+    private String difficultySection, passingNextLevel;
     private FrameLayout numberContainer,backgroundFrame;
     private final Random random = new Random();
     private final int[] numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -158,6 +166,8 @@ public class passingStageSelection extends AppCompatActivity {
         leveleight = findViewById(R.id.level_eight);
         levelnine = findViewById(R.id.level_nine);
         levelten = findViewById(R.id.level_ten);
+        
+        
 
         flashone = findViewById(R.id.level_one_flash_box);
         flashtwo = findViewById(R.id.level_two_flash_box);
@@ -169,6 +179,18 @@ public class passingStageSelection extends AppCompatActivity {
         flasheight = findViewById(R.id.level_eight_flash_box);
         flashnine = findViewById(R.id.level_nine_flash_box);
         flashten = findViewById(R.id.level_ten_flash_box);
+        
+        levelOneStar = findViewById(R.id.level_one_stars);
+levelTwoStar = findViewById(R.id.level_two_stars);
+levelThreeStar = findViewById(R.id.level_three_stars);
+levelFourStar = findViewById(R.id.level_four_stars);
+levelFiveStar = findViewById(R.id.level_five_stars);
+levelSixStar = findViewById(R.id.level_six_stars);
+levelSevenStar = findViewById(R.id.level_seven_stars);
+levelEightStar = findViewById(R.id.level_eight_stars);
+levelNineStar = findViewById(R.id.level_nine_stars);
+levelTenStar = findViewById(R.id.level_ten_stars);
+
         
         
         ImageView operationDisplayIcon = findViewById(R.id.difficultyImage);
@@ -189,6 +211,14 @@ if ("Addition".equals(operation)) {
         
         animateButtonFocus(levelone);
         animateButtonFocus(flashone);
+        
+         // Array of game types
+String[] gameTypes = {
+    "passing_level_1", "passing_level_2", "passing_level_3", "passing_level_4", 
+    "passing_level_5", "passing_level_6", "passing_level_7", "passing_level_8", 
+    "passing_level_9", "passing_level_10"
+};
+
 
         // Add levels and flashboxes to arrays for iteration
         FrameLayout[] levels = {
@@ -201,144 +231,195 @@ if ("Addition".equals(operation)) {
                 flashsix, flashseven, flasheight, flashnine, flashten
         };
         
-        // Array of game types
-String[] gameTypes = {
-    "passing_level_1", "passing_level_2", "passing_level_3", "passing_level_4", 
-    "passing_level_5", "passing_level_6", "passing_level_7", "passing_level_8", 
-    "passing_level_9", "passing_level_10"
+        ImageView[] starViews = {
+    levelOneStar, levelTwoStar, levelThreeStar, levelFourStar, levelFiveStar,
+    levelSixStar, levelSevenStar, levelEightStar, levelNineStar, levelTenStar
 };
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
         
+       
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
         
-       String section = sharedPreferences.getSection(this);
+    String section = sharedPreferences.getSection(this);
     String grade = sharedPreferences.getGrade(this);
     String firstName = sharedPreferences.getFirstN(this);
     String lastName = sharedPreferences.getLastN(this);
-        
-CollectionReference collectionRef = db.collection("Accounts")
-        .document("Students")
-        .collection("MathSquare");
+    
+    CollectionReference collectionRef = db.collection("Accounts")
+    .document("Students")
+    .collection("MathSquare");
 
-// Query to retrieve the document based on firstName, lastName, section, and grade
+// Query to retrieve the student record
 collectionRef.whereEqualTo("firstName", firstName)
-        .whereEqualTo("lastName", lastName)
-        .whereEqualTo("section", section)
-        .whereEqualTo("grade", grade)
-        .get()
-        .addOnSuccessListener(queryDocumentSnapshots -> {
-            if (!queryDocumentSnapshots.isEmpty()) {
-                for (DocumentSnapshot document : queryDocumentSnapshots) {
-                    // Retrieve the array of completed levels
-                    List<String> completedLevels = (List<String>) document.get("passing_completed_levels");
-                    String passingNextLevel = document.getString("passing_level_must_complete");
+    .whereEqualTo("lastName", lastName)
+    .whereEqualTo("section", section)
+    .whereEqualTo("gameType", "Passing")
+    .whereEqualTo("grade", grade)
+    .get()
+    .addOnSuccessListener(queryDocumentSnapshots -> {
+        if (queryDocumentSnapshots.isEmpty()) {
+             // Loop through UI levels
+                        for (int i = 0; i < levels.length; i++) {
+                            String currentLevel = "level_" + (i + 1);
+                            String nextLevelToUnlock = "level_" + (i + 2);
+                            FrameLayout level = levels[i];
+                            ImageView flashbox = flashboxes[i];
 
-                    for (int i = 0; i < levels.length; i++) {
-                        String levelName = "level_" + (i + 1);
+                            // Handle level clicks)
+                            String levelState = (String) level.getContentDescription();
+                            if ("Available".equals(levelState)) {
+                                level.setOnClickListener(v -> {
+                                    playSound("click.mp3");
 
-                        // If the level is in the completed array, mark it as "Completed"
-                        if (completedLevels != null && completedLevels.contains(levelName)) {
-                            levels[i].setContentDescription("Completed");
-                            levels[i].setBackgroundResource(R.drawable.btn_short_condition);
+                                    Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
+                                    intent.putExtra("operation", operation);
+                                    intent.putExtra("passing", currentLevel);
+                                    intent.putExtra("game_type", "Passing");
+                                    intent.putExtra("passing_world", "world_one");
+                                    intent.putExtra("passing_next_level", nextLevelToUnlock);
+                                    intent.putExtra("difficulty", difficultySection);
 
-                            // Get stars earned for this level
-                            String starsEarned = document.getString("passing_" + levelName);
-                            if ("1 Star".equals(starsEarned)) {
-                                flashboxes[i].setImageResource(R.drawable.ic_star_one);
-                            } else if ("2 Stars".equals(starsEarned)) {
-                                flashboxes[i].setImageResource(R.drawable.ic_star_two);
-                            } else if ("3 Stars".equals(starsEarned)) {
-                                flashboxes[i].setImageResource(R.drawable.ic_star_three);
+                                    animateButtonClick(level);
+                                    stopButtonFocusAnimation(level);
+                                    startActivity(intent);
+                                });
+                            } else {
+                                level.setBackgroundResource(R.drawable.btn_short_condition_off);
+                                level.setOnClickListener(v ->
+                                    Toast.makeText(this, "Complete previous " + currentLevel + " to unlock.", Toast.LENGTH_SHORT).show()
+                                );
                             }
                         }
+            return;
+        }
 
-                        // Unlock the next level if it matches `passing_level_must_complete`
-                        if (levelName.equals(passingNextLevel)) {
-                            levels[i].setContentDescription("Available");
-                            levels[i].setBackgroundResource(R.drawable.btn_short_condition);
-                            flashboxes[i].setImageResource(R.drawable.transparent_box);
+        for (DocumentSnapshot document : queryDocumentSnapshots) {
+            String docId = document.getId();
+            DocumentReference studentDocRef = collectionRef.document(docId);
+
+            // Pull the "passing_level_must_complete" if it exists
+            passingNextLevel = document.getString("passing_level_must_complete");
+
+            // Prepare containers
+            List<String> completedLevels = new ArrayList<>();
+            Map<String, String> starsPerLevel = new HashMap<>();
+
+            // Load PassingHistory
+            studentDocRef.collection("PassingHistory")
+                .get()
+                .addOnSuccessListener(historySnapshots -> {
+                    for (DocumentSnapshot historyDoc : historySnapshots) {
+                        // 1) completed levels in this history entry (if you still need them)
+                        List<String> levelList = (List<String>) document.get("passing_completed_levels");
+                        if (levelList != null) {
+                            completedLevels.addAll(levelList);
+                        }
+
+                        // 2) parse the "stars_list" entries
+                        List<String> starsList = (List<String>) document.get("stars_list");
+                        if (starsList != null) {
+                            for (String entry : starsList) {
+                                // entry format: "level_3_2 Stars"
+                                int lastUnderscore = entry.lastIndexOf('_');
+                                if (lastUnderscore > 0) {
+                                    String levelKey = entry.substring(0, lastUnderscore);          // "level_3"
+                                    String starRating = entry.substring(lastUnderscore + 1);      // "2 Stars"
+                                    starsPerLevel.put(levelKey, starRating);
+                                }
+                            }
                         }
                     }
-                }
-            }
-        })
-        .addOnFailureListener(e -> {
-            Toast.makeText(this, "Failed to retrieve data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        });
 
-        
-// Set click listeners for all levels
-for (int i = 0; i < levels.length; i++) {
-    int index = i; // Required to use inside lambda
-            
-     String levelName = "level_" + (i + 0);           
-                
-    levels[i].setOnClickListener(v -> {
-              
-               
-        Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
-        intent.putExtra("operation", operation);
-        intent.putExtra("difficulty", difficultySection);
-        intent.putExtra("game_type", "Passing");
-        intent.putExtra("passing", levelName);           
-playSound("click.mp3");
-        // Animate and stop button focus
-        animateButtonClick(levels[index]);
-        stopButtonFocusAnimation(levels[index]);
+                    // Determine which levels are completed and which is next
+                    int maxCompleted = completedLevels.stream()
+                        .map(lvl -> {
+                            String num = lvl.replaceAll("\\D+", "");
+                            return num.isEmpty() ? 0 : Integer.parseInt(num);
+                        })
+                        .max(Integer::compare).orElse(0);
 
-        startActivity(intent);
+                    if (passingNextLevel == null || passingNextLevel.isEmpty()) {
+                        passingNextLevel = "level_" + (maxCompleted + 1);
+                    }
+                    int availableIndex = Integer.parseInt(passingNextLevel.replaceAll("\\D+", "")) - 1;
+
+                    // Update the UI
+                    for (int i = 0; i < levels.length; i++) {
+                        String currentLevel = "level_" + (i + 1);
+                        String nextLevelToUnlock = "level_" + (i + 2);
+                        FrameLayout level = levels[i];
+                        ImageView flashbox = flashboxes[i];
+
+                        boolean isCompleted = completedLevels.contains(currentLevel);
+                        boolean isAvailable = (i == availableIndex);
+
+                        if (isCompleted) {
+                            level.setContentDescription("Completed");
+                            level.setBackgroundResource(R.drawable.btn_short_condition);
+                            flashbox.setImageResource(R.drawable.transparent_box);
+
+                            String starsEarned = starsPerLevel.get(currentLevel);
+                            if ("1 Stars".equals(starsEarned)) {
+                                starViews[i].setImageResource(R.drawable.ic_star_one);
+                            } else if ("2 Stars".equals(starsEarned)) {
+                                starViews[i].setImageResource(R.drawable.ic_star_two);
+                            } else if ("3 Stars".equals(starsEarned)) {
+                                starViews[i].setImageResource(R.drawable.ic_star_three);
+                            }
+                        } else if (isAvailable) {
+                            level.setContentDescription("Available");
+                            level.setBackgroundResource(R.drawable.btn_short_condition);
+                            flashbox.setImageResource(R.drawable.white_box);
+                            startFlashingAnimation(flashbox);
+                        } else {
+                            level.setContentDescription("Not_Available");
+                            level.setBackgroundResource(R.drawable.btn_short_condition_off);
+                        }
+
+                        // Click handling
+                        level.setOnClickListener(v -> {
+                            String state = (String) level.getContentDescription();
+                            if ("Available".equals(state)) {
+                                playSound("click.mp3");
+                                Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
+                                intent.putExtra("operation", operation);
+                                intent.putExtra("passing", currentLevel);
+                                intent.putExtra("game_type", "Passing");
+                                intent.putExtra("passing_world", "world_one");
+                                intent.putExtra("passing_next_level", nextLevelToUnlock);
+                                intent.putExtra("difficulty", difficultySection);
+                                animateButtonClick(level);
+                                stopButtonFocusAnimation(level);
+                                startActivity(intent);
+                            } else {
+                                Toast.makeText(this,
+                                    "Complete previous " + currentLevel + " to unlock.",
+                                    Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this,
+                        "Error loading history: " + e.getMessage(),
+                        Toast.LENGTH_LONG).show();
+                });
+        }
+    })
+    .addOnFailureListener(e -> {
+        Toast.makeText(this,
+            "Failed to retrieve student: " + e.getMessage(),
+            Toast.LENGTH_SHORT).show();
     });
+
+   // Apply animations to all levels and flash boxes.
+for (FrameLayout level : levels) {
+    animateButtonFocus(level);
 }
 
-        
-         // Apply animations to all levels and flash boxes
-    for (FrameLayout level : levels) {
-        animateButtonFocus(level);
-    }
-
-    for (ImageView flash : flashboxes) {
-        animateButtonFocus(flash);
-    }
-
-        for (int i = 0; i < levels.length; i++) {
-            FrameLayout level = levels[i];
-            ImageView flashbox = flashboxes[i];
-            int levelnumber  = i;
-            String levelName = "level_" + (i + 0);
-            String levelNameMustBeCompletedNext = "level_" + (i + 1);
-playSound("click.mp3");
-            // Check contentDescription for each level
-            String description = (String) level.getContentDescription();
-            if ("Not_Available".equals(description)) {
-                // If not available, show toast on click and set background
-                flashbox.setImageResource(R.drawable.transparent_box);
-                level.setOnClickListener(v ->
-                        Toast.makeText(this, "Complete previous " + levelName + " to unlock.", Toast.LENGTH_SHORT).show()
-                );
-            } else if ("Available".equals(description)) {
-                // If available, make it flash and enable click
-                flashbox.setImageResource(R.drawable.white_box);
-                startFlashingAnimation(flashbox);
-
-                level.setOnClickListener(v->{
-                    
-                        Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
-        intent.putExtra("operation", operation);
-                        intent.putExtra("passing", levelName);
-                intent.putExtra("game_type", "Passing");
-                       intent.putExtra("passing_world", "world_one");
-                        intent.putExtra("passing_next_level", levelNameMustBeCompletedNext);
-                    intent.putExtra("difficulty",difficultySection);
-        
-
-        // Animate and stop button focus
-        animateButtonClick(level);
-        stopButtonFocusAnimation(level);
-
-        startActivity(intent);
-                });
-            }
-        }
+for (ImageView flash : flashboxes) {
+    animateButtonFocus(flash);
+}
         
         
         
@@ -350,6 +431,7 @@ playSound("click.mp3");
 backgroundFrame.post(this::applyVignetteEffect);
         
     }
+    
     private void startNumberAnimationLoop() {
         changeNumbers();
     }
