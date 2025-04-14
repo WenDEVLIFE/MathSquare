@@ -1,8 +1,12 @@
 package com.happym.mathsquare;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.OvershootInterpolator;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.fragment.app.Fragment;
@@ -64,20 +68,84 @@ public class UserFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_user, container, false);
-
-        // Add AdminActivity code here
+        
         LinearLayout signInButton1 = view.findViewById(R.id.btn_playgame_as_student);
+        LinearLayout signUpButton = view.findViewById(R.id.btn_signinteacher);
+
+        animateButtonFocus(signInButton1);
+        animateButtonFocus(signUpButton);
+        
         signInButton1.setOnClickListener(v -> {
+            animateButtonClick(signInButton1);
+            stopButtonFocusAnimation(signInButton1);
             Intent intent = new Intent(getContext(), AddAdminActivity.class);
             startActivity(intent);
         });
 
-        LinearLayout signUpButton = view.findViewById(R.id.btn_signinteacher);
         signUpButton.setOnClickListener(v -> {
+            animateButtonClick(signUpButton);
+            stopButtonFocusAnimation(signUpButton);
             Intent intent = new Intent(getContext(), teacherSignUp.class);
             startActivity(intent);
         });
 
         return view;
     }
+
+//Game Button Animation Press 
+
+private void animateButtonClick(View button) {
+    ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.6f, 1.1f, 1f);
+    ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.6f, 1.1f, 1f);
+
+    // Set duration for the animations
+    scaleX.setDuration(1000);
+    scaleY.setDuration(1000);
+
+    // OvershootInterpolator for game-like snappy effect
+    OvershootInterpolator overshootInterpolator = new OvershootInterpolator(2f);
+    scaleX.setInterpolator(overshootInterpolator);
+    scaleY.setInterpolator(overshootInterpolator);
+
+    // Combine animations into a set
+    AnimatorSet animatorSet = new AnimatorSet();
+    animatorSet.playTogether(scaleX, scaleY);
+    animatorSet.start();
+}
+
+
+// Function to animate button focus with a smooth pulsing bounce effect
+private void animateButtonFocus(View button) {
+    ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.06f, 1f);
+    ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 1.06f, 1f);
+
+    // Set duration for a slower, smoother pulsing bounce effect
+    scaleX.setDuration(2000);
+    scaleY.setDuration(2000);
+
+    // AccelerateDecelerateInterpolator for smooth pulsing
+    AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
+    scaleX.setInterpolator(interpolator);
+    scaleY.setInterpolator(interpolator);
+
+    // Set repeat count and mode on each ObjectAnimator
+    scaleX.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
+    scaleX.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
+    scaleY.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
+    scaleY.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
+
+    // Combine the animations into an AnimatorSet
+    AnimatorSet animatorSet = new AnimatorSet();
+    animatorSet.playTogether(scaleX, scaleY);
+    animatorSet.start();
+}
+
+// Stop Focus Animation
+private void stopButtonFocusAnimation(View button) {
+    AnimatorSet animatorSet = (AnimatorSet) button.getTag();
+    if (animatorSet != null) {
+        animatorSet.cancel();  // Stop the animation when focus is lost
+    }
+}
+
 }

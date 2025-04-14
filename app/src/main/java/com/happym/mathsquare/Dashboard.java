@@ -63,40 +63,36 @@ public class Dashboard extends AppCompatActivity {
         setContentView(R.layout.layout_teacher_dashboard);
         FirebaseApp.initializeApp(this);
         
-       LinearLayout btnLogOut = findViewById(R.id.btn_logout);
+          LinearLayout btnLogOut = findViewById(R.id.btn_logout);
+          animateButtonFocus(btnLogOut);
         
+          // Firestore instance
+          db = FirebaseFirestore.getInstance();
         
-       animateButtonFocus(btnLogOut);
+          teacherEmail = sharedPreferences.getEmail(this);
         
-        // Firestore instance
-        db = FirebaseFirestore.getInstance();
+          switchquiz1 = findViewById(R.id.switch_quiz1);
+          switchquiz2 = findViewById(R.id.switch_quiz2);
         
-         // Replace this with actual logic to get the teacher's email
-        teacherEmail = sharedPreferences.getEmail(this);
+          firstSection = findViewById(R.id.first_grade);
+          firstGrade = findViewById(R.id.first_section);
+          initializeSwitchListeners();
         
-        switchquiz1 = findViewById(R.id.switch_quiz1);
-         switchquiz2 = findViewById(R.id.switch_quiz2);
+          ImageView createsection = findViewById(R.id.createsection);
+           quizhistory_panel = findViewById(R.id.quizhistory_panel);
+           sections_panel = findViewById(R.id.sections_panel);
         
-        firstSection = findViewById(R.id.first_grade);
-         firstGrade = findViewById(R.id.first_section);
-        initializeSwitchListeners();
-        
-        ImageView createsection = findViewById(R.id.createsection);
-        quizhistory_panel = findViewById(R.id.quizhistory_panel);
-        sections_panel = findViewById(R.id.sections_panel);
-        
-        createSectionDialog = new CreateSection();
-        playSound("click.mp3");
-        createsection.setOnClickListener(v -> {
-            
-                createSectionDialog.show(getSupportFragmentManager(), "PauseDialog"); // Show the dialog
+           createSectionDialog = new CreateSection();
+           playSound("click.mp3");
+           createsection.setOnClickListener(v -> {
+           createSectionDialog.show(getSupportFragmentManager(), "PauseDialog"); // Show the dialog
         });
         
         quizhistory_panel.setOnClickListener(v -> {
-                playSound("click.mp3");
-    Intent intent = new Intent(this, dashboard_StudentsPanel.class);
-    startActivity(intent);
-});
+            playSound("click.mp3");
+            Intent intent = new Intent(this, dashboard_StudentsPanel.class);
+            startActivity(intent);
+        });
         sections_panel.setOnClickListener(v -> {
                 playSound("click.mp3");
             Intent intent = new Intent(this, dashboard_SectionPanel.class);
@@ -106,18 +102,18 @@ public class Dashboard extends AppCompatActivity {
         btnLogOut.setOnClickListener(view -> {
                animateButtonClick(btnLogOut);
                Intent intent = new Intent(this, signInUp.class);
-                                sharedPreferences.StudentIsSetLoggedIn(this, false);
-                                            sharedPreferences.setLoggedIn(this, false);
-sharedPreferences.clearSection(this);
+                    sharedPreferences.StudentIsSetLoggedIn(this, false);
+                    sharedPreferences.setLoggedIn(this, false);
+                    sharedPreferences.clearSection(this);
                     sharedPreferences.clearGrade(this);
                     sharedPreferences.clearFirstName(this);
                     sharedPreferences.clearLastName(this);
-               playSound("click.mp3");
-                                startActivity(intent);
-                finish();
-                                Toast.makeText(this, "Logout successfully!", Toast.LENGTH_SHORT).show();
-                                stopButtonFocusAnimation(btnLogOut);
-                                animateButtonFocus(btnLogOut);
+                    playSound("click.mp3");
+                    startActivity(intent);
+                    finish();
+                    Toast.makeText(this, "Logout successfully!", Toast.LENGTH_SHORT).show();
+                    stopButtonFocusAnimation(btnLogOut);
+                    animateButtonFocus(btnLogOut);
                 
         });
      
@@ -126,42 +122,38 @@ sharedPreferences.clearSection(this);
    @Override
 protected void onStart() {
     super.onStart();
-    listenToTeacherSections(teacherEmail,firstSection,firstGrade); // Replace with actual email
+    listenToTeacherSections(firstSection,firstGrade); 
 }
     
-    private void listenToTeacherSections(String teacherEmail, TextView gradeTextView, TextView sectionTextView) {
-    sectionsListener = db.collection("Accounts")
-            .document("Teachers")
-            .collection(teacherEmail)
-            .document("MathSquare")
-            .collection("MySections")
-            .orderBy("timestamp", Query.Direction.DESCENDING) // Ensure documents are ordered by creation time
-            .limit(1) // Fetch only the latest document
+    private void listenToTeacherSections(TextView gradeTextView, TextView sectionTextView) {
+    sectionsListener = db.collection("Sections")
+            .orderBy("timestamp", Query.Direction.DESCENDING) // Sort by most recent
+            .limit(1) // Only get the latest section
             .addSnapshotListener((queryDocumentSnapshots, e) -> {
                 if (e != null) {
-                    Toast.makeText(this, "Error fetching data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Error fetching section: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     return;
                 }
 
                 if (queryDocumentSnapshots != null && !queryDocumentSnapshots.isEmpty()) {
                     DocumentSnapshot latestDocument = queryDocumentSnapshots.getDocuments().get(0);
 
-                    // Retrieve grade and section fields
-                    String grade = latestDocument.getString("Grade");
+                    Long gradeNumLong = latestDocument.getLong("Grade_Number");
+                    String grade = gradeNumLong != null ? String.valueOf(gradeNumLong.intValue()) : null;
                     String section = latestDocument.getString("Section");
+                    String documentId = latestDocument.getId();
 
-                    // Update TextViews if data exists
-                    if (grade != null) {
+                    if (grade != null && section != null) {
                         gradeTextView.setText(grade);
-                    }
-                    if (section != null) {
                         sectionTextView.setText(section);
                     }
                 } else {
-                    Toast.makeText(this, "No sections found for this teacher.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "No sections found.", Toast.LENGTH_SHORT).show();
                 }
             });
 }
+
+
 
     // Method to set up a real-time listener and toggle Firestore status
 private void setupSwitchListener(SwitchCompat switchCompat, String quizId) {
@@ -278,8 +270,5 @@ private void stopButtonFocusAnimation(View button) {
         animatorSet.cancel();  // Stop the animation when focus is lost
     }
 }
-    
-    //Text Title Animation
-    
     
 }

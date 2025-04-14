@@ -156,11 +156,11 @@ playSound("click.mp3");
             }
         
         
-        switchquiz1 = findViewById(R.id.switch_quiz1);
+         switchquiz1 = findViewById(R.id.switch_quiz1);
          switchquiz2 = findViewById(R.id.switch_quiz2);
          switchquiz3 = findViewById(R.id.switch_quiz3);
          switchquiz4 = findViewById(R.id.switch_quiz4);
-        switchquiz5 = findViewById(R.id.switch_quiz5);
+         switchquiz5 = findViewById(R.id.switch_quiz5);
          switchquiz6 = findViewById(R.id.switch_quiz6);
         
 
@@ -175,7 +175,7 @@ playSound("click.mp3");
         
         */
         
-        fetchStudents();
+        fetchStudents("Quiz");
         initializeSwitchListeners();
         
          
@@ -246,65 +246,73 @@ private void initializeSwitchListeners() {
     setupSwitchListener(switchquiz6, "quiz_6");
 }
 
-    private void fetchStudents() {
+   private void fetchStudents(String filter) {
     try {
-        
-            db.collection("Accounts")
-                .document("Students")
-                .collection("MathSquare") // Access the "MathSquare" collection
-                .orderBy("quizno_int", Query.Direction.ASCENDING)
-                .get()
-                .addOnCompleteListener(task -> {
-                    try {
-                        if (task.isSuccessful() && task.getResult() != null) {
-                            List<Student> students = new ArrayList<>();
+        Log.d("FETCH_STUDENTS", "Starting fetch from Firestore...");
 
-                            // Loop through each document in the "MathSquare" collection
-                            for (QueryDocumentSnapshot doc : task.getResult()) {
-                                try {
-                                    String firstName = doc.getString("firstName");
-                                    String lastName = doc.getString("lastName");
-                                    String section = doc.getString("section");
-                                    String grade = doc.getString("grade");
-                                    String quizNo =doc.getString("quizno");
-                                    String score = doc.getString("quizscore");
-                                    
-                                    String documentId = doc.getId();
+        db.collection("Accounts")
+            .document("Students")
+            .collection("MathSquare")
+            .whereEqualTo("gameType", filter) // Filter by gameType
+            .orderBy("quizno_int", Query.Direction.ASCENDING)
+            .get()
+            .addOnCompleteListener(task -> {
+                try {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        List<Student> students = new ArrayList<>();
 
-                                    // Add parsed student to the list
-                                    students.add(new Student(
-                                            firstName + " " + lastName, // Full name
-                                            section,
-                                            grade,
-                                            quizNo,
-                                            score,
-                                            documentId
-                                    ));
-                                } catch (Exception e) {
-                                    Toast.makeText(this, "Error processing document: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                }
+                        Log.d("FETCH_STUDENTS", "Documents fetched: " + task.getResult().size());
+
+                        for (QueryDocumentSnapshot doc : task.getResult()) {
+                            try {
+                                String firstName = doc.getString("firstName");
+                                String lastName = doc.getString("lastName");
+                                String section = doc.getString("section");
+                                String grade = doc.getString("grade");
+                                String quizNo = doc.getString("quizno");
+                                String score = doc.getString("quizscore");
+                                String gameType = doc.getString("gameType");
+
+                                String documentId = doc.getId();
+
+                                Log.d("FETCH_STUDENTS", "Processing doc ID: " + documentId + " | GameType: " + gameType);
+
+                                students.add(new Student(
+                                        firstName + " " + lastName,
+                                        section,
+                                        grade,
+                                        quizNo,
+                                        score,
+                                        documentId
+                                ));
+                            } catch (Exception e) {
+                                Log.e("FETCH_STUDENTS", "Error parsing document: " + e.getMessage());
+                                Toast.makeText(this, "Error processing document: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                             }
-
-                            // Update UI with the fetched student data
-                            addRowsToTable(students);
-                        } else {
-                            Toast.makeText(this, "No student data found.", Toast.LENGTH_SHORT).show();
                         }
-                    } catch (Exception e) {
-                        Toast.makeText(this, "Error processing student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+
+                        addRowsToTable(students);
+                        Log.d("FETCH_STUDENTS", "Student list size: " + students.size());
+
+                    } else {
+                        Log.w("FETCH_STUDENTS", "Task unsuccessful or no result");
+                        Toast.makeText(this, "No student data found.", Toast.LENGTH_SHORT).show();
                     }
-                })
-                .addOnFailureListener(e -> {
-                    try {
-                        Toast.makeText(this, "Error fetching students: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    } catch (Exception ex) {
-                        Toast.makeText(this, "Unexpected error: " + ex.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                });
+                } catch (Exception e) {
+                    Log.e("FETCH_STUDENTS", "Error in onComplete: " + e.getMessage());
+                    Toast.makeText(this, "Error processing student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            })
+            .addOnFailureListener(e -> {
+                Log.e("FETCH_STUDENTS", "Firestore query failed: " + e.getMessage());
+                Toast.makeText(this, "Error fetching students: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            });
     } catch (Exception e) {
+        Log.e("FETCH_STUDENTS", "Initial fetch error: " + e.getMessage());
         Toast.makeText(this, "Error initializing fetch: " + e.getMessage(), Toast.LENGTH_LONG).show();
     }
 }
+
 
 private void addRowsToTable(List<Student> students) {
     try {

@@ -8,7 +8,9 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.InputFilter;
 import android.view.ViewGroup;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
 import android.os.Bundle;
 import android.text.Editable;
@@ -32,6 +34,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +45,11 @@ import java.util.UUID;
 import com.happym.mathsquare.sharedPreferences;
 import androidx.core.view.WindowCompat;
 public class studentSignUp extends AppCompatActivity {
+    
+    private String selectedSectionId;
+    private String selectedSectionName;
+    private String selectedGradeLevel;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,7 +65,7 @@ FirebaseFirestore db = FirebaseFirestore.getInstance();
         TextInputLayout firstNameLayout = findViewById(R.id.first_name_layout);
         TextInputLayout lastNameLayout = findViewById(R.id.last_name_layout);
         AppCompatButton submitButton = findViewById(R.id.btn_submit);
-        Spinner numberDropdownPicker = findViewById(R.id.numberDropdownPicker);
+        AutoCompleteTextView numberDropdownPicker = findViewById(R.id.numberDropdownPicker);
         TextView spinnerError = findViewById(R.id.spinnerError);
 
 TextInputEditText firstNameEditText = (TextInputEditText) firstNameLayout.getEditText();
@@ -79,76 +87,68 @@ if (lastNameEditText != null) {
     lastNameEditText.setFilters(new InputFilter[]{noSpacesFilter});
 }
         
-// Set up Spinner with list of grades
-List<String> grades = Arrays.asList("Choose My Grade", "1", "2", "3", "4", "5", "6");
-ArrayAdapter<String> adapterGrades = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, grades){
-@Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                View view = super.getView(position, convertView, parent);
-                TextView textView = (TextView) view;
-                textView.setTypeface(null, Typeface.BOLD); // Make font bold
-                return view;
-            }
+// Set up Dropdown with list of grades using default styling
+List<String> grades = Arrays.asList("1", "2", "3", "4", "5", "6");
 
-            @Override
-            public View getDropDownView(int position, View convertView, ViewGroup parent) {
-                View view = super.getDropDownView(position, convertView, parent);
-                TextView textView = (TextView) view;
-                textView.setTypeface(null, Typeface.BOLD); // Make dropdown items bold
-                return view;
-            }
-        };
-        
+ArrayAdapter<String> adapterGrades = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, grades);
+adapterGrades.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
         adapterGrades.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-numberDropdownPicker.setAdapter(adapterGrades);
+        numberDropdownPicker.setAdapter(adapterGrades);
 
 
         int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
 
         if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
-            // Dark Mode: Set dropdown background to dark and transparent when not selected
-            numberDropdownPicker.setPopupBackgroundResource(android.R.color.darker_gray);
-            numberDropdownPicker.setBackgroundColor(Color.TRANSPARENT);
+            
+            
         } else {
-            // Light Mode: Set dropdown background to light and transparent when not selected
-            numberDropdownPicker.setPopupBackgroundResource(android.R.color.white);
-            numberDropdownPicker.setBackgroundColor(Color.TRANSPARENT);
-        }
-        
-// Set up listener to retrieve sections when a grade is selected
-numberDropdownPicker.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        String selectedGrade = numberDropdownPicker.getSelectedItem().toString();
-        
-        if (!selectedGrade.equals("Select your grade")) {
-            // Firestore query to get sections for the selected grade
-            db.collection("Sections").document(selectedGrade)
-                    .get()
-                    .addOnSuccessListener(documentSnapshot -> {
-                        if (documentSnapshot.exists()) {
-                            // Get the list of sections
-                            List<String> sections = (List<String>) documentSnapshot.get("sections"); // Assuming "sections" is the field name
-                            if (sections != null) {
-                                // Update SectionChooser with retrieved sections
-                                ArrayAdapter<String> sectionAdapter = new ArrayAdapter<>(studentSignUp.this, android.R.layout.simple_dropdown_item_1line, sections);
-                                sectionChooser.setAdapter(sectionAdapter);
-                            }
-                        } else {
-                            Toast.makeText(studentSignUp.this, "No sections found for grade " + selectedGrade, Toast.LENGTH_SHORT).show();
-                        }
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(studentSignUp.this, "Error fetching sections: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    });
-        }
-    }
+            
 
-    @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-        // Do nothing
+        }
+        
+numberDropdownPicker.setOnItemClickListener((adapterView, view, position, id) -> {
+    String selectedGrade = adapterGrades.getItem(position);
+
+    if (selectedGrade.matches("[1-6]")) {
+        int gradeNumber = Integer.parseInt(selectedGrade);
+
+        db.collection("Sections")
+            .whereEqualTo("Grade_Number", gradeNumber)
+            .get()
+            .addOnSuccessListener(querySnapshot -> {
+                List<String> sectionNames = new ArrayList<>();
+                Map<String, String> sectionIdMap = new HashMap<>();
+
+                for (QueryDocumentSnapshot doc : querySnapshot) {
+                    String section = doc.getString("Section");
+                    if (section != null) {
+                        sectionNames.add(section);
+                        sectionIdMap.put(section, doc.getId());
+                    }
+                }
+
+                if (!sectionNames.isEmpty()) {
+                    ArrayAdapter<String> sectionAdapter = new ArrayAdapter<>(studentSignUp.this, android.R.layout.simple_dropdown_item_1line, sectionNames);
+                    sectionChooser.setAdapter(sectionAdapter);
+
+                    sectionChooser.setOnItemClickListener((adapterView1, view1, i, l) -> {
+                        String selectedSection = sectionAdapter.getItem(i);
+                        String documentId = sectionIdMap.get(selectedSection);
+
+                        selectedSectionId = documentId;
+                        selectedSectionName = selectedSection;
+                        selectedGradeLevel = selectedGrade;
+                    });
+                } else {
+                    Toast.makeText(studentSignUp.this, "No sections found for grade " + selectedGrade, Toast.LENGTH_SHORT).show();
+                }
+            })
+            .addOnFailureListener(e -> Toast.makeText(studentSignUp.this, "Error fetching sections: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 });
+
+
 
 // Set up SectionChooser to show dropdown when clicked
 sectionChooser.setOnClickListener(v -> sectionChooser.showDropDown());
@@ -219,13 +219,12 @@ sectionChooser.setOnClickListener(v -> sectionChooser.showDropDown());
             }
 
             // Validate Spinner selection (Grade)
-            int gradePosition = numberDropdownPicker.getSelectedItemPosition();
-            String grade = (gradePosition > 0) ? numberDropdownPicker.getSelectedItem().toString() : null;
-            if (grade == null) {
-                spinnerError.setText("Please select your grade");
-                spinnerError.setVisibility(View.VISIBLE);
-                hasError = true;
-            }
+            String grade = numberDropdownPicker.getText().toString().trim();
+if (TextUtils.isEmpty(grade) || !grade.matches("[1-6]")) {
+    spinnerError.setText("Please select your grade");
+    spinnerError.setVisibility(View.VISIBLE);
+    hasError = true;
+}
 
             // If no errors, proceed with saving the data
             if (!hasError) {
@@ -234,9 +233,9 @@ sectionChooser.setOnClickListener(v -> sectionChooser.showDropDown());
                 HashMap<String, Object> studentData = new HashMap<>();
                 studentData.put("firstName", firstName);
                 studentData.put("lastName", lastName);
-                studentData.put("section", section);
-                studentData.put("grade", grade);
-               studentData.put("quizno", "N/A");
+                studentData.put("section", selectedSectionName);
+                studentData.put("grade", selectedGradeLevel);
+                studentData.put("quizno", "N/A");
                 studentData.put("timestamp", FieldValue.serverTimestamp());           
                 studentData.put("quizscore", "0");    
                     
@@ -275,7 +274,7 @@ sharedPreferences.saveSection(studentSignUp.this, section);
                             .set(studentData)       // Save the student data
                             .addOnSuccessListener(documentReference -> {
                                 // Save student data successfully, now handle Sections collection
-                                saveStudentToSections(firstName, lastName, section, grade);  // Save to Sections
+                                saveStudentToSection(firstName, lastName, selectedSectionId);  // Save to Sections
 
                                 // Proceed with UI actions (navigate to MainActivity)
                                 animateButtonPushDowm(submitButton);
@@ -312,43 +311,35 @@ sharedPreferences.saveSection(studentSignUp.this, section);
 
             }
         });
-
-
-
-
-        
     }
-    // Method to save student data to Sections collection under the correct grade and section
-    private void saveStudentToSections(String firstName, String lastName, String section, String grade) {
-        // Reference to Firestore database
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
+    
+    
+    private void saveStudentToSection(String firstName, String lastName, String sectionDocId) {
+   
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
+    
+    CollectionReference studentsCollection = db.collection("Sections")
+        .document(sectionDocId)
+        .collection("Students");
 
-        // Reference to the Sections document for the given grade and section
-        DocumentReference sectionDocRef = db.collection("Sections")
-                .document(grade) // Use the grade as the document name (e.g., "Grade 1")
-                .collection("Student_Sections")  // Each grade has a sub-collection "Sections"
-                .document(section);  // Section (e.g., "A", "B")
+    //Student data map.
+    Map<String, Object> studentData = new HashMap<>();
+    studentData.put("firstName", firstName);
+    studentData.put("lastName", lastName);
+    studentData.put("section", selectedSectionName);
+    studentData.put("grade", selectedGradeLevel);
+    studentData.put("timestamp", FieldValue.serverTimestamp());
 
-        // Create the student data (firstName, lastName)
-        Map<String, String> student = new HashMap<>();
-        student.put("firstName", firstName);
-        student.put("lastName", lastName);
-
-        // Prepare the map to store the student in the correct section
-        Map<String, Object> sectionMap = new HashMap<>();
-        sectionMap.put("studentIndexes", FieldValue.arrayUnion(student));  // Add student to the studentIndexes array
-
-        // Use 'set()' to save or merge data into the document
-        sectionDocRef.set(sectionMap, SetOptions.merge())  // Merge ensures data isn't overwritten
-                .addOnSuccessListener(aVoid -> {
-                    // Successfully added student to section
-                    Log.d("Firestore", "Student added to section " + section + " in grade " + grade);
-                })
-                .addOnFailureListener(e -> {
-                    // Handle failure if Firestore save fails
-                    Toast.makeText(this, "Failed to save student to section: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
+    studentsCollection.add(studentData)
+        .addOnSuccessListener(documentReference -> {
+            Log.d("Firestore", "Student added with ID: " + documentReference.getId());
+            Toast.makeText(this, "Student added successfully!", Toast.LENGTH_SHORT).show();
+        })
+        .addOnFailureListener(e -> {
+            Toast.makeText(this, "Failed to save student: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        });
     }
+
 
     // Shake and rotate animation for error fields
     private void animateShakeRotateEditTextErrorAnimation(View view) {

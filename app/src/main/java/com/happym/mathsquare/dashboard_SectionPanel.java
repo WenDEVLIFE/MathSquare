@@ -20,12 +20,14 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
 
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.WriteBatch;
 import com.happym.mathsquare.Model.Sections;
 import com.happym.mathsquare.Model.Student;
 
@@ -73,7 +75,7 @@ private MediaPlayer bgMediaPlayer;
         tableLayout = findViewById(R.id.tableLayout);
         createSectionDialog = new CreateSection();
         
-        listenToTeacherSections(teacherEmail);
+        listenToTeacherSections();
         
         deleteBtn = findViewById(R.id.deletesection);
         checkBtn = findViewById(R.id.checkdelete);
@@ -198,13 +200,9 @@ playSound("click.mp3");
     }
     
 
-private void listenToTeacherSections(String teacherEmail) {
-    sectionsListener = db.collection("Accounts")
-            .document("Teachers")
-            .collection(teacherEmail)
-            .document("MathSquare")
-            .collection("MySections")
-            .orderBy("Grade_Number", Query.Direction.ASCENDING) // Sort by Grade_Number in ascending order
+private void listenToTeacherSections() {
+    sectionsListener = db.collection("Sections")
+            .orderBy("Grade_Number", Query.Direction.ASCENDING) // Sort by Grade_Number
             .addSnapshotListener((queryDocumentSnapshots, e) -> {
                 if (e != null) {
                     Toast.makeText(this, "Error fetching data: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -215,17 +213,21 @@ private void listenToTeacherSections(String teacherEmail) {
                     List<Sections> newSections = new ArrayList<>();
 
                     for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
-                        String grade = documentSnapshot.getString("Grade");
+                        // Retrieve Grade_Number as Long from Firestore; convert it to an int and then to a string.
+                        Long gradeNumLong = documentSnapshot.getLong("Grade_Number");
+                        String grade = gradeNumLong != null ? String.valueOf(gradeNumLong.intValue()) : null;
                         String section = documentSnapshot.getString("Section");
-                        String documentId = documentSnapshot.getString("DocumentKey");
+                        // Use the Firestore generated document ID as the document key.
+                        String documentId = documentSnapshot.getId();
 
-                        if (grade != null && section != null && documentId != null) {
+                        if (grade != null && section != null) {
+                            // Create a new Sections object using the section name, grade string, and document ID.
                             Sections newSection = new Sections(section, grade, documentId);
 
-                            // Check if it already exists in the local model
+                            // Check if it already exists in the local model.
                             if (!existingSections.contains(newSection)) { 
                                 existingSections.add(newSection); // Add to local model
-                                newSections.add(newSection); // Add to table
+                                newSections.add(newSection); // Add to table list
                             }
                         }
                     }
@@ -235,9 +237,6 @@ private void listenToTeacherSections(String teacherEmail) {
                 }
             });
 }
-
-
-
     
 private void addRowsToTable(List<Sections> students) {
     List<TableRow> rows = new ArrayList<>(); // Store rows temporarily
@@ -264,8 +263,8 @@ private void addRowsToTable(List<Sections> students) {
             playSound("click.mp3");
             if (isChecked) {
                 selectedRows.add(row);
-               checkBtn.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.btn_condition_create));
- checkBtn.setImageResource(R.drawable.ic_delete);        
+                checkBtn.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.btn_condition_create));
+                checkBtn.setImageResource(R.drawable.ic_delete);        
             } else {
                 selectedRows.remove(row);
 
@@ -285,16 +284,14 @@ private void addRowsToTable(List<Sections> students) {
     // Second loop to ensure each row gets its correct documentId
     for (int i = 0; i < students.size(); i++) {
         TableRow row = rows.get(i);
-        Sections student = students.get(i);
+        Sections section = students.get(i);
 
-        row.setTag(student.getDocId()); // Set unique document ID for each row
-        Log.d("RowTag", "Set tag for row: " + student.getDocId());
+        row.setTag(section.getDocId()); // Set unique document ID for each row
+        Log.d("RowTag", "Set tag for row: " + section.getDocId());
     }
 }
-
-
     
-    private void toggleAllRows(boolean isChecked) {
+private void toggleAllRows(boolean isChecked) {
     selectedRows.clear(); // Clear previous selections
 
     for (int i = 0; i < rowCheckBoxes.size(); i++) {
@@ -311,110 +308,63 @@ private void addRowsToTable(List<Sections> students) {
     }
 }
 
+// Delete all student documents for a given section, then call the onComplete callback.
+private void deleteStudentsAndThen(String sectionDocId, Runnable onComplete) {
+    CollectionReference studentsCollection = db.collection("Sections")
+        .document(sectionDocId)
+        .collection("Students");
 
- private void deleteSelectedRows() {
+    // Retrieve all student documents in the subcollection.
+    studentsCollection.get()
+        .addOnSuccessListener(queryDocumentSnapshots -> {
+            WriteBatch batch = db.batch();
+            for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                batch.delete(document.getReference());
+            }
+           
+            batch.commit()
+                .addOnSuccessListener(aVoid -> {
+                    onComplete.run();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error deleting students: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+        })
+        .addOnFailureListener(e -> {
+            Toast.makeText(this, "Error retrieving students: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        });
+}
+
+// Delete the selected section rows including their students.
+private void deleteSelectedRows() {
     playSound("click.mp3");
-    
-    List<TableRow> rowsToRemove = new ArrayList<>(selectedRows); // Create a copy to avoid modification errors
+
+    List<TableRow> rowsToRemove = new ArrayList<>(selectedRows);
     selectedRows.clear(); // Clear selections after deletion
 
+    // Process each selected row.
     for (TableRow row : rowsToRemove) {
-        String docId = (String) row.getTag();
+        // The row's tag holds the section document ID from the "Sections" collection.
+        String sectionDocId = (String) row.getTag();
 
-        db.collection("Accounts")
-            .document("Teachers")
-            .collection(teacherEmail)
-            .document("MathSquare")
-            .collection("MySections")
-            .document(docId)
-            .get()
-            .addOnSuccessListener(documentSnapshot -> {
-                if (documentSnapshot.exists()) {
-                    String selectedGrade = documentSnapshot.getString("Grade");
-                    String sectionName = documentSnapshot.getString("Section");
+        DocumentReference sectionRef = db.collection("Sections").document(sectionDocId);
 
-                    // Reference for Student_Sections sub-collection
-                    DocumentReference sectionDocRef = db.collection("Sections")
-                        .document(selectedGrade)
-                        .collection("Student_Sections")
-                        .document(sectionName);
-
-                    // Step 1: Delete the document from MySections
-                    db.collection("Accounts")
-                        .document("Teachers")
-                        .collection(teacherEmail)
-                        .document("MathSquare")
-                        .collection("MySections")
-                        .document(docId)
-                        .delete()
-                        .addOnSuccessListener(aVoid -> {
-                            // Remove from UI
-                            tableLayout.removeView(row);
-                            rowCheckBoxes.remove(row.findViewById(R.id.rowCheckbox));
-
-                            // Step 2: Remove section from the grade's sections list
-                            db.collection("Sections")
-                                .document(selectedGrade)
-                                .get()
-                                .addOnSuccessListener(gradeDoc -> {
-                                    if (gradeDoc.exists()) {
-                                        Map<String, Object> existingData = gradeDoc.getData();
-                                        if (existingData != null && existingData.containsKey("sections")) {
-                                            List<String> existingSections = (List<String>) existingData.get("sections");
-
-                                            if (existingSections != null && existingSections.contains(sectionName)) {
-                                                existingSections.remove(sectionName); // Remove the section
-
-                                                if (existingSections.isEmpty()) {
-                                                    // If no more sections exist, delete the entire grade document
-                                                    db.collection("Sections")
-                                                        .document(selectedGrade)
-                                                        .delete()
-                                                        .addOnSuccessListener(aVoid3 -> {
-                                                            Log.d("Delete", "Grade removed as it had no more sections.");
-                                                        })
-                                                        .addOnFailureListener(e -> {
-                                                            Toast.makeText(this, "Error deleting empty grade: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                                        });
-                                                } else {
-                                                    // Update Firestore with the new sections list
-                                                    db.collection("Sections")
-                                                        .document(selectedGrade)
-                                                        .update("sections", existingSections)
-                                                        .addOnSuccessListener(aVoid2 -> {
-                                                            // Step 4: Delete the section from Student_Sections sub-collection
-                                                            sectionDocRef.delete()
-                                                                .addOnSuccessListener(aVoid3 -> {
-                                                                    // Step 5: Delete students under this grade and section
-                                                                    deleteStudents(selectedGrade, sectionName);
-                                                                })
-                                                                .addOnFailureListener(e -> {
-                                                                    Toast.makeText(this, "Error deleting section from Student_Sections: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                                                });
-                                                        })
-                                                        .addOnFailureListener(e -> {
-                                                            Toast.makeText(this, "Error updating sections: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                                        });
-                                                }
-                                            }
-                                        }
-                                    }
-                                })
-                                .addOnFailureListener(e -> {
-                                    Toast.makeText(this, "Error retrieving grade sections: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                });
-                        })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(this, "Error deleting row: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        });
-                }
-            })
-            .addOnFailureListener(e -> {
-                Toast.makeText(this, "Error retrieving section data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            });
+        deleteStudentsAndThen(sectionDocId, () -> {
+            sectionRef.delete()
+                .addOnSuccessListener(aVoid -> {
+                    // Successfully deleted section and its students.
+                    // Remove the row from the UI.
+                    tableLayout.removeView(row);
+                    rowCheckBoxes.remove(row.findViewById(R.id.rowCheckbox));
+                    Toast.makeText(this, "Section and students deleted successfully.", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error deleting section: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+        });
     }
 
-    // Reset UI state
+    // Reset the UI state.
     isDeleteButtonSelected = false;
     allCheckBox.setVisibility(View.GONE);
     checkBtn.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.btn_green_off));
@@ -422,7 +372,6 @@ private void addRowsToTable(List<Sections> students) {
     checkBtn.setVisibility(View.GONE);
     deleteBtn.setImageResource(R.drawable.ic_delete);
 
-    // Remove checkboxes from rows
     for (TableRow row : rowsToRemove) {
         CheckBox rowCheckbox = row.findViewById(R.id.rowCheckbox);
         if (rowCheckbox != null) {
@@ -430,57 +379,9 @@ private void addRowsToTable(List<Sections> students) {
         }
     }
 
-    Log.d("Delete", "Selected rows deleted and UI updated.");
+    Log.d("Delete", "Selected rows (sections and their students) deleted and UI updated.");
 }
 
-    
-private void deleteStudents(String grade, String section) {
-    db.collection("Accounts")
-        .document("Students")
-        .collection("MathSquare")
-        .whereEqualTo("grade", grade)
-        .whereEqualTo("section", section)
-        .get()
-        .addOnSuccessListener(queryDocumentSnapshots -> {
-            for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                String studentId = document.getId(); // Get UUID (document ID)
-                String firstName = document.getString("firstName");
-                String lastName = document.getString("lastName");
-
-                // Step 1: Delete student document from "Accounts/Students/MathSquare/{uuid}"
-                db.collection("Accounts")
-                    .document("Students")
-                    .collection("MathSquare")
-                    .document(studentId)
-                    .delete()
-                    .addOnSuccessListener(aVoid -> {
-                        // Step 2: Remove student from "studentIndexes" array in "Sections/{grade}/Student_Sections/{section}"
-                        DocumentReference sectionDocRef = db.collection("Sections")
-                            .document(grade)
-                            .collection("Student_Sections")
-                            .document(section);
-
-                        Map<String, Object> student = new HashMap<>();
-                        student.put("firstName", firstName);
-                        student.put("lastName", lastName);
-
-                        sectionDocRef.update("studentIndexes", FieldValue.arrayRemove(student))
-                            .addOnSuccessListener(aVoid2 -> {
-                                Toast.makeText(this, "Deleted student: " + firstName + " " + lastName, Toast.LENGTH_SHORT).show();
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(this, "Error removing student from studentIndexes: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            });
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(this, "Error deleting student document: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    });
-            }
-        })
-        .addOnFailureListener(e -> {
-            Toast.makeText(this, "Error retrieving students: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        });
-}
 
     
 }

@@ -68,6 +68,7 @@ import android.animation.AnimatorSet;
 import android.view.animation.BounceInterpolator;
 import java.io.IOException;
 import java.util.Random;
+import com.happym.mathsquare.Animation.*;
 
 public class Results extends AppCompatActivity {
     private FirebaseFirestore db;
@@ -75,28 +76,28 @@ public class Results extends AppCompatActivity {
     private ProgressDialog loadingDialog;
     private TextView showScore, showResult, showMotive;
     private List<MathProblem> problemSet = new ArrayList<>();
-private MediaPlayer soundEffectPlayer;
+    private MediaPlayer soundEffectPlayer;
     private boolean saveSuccesfully = false;
     private int selHeart, selTimer;
-   private ArrayList<String> operationList;
-   private String quizIds;
-   private String starRating;
-      private int number;    
-    private FrameLayout numberContainer,backgroundFrame;
+    private ArrayList<String> operationList;
+    private String quizIds;
+    private String starRating;
+    private int number;
+    private FrameLayout numberContainer, backgroundFrame;
     private final Random random = new Random();
-    private final int[] numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    private final int numberCount = 3; // Number of numbers per side
+    private NumBGAnimation numBGAnimation;
     String completedLevelsField = "";
-                        String worldCompletedField = "";
+    String worldCompletedField = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_results);
-// Firestore instance
+        // Firestore instance
         db = FirebaseFirestore.getInstance();
-        
-       selHeart = getIntent().getIntExtra("heartLimit", 3);
+
+        selHeart = getIntent().getIntExtra("heartLimit", 3);
         selTimer = getIntent().getIntExtra("timerLimit", 10);
         String gameType = getIntent().getStringExtra("gametype");
         String getQuiz = getIntent().getStringExtra("quizid");
@@ -104,272 +105,157 @@ private MediaPlayer soundEffectPlayer;
         String getDifficulty = getIntent().getStringExtra("EXTRA_DIFFICULTY");
         operationList = getIntent().getStringArrayListExtra("operationList");
         ImageButton imageButton = findViewById(R.id.imgBtn_home);
-        imageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                   playSound("click.mp3");
-                Intent intent = new Intent(Results.this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-                    
-                   finish();
-            }
-        });
-        ImageButton imageButton_pause = findViewById(R.id.imgBtn_retry);
-imageButton_pause.setOnClickListener(new View.OnClickListener() {
-    @Override
-    public void onClick(View v) {
-                    playSound("click.mp3");
-        // Get current data
-        
-        ArrayList<MathProblem> answeredQuestions = getIntent().getParcelableArrayListExtra("EXTRA_ANSWERED_QUESTIONS");
+        imageButton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        playSound("click.mp3");
+                        Intent intent = new Intent(Results.this, MainActivity.class);
+                        intent.addFlags(
+                                Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
 
-        // Create an intent to return to MultipleChoicePage
-        Intent resultIntent = new Intent(Results.this, MultipleChoicePage.class);
-                    
-        resultIntent.putExtra("game_type", gameType);  
-                    if("quiz".equals(gameType)) {
-                       resultIntent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));       
-                       resultIntent.putExtra("quizId", getQuiz);                  
-                    }else{
-                       resultIntent.putExtra("operation", getOperationText);
+                        finish();
                     }
-        
-        resultIntent.putExtra("difficulty", getDifficulty);
-resultIntent.putExtra("heartLimit", selHeart);
-                    resultIntent.putExtra("timerLimit",selTimer);
-        startActivity(resultIntent);
-                    finish();
-    }
-});
+                });
+        ImageButton imageButton_pause = findViewById(R.id.imgBtn_retry);
+        imageButton_pause.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        playSound("click.mp3");
+                        // Get current data
 
+                        ArrayList<MathProblem> answeredQuestions =
+                                getIntent().getParcelableArrayListExtra("EXTRA_ANSWERED_QUESTIONS");
+
+                        // Create an intent to return to MultipleChoicePage
+                        Intent resultIntent = new Intent(Results.this, MultipleChoicePage.class);
+
+                        resultIntent.putExtra("game_type", gameType);
+                        if ("quiz".equals(gameType)) {
+                            resultIntent.putStringArrayListExtra(
+                                    "operationList", new ArrayList<>(operationList));
+                            resultIntent.putExtra("quizId", getQuiz);
+                        } else {
+                            resultIntent.putExtra("operation", getOperationText);
+                        }
+
+                        resultIntent.putExtra("difficulty", getDifficulty);
+                        resultIntent.putExtra("heartLimit", selHeart);
+                        resultIntent.putExtra("timerLimit", selTimer);
+                        startActivity(resultIntent);
+                        finish();
+                    }
+                });
 
         TextView textView = findViewById(R.id.textViewResults);
-textView.setText("");
-        textView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                    playSound("click.mp3");
-                Intent intent = new Intent(Results.this, Difficulty.class);
-                startActivity(intent);
-            }
-        });
+        textView.setText("");
+        textView.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        playSound("click.mp3");
+                        Intent intent = new Intent(Results.this, Difficulty.class);
+                        startActivity(intent);
+                    }
+                });
 
         String getResult = getIntent().getStringExtra("EXTRA_RESULT");
         String worldType = getIntent().getStringExtra("passingworldtype");
         String levelType = getIntent().getStringExtra("leveltype");
         String difficulty = getIntent().getStringExtra("EXTRA_DIFFICULTY");
-       String levelNext = getIntent().getStringExtra("passinglevelnext");
-        
-            
-int getScore = getIntent().getIntExtra("EXTRA_SCORE", 0);
-int getTotal = getIntent().getIntExtra("EXTRA_TOTAL", 0);
+        String levelNext = getIntent().getStringExtra("passinglevelnext");
 
-        
-showResult = findViewById(R.id.textViewResult);
-showScore = findViewById(R.id.textViewScore);
-showMotive = findViewById(R.id.textViewMotive);
+        int getScore = getIntent().getIntExtra("EXTRA_SCORE", 0);
+        int getTotal = getIntent().getIntExtra("EXTRA_TOTAL", 0);
 
-// Result and score text
-showResult.setText(getResult);
-String scoreDisplay = getScore + "/" + getTotal;
-showScore.setText(scoreDisplay);
-        
- loadingDialog = new ProgressDialog(this);
-    loadingDialog.setMessage("Saving Progress...");
-    loadingDialog.setCancelable(false);
-    
-       
-// Display Motivational message based on the result
-switch (getResult) {
-    case "Congratulations":
-     playSound("victory.mp3");       
-            if(sharedPreferences.StudentIsLoggedIn(this)){
-                
-                   sendScoreResult(getScore,getQuiz,gameType,levelType,levelNext,worldType,difficulty);
-               
-            }
-            
-        showMotive.setText("Excellent!");
-        break;
-    case "Good Job!":
-    playSound("victory.mp3");      
-            if(sharedPreferences.StudentIsLoggedIn(this)){
-                   sendScoreResult(getScore,getQuiz,gameType,levelType,levelNext,worldType,difficulty);
-                
-               
-            }
-        showMotive.setText("Keep it Up!");
-        break;
-    case "Nice Try!":
-    playSound("victory.mp3");      
-            if(sharedPreferences.StudentIsLoggedIn(this)){
-                   sendScoreResult(getScore,getQuiz,gameType,levelType,levelNext,worldType,difficulty);
-                
-               
-               
-            }
-        showMotive.setText("You can do even better!");
-        break;
-    case "Failed":
-            if(sharedPreferences.StudentIsLoggedIn(this)){
-                  sendScoreResult(getScore,getQuiz,gameType,levelType,levelNext,worldType,difficulty);
-            }
-           
-        showMotive.setText("Try Again!");
-        break;
-}
-        
-       
-   backgroundFrame = findViewById(R.id.main);
+        showResult = findViewById(R.id.textViewResult);
+        showScore = findViewById(R.id.textViewScore);
+        showMotive = findViewById(R.id.textViewMotive);
+
+        // Result and score text
+        showResult.setText(getResult);
+        String scoreDisplay = getScore + "/" + getTotal;
+        showScore.setText(scoreDisplay);
+
+        loadingDialog = new ProgressDialog(this);
+        loadingDialog.setMessage("Saving Progress...");
+        loadingDialog.setCancelable(false);
+
+        // Display Motivational message based on the result
+        switch (getResult) {
+            case "Congratulations":
+                playSound("victory.mp3");
+                if (sharedPreferences.StudentIsLoggedIn(this)) {
+
+                    sendScoreResult(
+                            getScore,
+                            getQuiz,
+                            gameType,
+                            levelType,
+                            levelNext,
+                            worldType,
+                            difficulty);
+                }
+
+                showMotive.setText("Excellent!");
+                break;
+            case "Good Job!":
+                playSound("victory.mp3");
+                if (sharedPreferences.StudentIsLoggedIn(this)) {
+                    sendScoreResult(
+                            getScore,
+                            getQuiz,
+                            gameType,
+                            levelType,
+                            levelNext,
+                            worldType,
+                            difficulty);
+                }
+                showMotive.setText("Keep it Up!");
+                break;
+            case "Nice Try!":
+                playSound("victory.mp3");
+                if (sharedPreferences.StudentIsLoggedIn(this)) {
+                    sendScoreResult(
+                            getScore,
+                            getQuiz,
+                            gameType,
+                            levelType,
+                            levelNext,
+                            worldType,
+                            difficulty);
+                }
+                showMotive.setText("You can do even better!");
+                break;
+            case "Failed":
+                if (sharedPreferences.StudentIsLoggedIn(this)) {
+                    sendScoreResult(
+                            getScore,
+                            getQuiz,
+                            gameType,
+                            levelType,
+                            levelNext,
+                            worldType,
+                            difficulty);
+                }
+
+                showMotive.setText("Try Again!");
+                break;
+        }
+
+        backgroundFrame = findViewById(R.id.main);
         numberContainer = findViewById(R.id.number_container); // Get FrameLayout from XML
 
-        startNumberAnimationLoop();
-        
-backgroundFrame.post(this::applyVignetteEffect);
-        
-        
-        
+        numBGAnimation = new NumBGAnimation(this, numberContainer);
+        numBGAnimation.startNumberAnimationLoop();
+
+        backgroundFrame.post(
+                () -> {
+                    VignetteEffect.apply(this, backgroundFrame);
+                });
     }
-    private void startNumberAnimationLoop() {
-        changeNumbers();
-    }
-
-    private void changeNumbers() {
-    numberContainer.removeAllViews(); // Clear old numbers
-
-    int screenWidth = getResources().getDisplayMetrics().widthPixels;
-    int screenHeight = getResources().getDisplayMetrics().heightPixels;
-
-    for (int i = 0; i < numberCount; i++) {
-        // Generate unique Y positions for better spread
-        float randomY1 = random.nextInt(screenHeight - 300) + 100;
-        float randomY2 = random.nextInt(screenHeight - 300) + 100;
-
-        // Left-side number variants (move to the right)
-        float startXLeft1 = -300f; // Start outside the screen
-        float startXLeft2 = -600f; // Start further outside
-
-        float endXLeft1 = screenWidth - (random.nextInt(screenWidth / 2 - 100) + 100);
-        float endXLeft2 = screenWidth - (random.nextInt(screenWidth / 2 - 100) + 150);
-
-        TextView numberLeft1 = createNumberTextView();
-        numberLeft1.setText(String.valueOf(numbers[random.nextInt(numbers.length)]));
-        numberLeft1.setX(startXLeft1); // Start outside
-        numberLeft1.setY(randomY1);
-        numberContainer.addView(numberLeft1);
-        numberLeft1.postDelayed(() -> animateNumber(numberLeft1, startXLeft1, endXLeft1), random.nextInt(3000)); // Delay up to 3s
-
-        TextView numberLeft2 = createNumberTextView();
-        numberLeft2.setText(String.valueOf(numbers[random.nextInt(numbers.length)]));
-        numberLeft2.setX(startXLeft2); // Start further outside
-        numberLeft2.setY(randomY2);
-        numberContainer.addView(numberLeft2);
-        numberLeft2.postDelayed(() -> animateNumber(numberLeft2, startXLeft2, endXLeft2), random.nextInt(6000)); // Delay up to 6s
-
-        // Right-side number variants (move to the left)
-        float startXRight1 = screenWidth + 300f; // Start outside the screen
-        float startXRight2 = screenWidth + 600f; // Start further outside
-
-        float endXRight1 = random.nextInt(screenWidth / 2 - 300) + 100;
-        float endXRight2 = random.nextInt(screenWidth / 2 - 300) + 150;
-
-        TextView numberRight1 = createNumberTextView();
-        numberRight1.setText(String.valueOf(numbers[random.nextInt(numbers.length)]));
-        numberRight1.setX(startXRight1); // Start outside
-        numberRight1.setY(randomY1);
-        numberContainer.addView(numberRight1);
-        numberRight1.postDelayed(() -> animateNumber(numberRight1, startXRight1, endXRight1), random.nextInt(3000)); // Delay up to 3s
-
-        TextView numberRight2 = createNumberTextView();
-        numberRight2.setText(String.valueOf(numbers[random.nextInt(numbers.length)]));
-        numberRight2.setX(startXRight2); // Start further outside
-        numberRight2.setY(randomY2);
-        numberContainer.addView(numberRight2);
-        numberRight2.postDelayed(() -> animateNumber(numberRight2, startXRight2, endXRight2), random.nextInt(6000)); // Delay up to 6s
-    }
-
-    // Repeat the cycle
-    numberContainer.postDelayed(this::changeNumbers, 20000);
-}
-
-    
-    private TextView createNumberTextView() {
-        TextView textView = new TextView(this);
-        textView.setTextSize(200); // Big size
-        textView.setTypeface(Typeface.DEFAULT_BOLD);
-        textView.setGravity(Gravity.CENTER);
-        textView.setTextColor(Color.GRAY); // Gray text with border
-        textView.setLayoutParams(new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT
-        ));
-        return textView;
-    }
-
-private void animateNumber(TextView textView, float startX, float endX) {
-    textView.setX(startX);
-    textView.setAlpha(0.65f); // Ensure visibility at start
-
-    // Move from left/right to center
-    ObjectAnimator moveAnimation = ObjectAnimator.ofFloat(textView, "translationX", startX, endX);
-    moveAnimation.setDuration(9000); // Smooth movement
-    moveAnimation.setInterpolator(new DecelerateInterpolator());
-
-    // Rotate slightly while moving
-    ObjectAnimator rotateAnimation = ObjectAnimator.ofFloat(textView, "rotation", -20f, 20f);
-    rotateAnimation.setDuration(5000);
-    rotateAnimation.setRepeatMode(ValueAnimator.REVERSE);
-    rotateAnimation.setRepeatCount(ValueAnimator.INFINITE);
-    rotateAnimation.setInterpolator(new LinearInterpolator());
-
-    // Play Move & Rotate Together
-    AnimatorSet moveAndRotate = new AnimatorSet();
-    moveAndRotate.playTogether(moveAnimation, rotateAnimation);
-    moveAndRotate.start();
-
-    moveAnimation.addListener(new AnimatorListenerAdapter() {
-        @Override
-        public void onAnimationEnd(Animator animation) {
-            // Once movement ends, start fading out
-            ObjectAnimator fadeOut = ObjectAnimator.ofFloat(textView, "alpha", 0.65f, 0);
-            fadeOut.setDuration(4000); // Slow disappearance
-            fadeOut.setInterpolator(new LinearInterpolator());
-            fadeOut.start();
-        }
-    });
-}
-
-private void applyVignetteEffect() {
-    
-
-    int width = backgroundFrame.getWidth();
-    int height = backgroundFrame.getHeight();
-
-    if (width == 0 || height == 0) return; // Prevents crash if layout is not measured yet
-
-    // Create a bitmap
-    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-    Canvas canvas = new Canvas(bitmap);
-
-    // Define the vignette effect
-    RadialGradient gradient = new RadialGradient(
-            width / 2f, height / 2f, // Center of the gradient
-            Math.max(width, height) * 0.8f, // Radius (70% of the largest dimension)
-            new int[]{Color.parseColor("#FFEF47"), Color.parseColor("#898021"), Color.parseColor("#504A31")},
-            new float[]{0.2f, 0.6f, 1f}, // Gradient stops
-            Shader.TileMode.CLAMP);
-
-    Paint paint = new Paint();
-    paint.setShader(gradient);
-    paint.setAlpha(180); // Adjust transparency
-
-    // Draw gradient on the canvas
-    canvas.drawRect(0, 0, width, height, paint);
-
-    // Set as background
-    backgroundFrame.setBackground(new BitmapDrawable(getResources(), bitmap));
-}
 
     private void playSound(String fileName) {
         // Stop any previous sound effect before playing a new one
@@ -394,398 +280,656 @@ private void applyVignetteEffect() {
             e.printStackTrace();
         }
     }
-    
-   /**
- * Sends the score result to the Firebase backend for different game types.
- *
- * @param Score             The score achieved by the student.
- * @param quizid            The quiz identifier.
- * @param gametype          The type of game ("passing_level", "quiz", "OnTimer", or "Practicd").
- * @param levelNum          The level number (e.g., "level_1", "level_10").
- * @param nextlevel         The identifier for the next level to complete.
- * @param worldType         The world in which the level is played (e.g., "world_one", "world_two").
- * @param OnTimerDifficulty The difficulty setting for OnTimer mode.
- */
-private void sendScoreResult(int Score, String quizid, String gametype, String levelNum, String nextlevel, String worldType, String OnTimerDifficulty) {
 
-    // Retrieve student-related information from shared preferences.
-    String section = sharedPreferences.getSection(this);
-    String grade = sharedPreferences.getGrade(this);
-    String firstName = sharedPreferences.getFirstN(this);
-    String lastName = sharedPreferences.getLastN(this);
-    
-    // Determine quiz name & number
-int number;
-switch (quizid) {
-    case "quiz_1": quizIds = "Quiz 1"; number = 1; break;
-    case "quiz_2": quizIds = "Quiz 2"; number = 2; break;
-    case "quiz_3": quizIds = "Quiz 3"; number = 3; break;
-    case "quiz_4": quizIds = "Quiz 4"; number = 4; break;
-    case "quiz_5": quizIds = "Quiz 5"; number = 5; break;
-    case "quiz_6": quizIds = "Quiz 6"; number = 6; break;
-    default:       quizIds = "Quiz 1"; number = 1; break;
-}
+    /**
+     * Sends the score result to the Firebase backend for different game types.
+     *
+     * @param Score The score achieved by the student.
+     * @param quizid The quiz identifier.
+     * @param gametype The type of game ("passing_level", "quiz", "OnTimer", or "Practicd").
+     * @param levelNum The level number (e.g., "level_1", "level_10").
+     * @param nextlevel The identifier for the next level to complete.
+     * @param worldType The world in which the level is played (e.g., "world_one", "world_two").
+     * @param OnTimerDifficulty The difficulty setting for OnTimer mode.
+     */
+    private void sendScoreResult(
+            int Score,
+            String quizid,
+            String gametype,
+            String levelNum,
+            String nextlevel,
+            String worldType,
+            String OnTimerDifficulty) {
 
-quizname = quizIds;
-String uuid     = UUID.randomUUID().toString();
+        // Retrieve student-related information from shared preferences.
+        String section = sharedPreferences.getSection(this);
+        String grade = sharedPreferences.getGrade(this);
+        String firstName = sharedPreferences.getFirstN(this);
+        String lastName = sharedPreferences.getLastN(this);
 
-// Common data map
-Map<String, Object> studentDataQuiz = new HashMap<>();
-studentDataQuiz.put("firstName", firstName);
-studentDataQuiz.put("lastName", lastName);
-studentDataQuiz.put("section", section);
-studentDataQuiz.put("gameType", "Quiz");
-studentDataQuiz.put("grade", grade);
-studentDataQuiz.put("timestamp", FieldValue.serverTimestamp());
-studentDataQuiz.put("quizno", quizname);
-studentDataQuiz.put("quizno_int", number);
-studentDataQuiz.put("quizscore", String.valueOf(Score));
+        // Determine quiz name & number
+        int number;
 
-    // Create a HashMap to store OnTimer mode data.
-    HashMap<String, Object> OnTimerData = new HashMap<>();
-    OnTimerData.put("firstName", firstName);
-    OnTimerData.put("lastName", lastName);
-    OnTimerData.put("section", section);
-    OnTimerData.put("grade", grade);
-    OnTimerData.put("gameType", "OnTimer");
-       OnTimerData.put("quizno", "OnTimer");
-        OnTimerData.put("quizno_int", number); 
-     OnTimerData.put("timestamp", FieldValue.serverTimestamp());             
-    OnTimerData.put("ontimer_difficulty", OnTimerDifficulty);
-    OnTimerData.put("quizscore", String.valueOf(Score));
-
-    // Create a HashMap to store Practice mode data.
-    HashMap<String, Object> PracticeData = new HashMap<>();
-    PracticeData.put("firstName", firstName);
-    PracticeData.put("lastName", lastName);
-    PracticeData.put("section", section);
-    PracticeData.put("gameType", "Practice");
-    PracticeData.put("grade", grade);
-       PracticeData.put("quizno_int", number); 
-       PracticeData.put("quizno", "Practice");
-       PracticeData.put("timestamp", FieldValue.serverTimestamp());           
-    PracticeData.put("practice_difficulty", OnTimerDifficulty);
-    PracticeData.put("quizscore", String.valueOf(Score));
-
-  // Create a HashMap for passing level data.
-HashMap<String, Object> passingData = new HashMap<>();
-passingData.put("firstName", firstName);
-passingData.put("gameType", "Passing");
-passingData.put("lastName", lastName);
-passingData.put("section", section);
-passingData.put("grade", grade);
-passingData.put("quizno_int", number); 
-passingData.put("quizno", "Passing_" + levelNum);
-passingData.put("timestamp", FieldValue.serverTimestamp());
-passingData.put("passing_level_must_complete", nextlevel);
-passingData.put("quizscore", String.valueOf(Score));
-
-// Determine star rating based on the score
-String scoreStr = String.valueOf(Score);
-switch (scoreStr) {
-    case "1": case "2": case "3": case "4":
-        starRating = "1 Stars";
-        break;
-    case "5": case "6": case "7": case "8": case "9":
-        starRating = "2 Stars";
-        break;
-    default:
-        starRating = "3 Stars";
-        break;
-}
-
-// Prepare the new stars entry for the current level.
-String newStarsEntry = levelNum + "_" + starRating;
-// Create an initial starsHistory list with the new entry.
-List<String> starsHistory = new ArrayList<>();
-starsHistory.add(newStarsEntry);
-
-// Put the final starRating back into passingData
-passingData.put("stars_passing_" + levelNum, starRating);
-passingData.put("stars_list", starsHistory);
-
-if ("Passing".equals(gametype)) {
-    CollectionReference collectionRef = db.collection("Accounts")
-        .document("Students")
-        .collection("MathSquare");
-
-    collectionRef.whereEqualTo("firstName", firstName)
-      .whereEqualTo("lastName", lastName)
-      .whereEqualTo("gameType", "Passing")
-      .get()
-      .addOnCompleteListener(task -> {
-          if (!task.isSuccessful()) {
-              loadingDialog.dismiss();
-              Toast.makeText(this, "Error fetching data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-              return;
-          }
-
-          if (!task.getResult().isEmpty()) {
-              // Existing student
-              for (DocumentSnapshot document : task.getResult()) {
-                  DocumentReference docRef = collectionRef.document(document.getId());
-
-                  docRef.get().addOnSuccessListener(snapshot -> {
-                      if (!snapshot.exists()) return;
-
-                      // Retrieve the current completed levels
-                      List<String> completedLevels = (List<String>) snapshot.get("passing_completed_levels");
-                      if (completedLevels == null) completedLevels = new ArrayList<>();
-
-                      // Merge the stars_list: get the existing list then update with the new entry.
-                      List<String> existingStarsList = (List<String>) snapshot.get("stars_list");
-                      if (existingStarsList == null) {
-                          existingStarsList = new ArrayList<>();
-                      }
-                      // Remove any existing entry for the current level
-                      Iterator<String> iterator = existingStarsList.iterator();
-                      while (iterator.hasNext()) {
-                          String entry = iterator.next();
-                          if (entry.startsWith(levelNum + "_")) {
-                              iterator.remove();
-                          }
-                      }
-                      // Add the new entry
-                      existingStarsList.add(newStarsEntry);
-                      // Sort the list numerically based on the numeric part of the level string
-                      Collections.sort(existingStarsList, (a, b) -> {
-                          int numA = Integer.parseInt(a.replaceAll("\\D+", ""));
-                          int numB = Integer.parseInt(b.replaceAll("\\D+", ""));
-                          return Integer.compare(numA, numB);
-                      });
-
-                      // Update the main record if this level isn't already marked complete.
-                      if (!completedLevels.contains(levelNum)) {
-                          completedLevels.add(levelNum);
-                          Collections.sort(completedLevels, (a, b) -> {
-                              int na = Integer.parseInt(a.replaceAll("\\D+", ""));
-                              int nb = Integer.parseInt(b.replaceAll("\\D+", ""));
-                              return Integer.compare(na, nb);
-                          });
-                          docRef.update(
-                              "passing_completed_levels", completedLevels,
-                              "stars_list", existingStarsList,
-                              "passing_level_must_complete", nextlevel
-                          )
-                          .addOnSuccessListener(aVoid ->
-                              Toast.makeText(this, "Main record updated", Toast.LENGTH_SHORT).show()
-                          )
-                          .addOnFailureListener(e ->
-                              Toast.makeText(this, "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                          );
-                      }
-
-                      // Create a new PassingHistory entry that contains the new stars entry.
-                      Map<String, Object> historyData = new HashMap<>();
-                      historyData.put("level", levelNum);
-                      historyData.put("score", Score);
-                      historyData.put("stars", starRating);
-                      historyData.put("timestamp", FieldValue.serverTimestamp());
-
-                      docRef.collection("PassingHistory")
-                          .add(historyData)
-                          .addOnSuccessListener(aVoid -> {
-                              loadingDialog.dismiss();
-                              Toast.makeText(this, "Passing history saved", Toast.LENGTH_SHORT).show();
-                          })
-                          .addOnFailureListener(e -> {
-                              loadingDialog.dismiss();
-                              Toast.makeText(this, "History save failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                          });
-                  });
-              }
-          } else {
-              // New student: create main record + first history entry
-              passingData.put("passing_completed_levels", Arrays.asList(levelNum));
-
-              collectionRef.add(passingData)
-                  .addOnSuccessListener(docRef -> {
-                      // Build first history entry
-                      Map<String, Object> historyData = new HashMap<>();
-                      historyData.put("level", levelNum);
-                      historyData.put("score", Score);
-                      historyData.put("stars", starRating);
-                      historyData.put("timestamp", FieldValue.serverTimestamp());
-
-                      docRef.collection("PassingHistory")
-                          .add(historyData)
-                          .addOnSuccessListener(aVoid -> {
-                              loadingDialog.dismiss();
-                              Toast.makeText(this, "Student and history created", Toast.LENGTH_SHORT).show();
-                          })
-                          .addOnFailureListener(e -> {
-                              loadingDialog.dismiss();
-                              Toast.makeText(this, "Failed saving history: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                          });
-                  })
-                  .addOnFailureListener(e -> {
-                      loadingDialog.dismiss();
-                      Toast.makeText(this, "Error creating student: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                  });
-          }
-      });
-} else if ("quiz".equals(gametype)) {
-    
-CollectionReference collectionRef = db
-    .collection("Accounts")
-    .document("Students")
-    .collection("MathSquare");
-
-// Query for an existing quiz by integer quiz number
-collectionRef
-    .whereEqualTo("firstName", firstName)
-    .whereEqualTo("lastName", lastName)
-    .whereEqualTo("quizno_int", number)
-    .get()
-    .addOnCompleteListener(task -> {
-        loadingDialog.dismiss();
-        if (!task.isSuccessful()) {
-            Toast.makeText(this, 
-                "Error checking student data: " + task.getException().getMessage(),
-                Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        if (!task.getResult().isEmpty()) {
-            // Update existing record(s)
-            for (DocumentSnapshot doc : task.getResult()) {
-                DocumentReference docRef = collectionRef.document(doc.getId());
-                Map<String, Object> updates = new HashMap<>();
-                updates.put("quizscore", String.valueOf(Score));
-                updates.put("quizno_int", number);
-                updates.put("timestamp", FieldValue.serverTimestamp());
-                // If you also want to update quizno or other fields, add them here
-
-                docRef.update(updates)
-                    .addOnSuccessListener(aVoid ->
-                        Toast.makeText(this, "Quiz updated successfully", 
-                                       Toast.LENGTH_SHORT).show())
-                    .addOnFailureListener(e ->
-                        Toast.makeText(this, "Error updating: " + e.getMessage(),
-                                       Toast.LENGTH_LONG).show());
-            }
+        if (quizid == null) {
+            quizIds = "Quiz 1";
+            number = 1;
         } else {
-            // No existing quiz, so add new document
-            collectionRef.add(studentDataQuiz)
-                .addOnSuccessListener(aVoid ->
-                    Toast.makeText(this, "New quiz record added", 
-                                   Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e ->
-                    Toast.makeText(this, "Error adding: " + e.getMessage(),
-                                   Toast.LENGTH_LONG).show());
+            switch (quizid) {
+                case "quiz_1":
+                    quizIds = "Quiz 1";
+                    number = 1;
+                    break;
+                case "quiz_2":
+                    quizIds = "Quiz 2";
+                    number = 2;
+                    break;
+                case "quiz_3":
+                    quizIds = "Quiz 3";
+                    number = 3;
+                    break;
+                case "quiz_4":
+                    quizIds = "Quiz 4";
+                    number = 4;
+                    break;
+                case "quiz_5":
+                    quizIds = "Quiz 5";
+                    number = 5;
+                    break;
+                case "quiz_6":
+                    quizIds = "Quiz 6";
+                    number = 6;
+                    break;
+                default:
+                    quizIds = "Quiz 1";
+                    number = 1;
+                    break;
+            }
         }
-    })
-    .addOnFailureListener(e -> {
-        loadingDialog.dismiss();
-        Toast.makeText(this, "Error fetching student data: " + e.getMessage(),
-                       Toast.LENGTH_LONG).show();
-    });
 
-    } else if ("OnTimer".equals(gametype)) {
-        // Process for OnTimer game type.
-        CollectionReference collectionRef = db.collection("Accounts")
-            .document("Students")
-            .collection("MathSquare");
+        String quizname = quizIds;
+        String uuid = UUID.randomUUID().toString();
 
-        // Query for an existing OnTimer record matching the student's difficulty level.
-        collectionRef.whereEqualTo("firstName", firstName)
-            .whereEqualTo("lastName", lastName)
-            .whereEqualTo("gameType", "OnTimer")
-            .get()
-            .addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    if (!task.getResult().isEmpty()) {
-                        // Update the existing OnTimer document.
-                        for (DocumentSnapshot document : task.getResult()) {
-                            collectionRef.document(document.getId())
-                                .set(OnTimerData)
-                                .addOnSuccessListener(aVoid -> {
-                                    loadingDialog.dismiss();
-                                    Toast.makeText(this, "On Timer Score updated successfully", Toast.LENGTH_SHORT).show();
-                                })
-                                .addOnFailureListener(e -> {
-                                    loadingDialog.dismiss();
-                                    Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                });
-                        }
-                    } else {
-                        // No existing document found; simply dismiss the loading dialog.
-                        loadingDialog.dismiss();
-                    }
-                } else {
-                    // In case of failure, show an error and attempt to add a new OnTimer document.
-                    Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                    collectionRef.add(OnTimerData)
-                        .addOnSuccessListener(aVoid -> {
-                            loadingDialog.dismiss();
-                            Toast.makeText(this, "New On Timer Score added", Toast.LENGTH_SHORT).show();
-                        })
-                        .addOnFailureListener(e -> {
-                            loadingDialog.dismiss();
-                            Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        });
-                }
-            })
-            .addOnFailureListener(e -> {
-                loadingDialog.dismiss();
-                Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            });
+        // Common data map
+        Map<String, Object> studentDataQuiz = new HashMap<>();
+        studentDataQuiz.put("firstName", firstName);
+        studentDataQuiz.put("lastName", lastName);
+        studentDataQuiz.put("section", section);
+        studentDataQuiz.put("gameType", "Quiz");
+        studentDataQuiz.put("grade", grade);
+        studentDataQuiz.put("timestamp", FieldValue.serverTimestamp());
+        studentDataQuiz.put("quizno", quizname);
+        studentDataQuiz.put("quizno_int", number);
+        studentDataQuiz.put("quizscore", String.valueOf(Score));
 
-    } else if ("Practice".equals(gametype)) {
-        // Process for Practice mode (note: "Practicd" may be a typo for "Practice").
-        CollectionReference collectionRef = db.collection("Accounts")
-            .document("Students")
-            .collection("MathSquare");
+        // Create a HashMap to store OnTimer mode data.
+        HashMap<String, Object> OnTimerData = new HashMap<>();
+        OnTimerData.put("firstName", firstName);
+        OnTimerData.put("lastName", lastName);
+        OnTimerData.put("section", section);
+        OnTimerData.put("grade", grade);
+        OnTimerData.put("gameType", "OnTimer");
+        OnTimerData.put("quizno", "OnTimer");
+        OnTimerData.put("quizno_int", number);
+        OnTimerData.put("timestamp", FieldValue.serverTimestamp());
+        OnTimerData.put("ontimer_difficulty", OnTimerDifficulty);
+        OnTimerData.put("quizscore", String.valueOf(Score));
 
-        // Query for an existing Practice record where practice_score is set to "None".
-        collectionRef.whereEqualTo("firstName", firstName)
-            .whereEqualTo("lastName", lastName)
-            .whereEqualTo("gameType", "Practice")
-            .get()
-            .addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    if (!task.getResult().isEmpty()) {
-                        // If found, update the existing Practice document.
-                        for (DocumentSnapshot document : task.getResult()) {
-                            collectionRef.document(document.getId())
-                                .set(PracticeData)
-                                .addOnSuccessListener(aVoid -> {
+        // Create a HashMap to store Practice mode data.
+        HashMap<String, Object> PracticeData = new HashMap<>();
+        PracticeData.put("firstName", firstName);
+        PracticeData.put("lastName", lastName);
+        PracticeData.put("section", section);
+        PracticeData.put("gameType", "Practice");
+        PracticeData.put("grade", grade);
+        PracticeData.put("quizno_int", number);
+        PracticeData.put("quizno", "Practice");
+        PracticeData.put("timestamp", FieldValue.serverTimestamp());
+        PracticeData.put("practice_difficulty", OnTimerDifficulty);
+        PracticeData.put("quizscore", String.valueOf(Score));
+
+        // Create a HashMap for passing level data.
+        HashMap<String, Object> passingData = new HashMap<>();
+        passingData.put("firstName", firstName);
+        passingData.put("gameType", "Passing");
+        passingData.put("lastName", lastName);
+        passingData.put("section", section);
+        passingData.put("grade", grade);
+        passingData.put("quizno_int", number);
+        passingData.put("quizno", "Passing_" + levelNum);
+        passingData.put("timestamp", FieldValue.serverTimestamp());
+        passingData.put("passing_level_must_complete", nextlevel);
+        passingData.put("quizscore", String.valueOf(Score));
+
+        // Determine star rating based on the score
+        String scoreStr = String.valueOf(Score);
+        switch (scoreStr) {
+            case "1":
+            case "2":
+            case "3":
+            case "4":
+                starRating = "1 Stars";
+                break;
+            case "5":
+            case "6":
+            case "7":
+            case "8":
+            case "9":
+                starRating = "2 Stars";
+                break;
+            default:
+                starRating = "3 Stars";
+                break;
+        }
+
+        // Prepare the new stars entry for the current level.
+        String newStarsEntry = levelNum + "_" + starRating;
+        // Create an initial starsHistory list with the new entry.
+        List<String> starsHistory = new ArrayList<>();
+        starsHistory.add(newStarsEntry);
+
+        // Put the final starRating back into passingData
+        passingData.put("stars_passing_" + levelNum, starRating);
+        passingData.put("stars_list", starsHistory);
+
+        if ("Passing".equals(gametype)) {
+            CollectionReference collectionRef =
+                    db.collection("Accounts").document("Students").collection("MathSquare");
+
+            collectionRef
+                    .whereEqualTo("firstName", firstName)
+                    .whereEqualTo("lastName", lastName)
+                    .whereEqualTo("gameType", "Passing")
+                    .get()
+                    .addOnCompleteListener(
+                            task -> {
+                                if (!task.isSuccessful()) {
                                     loadingDialog.dismiss();
-                                    Toast.makeText(this, "Practice Score updated successfully", Toast.LENGTH_SHORT).show();
-                                })
-                                .addOnFailureListener(e -> {
-                                    loadingDialog.dismiss();
-                                    Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                });
-                        }
-                    } else {
-                        // If no matching record is found, simply dismiss the loading dialog.
-                        loadingDialog.dismiss();
-                    }
-                } else {
-                    // On query failure, show an error and attempt to add a new Practice document.
-                    Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                    collectionRef.add(PracticeData)
-                        .addOnSuccessListener(aVoid -> {
-                            loadingDialog.dismiss();
-                            Toast.makeText(this, "New Practice Score added", Toast.LENGTH_SHORT).show();
-                        })
-                        .addOnFailureListener(e -> {
-                            loadingDialog.dismiss();
-                            Toast.makeText(this, "Error updating: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        });
-                }
-            })
-            .addOnFailureListener(e -> {
-                loadingDialog.dismiss();
-                Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            });
-    } else {
-        // If none of the gametypes match, simply dismiss the loading dialog.
-        loadingDialog.dismiss();
+                                    Toast.makeText(
+                                                    this,
+                                                    "Error fetching data: "
+                                                            + task.getException().getMessage(),
+                                                    Toast.LENGTH_LONG)
+                                            .show();
+                                    return;
+                                }
+
+                                if (!task.getResult().isEmpty()) {
+                                    // Existing student
+                                    for (DocumentSnapshot document : task.getResult()) {
+                                        DocumentReference docRef =
+                                                collectionRef.document(document.getId());
+
+                                        docRef.get()
+                                                .addOnSuccessListener(
+                                                        snapshot -> {
+                                                            if (!snapshot.exists()) return;
+
+                                                            // Retrieve the current completed levels
+                                                            List<String> completedLevels =
+                                                                    (List<String>)
+                                                                            snapshot.get(
+                                                                                    "passing_completed_levels");
+                                                            if (completedLevels == null)
+                                                                completedLevels = new ArrayList<>();
+
+                                                            // Merge the stars_list: get the
+                                                            // existing list then update with the
+                                                            // new entry.
+                                                            List<String> existingStarsList =
+                                                                    (List<String>)
+                                                                            snapshot.get(
+                                                                                    "stars_list");
+                                                            if (existingStarsList == null) {
+                                                                existingStarsList =
+                                                                        new ArrayList<>();
+                                                            }
+                                                            // Remove any existing entry for the
+                                                            // current level
+                                                            Iterator<String> iterator =
+                                                                    existingStarsList.iterator();
+                                                            while (iterator.hasNext()) {
+                                                                String entry = iterator.next();
+                                                                if (entry.startsWith(
+                                                                        levelNum + "_")) {
+                                                                    iterator.remove();
+                                                                }
+                                                            }
+                                                            // Add the new entry
+                                                            existingStarsList.add(newStarsEntry);
+                                                            // Sort the list numerically based on
+                                                            // the numeric part of the level string
+                                                            Collections.sort(
+                                                                    existingStarsList,
+                                                                    (a, b) -> {
+                                                                        int numA =
+                                                                                Integer.parseInt(
+                                                                                        a
+                                                                                                .replaceAll(
+                                                                                                        "\\D+",
+                                                                                                        ""));
+                                                                        int numB =
+                                                                                Integer.parseInt(
+                                                                                        b
+                                                                                                .replaceAll(
+                                                                                                        "\\D+",
+                                                                                                        ""));
+                                                                        return Integer.compare(
+                                                                                numA, numB);
+                                                                    });
+
+                                                            // Update the main record if this level
+                                                            // isn't already marked complete.
+                                                            if (!completedLevels.contains(
+                                                                    levelNum)) {
+                                                                completedLevels.add(levelNum);
+                                                                Collections.sort(
+                                                                        completedLevels,
+                                                                        (a, b) -> {
+                                                                            int na =
+                                                                                    Integer
+                                                                                            .parseInt(
+                                                                                                    a
+                                                                                                            .replaceAll(
+                                                                                                                    "\\D+",
+                                                                                                                    ""));
+                                                                            int nb =
+                                                                                    Integer
+                                                                                            .parseInt(
+                                                                                                    b
+                                                                                                            .replaceAll(
+                                                                                                                    "\\D+",
+                                                                                                                    ""));
+                                                                            return Integer.compare(
+                                                                                    na, nb);
+                                                                        });
+                                                                docRef.update(
+                                                                                "passing_completed_levels",
+                                                                                        completedLevels,
+                                                                                "stars_list",
+                                                                                        existingStarsList,
+                                                                                "passing_level_must_complete",
+                                                                                        nextlevel)
+                                                                        .addOnSuccessListener(
+                                                                                aVoid ->
+                                                                                        Toast
+                                                                                                .makeText(
+                                                                                                        this,
+                                                                                                        "Main record updated",
+                                                                                                        Toast
+                                                                                                                .LENGTH_SHORT)
+                                                                                                .show())
+                                                                        .addOnFailureListener(
+                                                                                e ->
+                                                                                        Toast
+                                                                                                .makeText(
+                                                                                                        this,
+                                                                                                        "Update failed: "
+                                                                                                                + e
+                                                                                                                        .getMessage(),
+                                                                                                        Toast
+                                                                                                                .LENGTH_SHORT)
+                                                                                                .show());
+                                                            }
+
+                                                            // Create a new PassingHistory entry
+                                                            // that contains the new stars entry.
+                                                            Map<String, Object> historyData =
+                                                                    new HashMap<>();
+                                                            historyData.put("level", levelNum);
+                                                            historyData.put("score", Score);
+                                                            historyData.put("stars", starRating);
+                                                            historyData.put(
+                                                                    "timestamp",
+                                                                    FieldValue.serverTimestamp());
+
+                                                            docRef.collection("PassingHistory")
+                                                                    .add(historyData)
+                                                                    .addOnSuccessListener(
+                                                                            aVoid -> {
+                                                                                loadingDialog
+                                                                                        .dismiss();
+                                                                                Toast.makeText(
+                                                                                                this,
+                                                                                                "Passing history saved",
+                                                                                                Toast
+                                                                                                        .LENGTH_SHORT)
+                                                                                        .show();
+                                                                            })
+                                                                    .addOnFailureListener(
+                                                                            e -> {
+                                                                                loadingDialog
+                                                                                        .dismiss();
+                                                                                Toast.makeText(
+                                                                                                this,
+                                                                                                "History save failed: "
+                                                                                                        + e
+                                                                                                                .getMessage(),
+                                                                                                Toast
+                                                                                                        .LENGTH_LONG)
+                                                                                        .show();
+                                                                            });
+                                                        });
+                                    }
+                                } else {
+                                    // New student: create main record + first history entry
+                                    passingData.put(
+                                            "passing_completed_levels", Arrays.asList(levelNum));
+
+                                    collectionRef
+                                            .add(passingData)
+                                            .addOnSuccessListener(
+                                                    docRef -> {
+                                                        // Build first history entry
+                                                        Map<String, Object> historyData =
+                                                                new HashMap<>();
+                                                        historyData.put("level", levelNum);
+                                                        historyData.put("score", Score);
+                                                        historyData.put("stars", starRating);
+                                                        historyData.put(
+                                                                "timestamp",
+                                                                FieldValue.serverTimestamp());
+
+                                                        docRef.collection("PassingHistory")
+                                                                .add(historyData)
+                                                                .addOnSuccessListener(
+                                                                        aVoid -> {
+                                                                            loadingDialog.dismiss();
+                                                                            Toast.makeText(
+                                                                                            this,
+                                                                                            "Student and history created",
+                                                                                            Toast
+                                                                                                    .LENGTH_SHORT)
+                                                                                    .show();
+                                                                        })
+                                                                .addOnFailureListener(
+                                                                        e -> {
+                                                                            loadingDialog.dismiss();
+                                                                            Toast.makeText(
+                                                                                            this,
+                                                                                            "Failed saving history: "
+                                                                                                    + e
+                                                                                                            .getMessage(),
+                                                                                            Toast
+                                                                                                    .LENGTH_LONG)
+                                                                                    .show();
+                                                                        });
+                                                    })
+                                            .addOnFailureListener(
+                                                    e -> {
+                                                        loadingDialog.dismiss();
+                                                        Toast.makeText(
+                                                                        this,
+                                                                        "Error creating student: "
+                                                                                + e.getMessage(),
+                                                                        Toast.LENGTH_LONG)
+                                                                .show();
+                                                    });
+                                }
+                            });
+        } else if ("quiz".equals(gametype)) {
+
+            CollectionReference collectionRef =
+                    db.collection("Accounts").document("Students").collection("MathSquare");
+
+            // Query for an existing quiz by integer quiz number
+            collectionRef
+                    .whereEqualTo("firstName", firstName)
+                    .whereEqualTo("lastName", lastName)
+                    .whereEqualTo("quizno_int", number)
+                    .get()
+                    .addOnCompleteListener(
+                            task -> {
+                                loadingDialog.dismiss();
+                                if (!task.isSuccessful()) {
+                                    Toast.makeText(
+                                                    this,
+                                                    "Error checking student data: "
+                                                            + task.getException().getMessage(),
+                                                    Toast.LENGTH_LONG)
+                                            .show();
+                                    return;
+                                }
+
+                                if (!task.getResult().isEmpty()) {
+                                    // Update existing record(s)
+                                    for (DocumentSnapshot doc : task.getResult()) {
+                                        DocumentReference docRef =
+                                                collectionRef.document(doc.getId());
+                                        Map<String, Object> updates = new HashMap<>();
+                                        updates.put("quizscore", String.valueOf(Score));
+                                        updates.put("quizno_int", number);
+                                        updates.put("timestamp", FieldValue.serverTimestamp());
+                                        // If you also want to update quizno or other fields, add
+                                        // them here
+
+                                        docRef.update(updates)
+                                                .addOnSuccessListener(
+                                                        aVoid ->
+                                                                Toast.makeText(
+                                                                                this,
+                                                                                "Quiz updated successfully",
+                                                                                Toast.LENGTH_SHORT)
+                                                                        .show())
+                                                .addOnFailureListener(
+                                                        e ->
+                                                                Toast.makeText(
+                                                                                this,
+                                                                                "Error updating: "
+                                                                                        + e
+                                                                                                .getMessage(),
+                                                                                Toast.LENGTH_LONG)
+                                                                        .show());
+                                    }
+                                } else {
+                                    // No existing quiz, so add new document
+                                    collectionRef
+                                            .add(studentDataQuiz)
+                                            .addOnSuccessListener(
+                                                    aVoid ->
+                                                            Toast.makeText(
+                                                                            this,
+                                                                            "New quiz record added",
+                                                                            Toast.LENGTH_SHORT)
+                                                                    .show())
+                                            .addOnFailureListener(
+                                                    e ->
+                                                            Toast.makeText(
+                                                                            this,
+                                                                            "Error adding: "
+                                                                                    + e
+                                                                                            .getMessage(),
+                                                                            Toast.LENGTH_LONG)
+                                                                    .show());
+                                }
+                            })
+                    .addOnFailureListener(
+                            e -> {
+                                loadingDialog.dismiss();
+                                Toast.makeText(
+                                                this,
+                                                "Error fetching student data: " + e.getMessage(),
+                                                Toast.LENGTH_LONG)
+                                        .show();
+                            });
+
+        } else if ("OnTimer".equals(gametype)) {
+            // Process for OnTimer game type.
+            CollectionReference collectionRef =
+                    db.collection("Accounts").document("Students").collection("MathSquare");
+
+            // Query for an existing OnTimer record matching the student's difficulty level.
+            collectionRef
+                    .whereEqualTo("firstName", firstName)
+                    .whereEqualTo("lastName", lastName)
+                    .whereEqualTo("gameType", "OnTimer")
+                    .get()
+                    .addOnCompleteListener(
+                            task -> {
+                                if (task.isSuccessful()) {
+                                    if (!task.getResult().isEmpty()) {
+                                        // Update the existing OnTimer document.
+                                        for (DocumentSnapshot document : task.getResult()) {
+                                            collectionRef
+                                                    .document(document.getId())
+                                                    .set(OnTimerData)
+                                                    .addOnSuccessListener(
+                                                            aVoid -> {
+                                                                loadingDialog.dismiss();
+                                                                Toast.makeText(
+                                                                                this,
+                                                                                "On Timer Score updated successfully",
+                                                                                Toast.LENGTH_SHORT)
+                                                                        .show();
+                                                            })
+                                                    .addOnFailureListener(
+                                                            e -> {
+                                                                loadingDialog.dismiss();
+                                                                Toast.makeText(
+                                                                                this,
+                                                                                "Error updating: "
+                                                                                        + e
+                                                                                                .getMessage(),
+                                                                                Toast.LENGTH_LONG)
+                                                                        .show();
+                                                            });
+                                        }
+                                    } else {
+                                        // No existing document found; simply dismiss the loading
+                                        // dialog.
+                                        loadingDialog.dismiss();
+                                    }
+                                } else {
+                                    // In case of failure, show an error and attempt to add a new
+                                    // OnTimer document.
+                                    Toast.makeText(
+                                                    this,
+                                                    "Error checking student data: "
+                                                            + task.getException().getMessage(),
+                                                    Toast.LENGTH_LONG)
+                                            .show();
+                                    collectionRef
+                                            .add(OnTimerData)
+                                            .addOnSuccessListener(
+                                                    aVoid -> {
+                                                        loadingDialog.dismiss();
+                                                        Toast.makeText(
+                                                                        this,
+                                                                        "New On Timer Score added",
+                                                                        Toast.LENGTH_SHORT)
+                                                                .show();
+                                                    })
+                                            .addOnFailureListener(
+                                                    e -> {
+                                                        loadingDialog.dismiss();
+                                                        Toast.makeText(
+                                                                        this,
+                                                                        "Error updating: "
+                                                                                + e.getMessage(),
+                                                                        Toast.LENGTH_LONG)
+                                                                .show();
+                                                    });
+                                }
+                            })
+                    .addOnFailureListener(
+                            e -> {
+                                loadingDialog.dismiss();
+                                Toast.makeText(
+                                                this,
+                                                "Error fetching student data: " + e.getMessage(),
+                                                Toast.LENGTH_LONG)
+                                        .show();
+                            });
+
+        } else if ("Practice".equals(gametype)) {
+            // Process for Practice mode (note: "Practicd" may be a typo for "Practice").
+            CollectionReference collectionRef =
+                    db.collection("Accounts").document("Students").collection("MathSquare");
+
+            // Query for an existing Practice record where practice_score is set to "None".
+            collectionRef
+                    .whereEqualTo("firstName", firstName)
+                    .whereEqualTo("lastName", lastName)
+                    .whereEqualTo("gameType", "Practice")
+                    .get()
+                    .addOnCompleteListener(
+                            task -> {
+                                if (task.isSuccessful()) {
+                                    if (!task.getResult().isEmpty()) {
+                                        // If found, update the existing Practice document.
+                                        for (DocumentSnapshot document : task.getResult()) {
+                                            collectionRef
+                                                    .document(document.getId())
+                                                    .set(PracticeData)
+                                                    .addOnSuccessListener(
+                                                            aVoid -> {
+                                                                loadingDialog.dismiss();
+                                                                Toast.makeText(
+                                                                                this,
+                                                                                "Practice Score updated successfully",
+                                                                                Toast.LENGTH_SHORT)
+                                                                        .show();
+                                                            })
+                                                    .addOnFailureListener(
+                                                            e -> {
+                                                                loadingDialog.dismiss();
+                                                                Toast.makeText(
+                                                                                this,
+                                                                                "Error updating: "
+                                                                                        + e
+                                                                                                .getMessage(),
+                                                                                Toast.LENGTH_LONG)
+                                                                        .show();
+                                                            });
+                                        }
+                                    } else {
+                                        // If no matching record is found, simply dismiss the
+                                        // loading dialog.
+                                        loadingDialog.dismiss();
+                                    }
+                                } else {
+                                    // On query failure, show an error and attempt to add a new
+                                    // Practice document.
+                                    Toast.makeText(
+                                                    this,
+                                                    "Error checking student data: "
+                                                            + task.getException().getMessage(),
+                                                    Toast.LENGTH_LONG)
+                                            .show();
+                                    collectionRef
+                                            .add(PracticeData)
+                                            .addOnSuccessListener(
+                                                    aVoid -> {
+                                                        loadingDialog.dismiss();
+                                                        Toast.makeText(
+                                                                        this,
+                                                                        "New Practice Score added",
+                                                                        Toast.LENGTH_SHORT)
+                                                                .show();
+                                                    })
+                                            .addOnFailureListener(
+                                                    e -> {
+                                                        loadingDialog.dismiss();
+                                                        Toast.makeText(
+                                                                        this,
+                                                                        "Error updating: "
+                                                                                + e.getMessage(),
+                                                                        Toast.LENGTH_LONG)
+                                                                .show();
+                                                    });
+                                }
+                            })
+                    .addOnFailureListener(
+                            e -> {
+                                loadingDialog.dismiss();
+                                Toast.makeText(
+                                                this,
+                                                "Error fetching student data: " + e.getMessage(),
+                                                Toast.LENGTH_LONG)
+                                        .show();
+                            });
+        } else {
+            // If none of the gametypes match, simply dismiss the loading dialog.
+            loadingDialog.dismiss();
+        }
     }
-}
-
-
-
 }
