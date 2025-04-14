@@ -145,69 +145,27 @@ numberDropdownPicker.setAdapter(adapterGrades);
         hasError = true;
     }
                         
-                    if (!hasError) {
-                        
-                        String uuid = UUID.randomUUID().toString(); // Generate a random UUID
-                        HashMap<String, Object> teacherData = new HashMap<>();
-                teacherData.put("Grade", selectedGrade);
-                  teacherData.put("Grade_Number", Integer.parseInt(selectedGrade));
-                teacherData.put("Section", sections);
-               teacherData.put("timestamp", FieldValue.serverTimestamp());        
-                teacherData.put("DocumentKey", uuid);       
-    
-    sectionList.add(sections); // Add the new section to the list
+      if (!hasError) {
+    String uuid = UUID.randomUUID().toString(); // Generate a random UUID
 
-    // Check if the document exists and append to the array
+    // Create a map with only the required fields
+    HashMap<String, Object> sectionData = new HashMap<>();
+    sectionData.put("Section", sections); // Field for the Section name
+    sectionData.put("Grade_Number", Integer.parseInt(selectedGrade)); // Field for the Grade number
+    sectionData.put("timestamp", FieldValue.serverTimestamp()); // Field for the server timestamp
+
+    // Save the document in the "Sections" collection with the random UUID as its document ID
     db.collection("Sections")
-            .document(selectedGrade)
-            .get()
-            .addOnSuccessListener(documentSnapshot -> {
-                Map<String, Object> existingData = documentSnapshot.getData();
-                if (existingData != null && existingData.containsKey("sections")) {
-                    // Retrieve existing sections and append the new one
-                    List<String> existingSections = (List<String>) existingData.get("sections");
-                    if (!existingSections.contains(sections)) {
-                        existingSections.add(sections); // Avoid duplicates
-                        sectionList = existingSections;
-                    }
-                }
-
-                // Save the updated section list back to Firestore
-                db.collection("Sections")
-                        .document(selectedGrade)
-                        .set(new HashMap<String, Object>() {{
-                            put("sections", sectionList);
-                        }})
-                        .addOnSuccessListener(aVoid -> {
-                            String teacherEmail = sharedPreferences.getEmail(getContext());
-
-                           db.collection("Accounts")
-                    .document("Teachers")
-                    .collection(teacherEmail)
-                                        .document("MathSquare")
-                                        .collection("MySections")
-                    .document(uuid) // Use random UUID as the document ID
-                    .set(teacherData)
-                    .addOnSuccessListener(aVoidTwo -> {
-                    if (listener != null) {    
-                    listener.onUpdateSection(true); // Pass true back to the activity
-                                     }
-                        Toast.makeText(getContext(), "Section added successfully!", Toast.LENGTH_SHORT).show();
-                        dismiss();
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(getContext(), "Error saving teacher sections: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    });
-                                        
-                        })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(getContext(), "Error updating section: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        });
-            })
-            .addOnFailureListener(e -> {
-                Toast.makeText(getContext(), "Error checking existing sections: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            });
-}
+        .document(uuid)
+        .set(sectionData)
+        .addOnSuccessListener(aVoid -> {
+            Toast.makeText(getContext(), "Section added successfully!", Toast.LENGTH_SHORT).show();
+            dismiss();
+        })
+        .addOnFailureListener(e -> {
+            Toast.makeText(getContext(), "Error adding section: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        });
+    }
 
                     
                 
