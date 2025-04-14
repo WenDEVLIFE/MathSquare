@@ -60,7 +60,8 @@
              android:layout_width="wrap_content"
              android:layout_marginBottom="30dp"
              android:useDefaultMargins="true"
-             android:layout_centerHorizontal="true"
+             android:layout_gravity="center_horizontal"
+             android:gravity="center"
              android:layout_marginTop="40dp"
              android:columnCount="2"
              android:rowCount="2">
