@@ -36,7 +36,6 @@
             android:layout_width="match_parent"
             android:layout_marginEnd="16dp"
             android:hint="First Name"
-            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
             android:layout_marginStart="16dp"
             android:id="@+id/first_name_layout">
 
@@ -45,7 +44,6 @@
                 android:layout_width="match_parent"
                 android:textColorHint="@color/white"
                 android:fontFamily="@font/paytone_one"
-                android:backgroundTint="@color/white"
                 android:textColor="@color/black"
                 android:maxLines="1" />
 
@@ -56,7 +54,6 @@
             android:layout_width="match_parent"
             android:layout_marginEnd="16dp"
             android:hint="Last Name"
-            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
             android:layout_marginTop="16dp"
             android:layout_marginStart="16dp"
             android:id="@+id/last_name_layout">
@@ -66,7 +63,6 @@
                 android:layout_width="match_parent"
                 android:textColorHint="@color/white"
                 android:fontFamily="@font/paytone_one"
-                android:backgroundTint="@color/white"
                 android:textColor="@color/black"
                 android:maxLines="1" />
 
@@ -80,7 +76,6 @@
             android:layout_marginEnd="16dp"
             android:layout_marginTop="16dp"
             android:hint="Select Grade"
-            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
             app:endIconMode="dropdown_menu">
 
             <AutoCompleteTextView
@@ -89,7 +84,6 @@
                 android:layout_height="60dp"
                 android:textColorHint="@color/white"
                 android:fontFamily="@font/paytone_one"
-                android:backgroundTint="@color/white"
                 android:textColor="@color/black"
                 android:paddingStart="16dp"
                 android:paddingTop="8dp"
@@ -104,7 +98,6 @@
             android:layout_marginEnd="16dp"
             android:layout_marginTop="16dp"
             android:hint="Section"
-            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
             app:endIconMode="dropdown_menu">
 
             <AutoCompleteTextView
@@ -113,7 +106,6 @@
                 android:layout_height="60dp"
                 android:textColorHint="@color/white"
                 android:fontFamily="@font/paytone_one"
-                android:backgroundTint="@color/white"
                 android:textColor="@color/black"
                 android:paddingStart="16dp"
                 android:paddingTop="8dp"

@@ -38,8 +38,7 @@
              android:layout_marginEnd="16dp"
              app:counterEnabled="true"
              android:hint="Email Address"
-             style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-             android:layout_marginStart="16dp"
+              android:layout_marginStart="16dp"
              android:id="@+id/email_address_layout"
              >
 
@@ -48,8 +47,7 @@
                  android:layout_width="match_parent"
                  android:textColorHint="@color/white"
                  android:fontFamily="@font/paytone_one"
-                 android:backgroundTint="@color/white"
-                 android:textColor="@color/black"
+                     android:textColor="@color/black"
                  android:maxLines="1"
                  android:inputType="textEmailAddress"
                  android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@._" />
@@ -61,8 +59,7 @@
              android:layout_width="match_parent"
              android:layout_marginEnd="16dp"
              android:hint="Teacher First Name"
-             style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-             android:layout_marginTop="16dp"
+              android:layout_marginTop="16dp"
              android:layout_marginStart="16dp"
              android:id="@+id/first_name_layout">
 
@@ -71,8 +68,7 @@
                  android:layout_width="match_parent"
                  android:textColorHint="@color/white"
                  android:fontFamily="@font/paytone_one"
-                 android:backgroundTint="@color/white"
-                 android:textColor="@color/black"
+                    android:textColor="@color/black"
                  android:maxLines="1"
                  android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" />
 
@@ -84,8 +80,7 @@
              app:endIconMode="password_toggle"
              android:layout_marginEnd="16dp"
              android:hint="Password"
-             style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-             android:layout_marginTop="16dp"
+                  android:layout_marginTop="16dp"
              android:layout_marginStart="16dp"
              android:id="@+id/password">
 
@@ -94,8 +89,7 @@
                  android:layout_width="match_parent"
                  android:textColorHint="@color/white"
                  android:fontFamily="@font/paytone_one"
-                 android:backgroundTint="@color/white"
-                 android:textColor="@color/black"
+                  android:textColor="@color/black"
                  android:maxLines="1"
                  android:inputType="textPassword" />
 
@@ -107,8 +101,7 @@
              app:endIconMode="password_toggle"
              android:layout_marginEnd="16dp"
              android:hint="Repeat Password"
-             style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-             android:layout_marginTop="16dp"
+                android:layout_marginTop="16dp"
              android:layout_marginStart="16dp"
              android:id="@+id/password_repeat">
 
@@ -117,8 +110,7 @@
                  android:layout_width="match_parent"
                  android:textColorHint="@color/white"
                  android:fontFamily="@font/paytone_one"
-                 android:backgroundTint="@color/white"
-                 android:textColor="@color/black"
+                   android:textColor="@color/black"
                  android:maxLines="1"
                  android:inputType="textPassword" />
 
