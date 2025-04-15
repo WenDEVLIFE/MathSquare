@@ -344,6 +344,7 @@ collectionRef.whereEqualTo("firstName", firstName)
 
                     // Update the UI
                     for (int i = 0; i < levels.length; i++) {
+                        String previousLevel = "level_" + (i + 0);
                         String currentLevel = "level_" + (i + 1);
                         String nextLevelToUnlock = "level_" + (i + 2);
                         FrameLayout level = levels[i];
@@ -390,9 +391,21 @@ collectionRef.whereEqualTo("firstName", firstName)
                                 animateButtonClick(level);
                                 stopButtonFocusAnimation(level);
                                 startActivity(intent);
+                            }else if ("Completed".equals(state)) {
+                                playSound("click.mp3");
+                                Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
+                                intent.putExtra("operation", operation);
+                                intent.putExtra("passing", currentLevel);
+                                intent.putExtra("game_type", "Passing");
+                                intent.putExtra("passing_world", "world_one");
+                                intent.putExtra("passing_next_level", nextLevelToUnlock);
+                                intent.putExtra("difficulty", difficultySection);
+                                animateButtonClick(level);
+                                stopButtonFocusAnimation(level);
+                                startActivity(intent);
                             } else {
                                 Toast.makeText(this,
-                                    "Complete previous " + currentLevel + " to unlock.",
+                                    "Complete previous " + previousLevel + " to unlock.",
                                     Toast.LENGTH_SHORT).show();
                             }
                         });
