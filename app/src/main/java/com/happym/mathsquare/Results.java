@@ -69,6 +69,8 @@ import android.view.animation.BounceInterpolator;
 import java.io.IOException;
 import java.util.Random;
 import com.happym.mathsquare.Animation.*;
+import com.happym.mathsquare.GameType.Passing.*;
+import com.happym.mathsquare.GameType.Practice.*;
 
 public class Results extends AppCompatActivity {
     private FirebaseFirestore db;
@@ -110,12 +112,26 @@ public class Results extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         playSound("click.mp3");
-                        Intent intent = new Intent(Results.this, MainActivity.class);
+                        if(gameType == "Passing"){
+                           Intent intent = new Intent(Results.this, passingStageSelection.class);
                         intent.addFlags(
                                 Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);
-
                         finish();
+                        }else if(gameType == "Quiz"){
+                            Intent intent = new Intent(Results.this, QuizzesSection.class);
+                        intent.addFlags(
+                                Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        finish();
+                        }else{
+                            Intent intent = new Intent(Results.this, MainActivity.class);
+                        intent.addFlags(
+                                Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        finish();
+                        }
+                        
                     }
                 });
         ImageButton imageButton_pause = findViewById(R.id.imgBtn_retry);

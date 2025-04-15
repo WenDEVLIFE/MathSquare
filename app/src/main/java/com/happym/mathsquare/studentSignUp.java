@@ -87,14 +87,37 @@ if (lastNameEditText != null) {
     lastNameEditText.setFilters(new InputFilter[]{noSpacesFilter});
 }
         
-// Set up Dropdown with list of grades using default styling
 List<String> grades = Arrays.asList("1", "2", "3", "4", "5", "6");
 
-ArrayAdapter<String> adapterGrades = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, grades);
-adapterGrades.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+ArrayAdapter<String> adapterGrades = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, grades) {
 
-        adapterGrades.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        numberDropdownPicker.setAdapter(adapterGrades);
+    // Override the method for the spinner’s closed view
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        TextView view = (TextView) super.getView(position, convertView, parent);
+        // Set the padding (using pixel values here)
+        int padding = dpToPx(16); // Convert 16dp to pixels
+        view.setPadding(padding, padding, padding, padding);
+        return view;
+    }
+
+    // Override the method for the drop-down view
+    @Override
+    public View getDropDownView(int position, View convertView, ViewGroup parent) {
+        TextView view = (TextView) super.getDropDownView(position, convertView, parent);
+        int padding = dpToPx(16); // Convert 16dp to pixels
+        view.setPadding(padding, padding, padding, padding);
+        return view;
+    }
+
+    // Helper method to convert dp to pixels
+    private int dpToPx(int dp) {
+        return Math.round(dp * getContext().getResources().getDisplayMetrics().density);
+    }
+};
+
+adapterGrades.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+numberDropdownPicker.setAdapter(adapterGrades);
 
 
         int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
