@@ -263,7 +263,12 @@ collectionRef.whereEqualTo("firstName", firstName)
                             String nextLevelToUnlock = "level_" + (i + 2);
                             FrameLayout level = levels[i];
                             ImageView flashbox = flashboxes[i];
-
+                    
+                            level.setContentDescription("Not_Available");
+                            level.setBackgroundResource(R.drawable.btn_short_condition_off);
+                            
+                            startFlashingAnimation(flashbox);
+                            
                             // Handle level clicks)
                             String levelState = (String) level.getContentDescription();
                             if ("Available".equals(levelState)) {
@@ -352,6 +357,8 @@ collectionRef.whereEqualTo("firstName", firstName)
 
                         boolean isCompleted = completedLevels.contains(currentLevel);
                         boolean isAvailable = (i == availableIndex);
+                        
+                        startFlashingAnimation(flashbox);
 
                         if (isCompleted) {
                             level.setContentDescription("Completed");
