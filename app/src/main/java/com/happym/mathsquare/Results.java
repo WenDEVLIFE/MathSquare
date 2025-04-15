@@ -656,7 +656,7 @@ public class Results extends AppCompatActivity {
                                                     });
                                 }
                             });
-        } else if ("quiz".equals(gametype)) {
+        } else if ("Quiz".equals(gametype)) {
 
             CollectionReference collectionRef =
                     db.collection("Accounts").document("Students").collection("MathSquare");
