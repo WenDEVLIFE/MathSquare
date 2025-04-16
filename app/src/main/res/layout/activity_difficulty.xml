@@ -20,7 +20,7 @@
          android:layout_width="match_parent"
          android:textSize="33sp"
          android:textColor="#FFFFFF"
-         android:layout_marginTop="200dp"
+         android:layout_marginTop="100dp"
          android:textAlignment="center"
          app:layout_constraintTop_toTopOf="parent"
          android:shadowRadius="2"
@@ -41,7 +41,7 @@
          android:gravity="center_horizontal"
          android:orientation="vertical"
          tools:layout_editor_absoluteX="0dp"
-         android:layout_marginTop="260dp"
+         android:layout_marginTop="200dp"
          app:layout_constraintBottom_toBottomOf="parent"
          app:layout_constraintVertical_bias="0.233"
          app:layout_constraintTop_toBottomOf="@+id/textview_difficulty"
@@ -95,35 +95,6 @@
         <androidx.appcompat.widget.AppCompatButton
              android:layout_height="60dp"
              android:layout_width="200sp"
-             android:background="@drawable/btn_long_condition"
-             android:textAlignment="gravity"
-             android:fontFamily="@font/paytone_one"
-             android:paddingBottom="5dp"
-             android:textSize="23sp"
-             app:cornerRadius="2sp"
-             android:textColor="#FFFFFF"
-             android:id="@+id/btn_next"
-             android:paddingTop="5dp"
-             android:text="Next" />
-
-    </LinearLayout>
-
-    <LinearLayout
-         android:layout_height="wrap_content"
-         android:layout_width="match_parent"
-         android:visibility="gone"
-         android:gravity="center_horizontal"
-         android:orientation="vertical"
-         tools:layout_editor_absoluteX="0dp"
-         android:layout_marginTop="260dp"
-         app:layout_constraintBottom_toBottomOf="parent"
-         app:layout_constraintVertical_bias="0.263"
-         app:layout_constraintTop_toBottomOf="@+id/textview_difficulty"
-         android:id="@+id/difficulty_two">
-
-        <androidx.appcompat.widget.AppCompatButton
-             android:layout_height="60dp"
-             android:layout_width="200sp"
              android:textSize="23sp"
              android:textColor="#FFFFFF"
              android:layout_marginBottom="20dp"
@@ -165,6 +136,36 @@
              android:id="@+id/btn_superhard"
              android:paddingTop="5dp"
              android:text="Grade 6" />
+
+        <androidx.appcompat.widget.AppCompatButton
+             android:layout_height="60dp"
+             android:layout_width="200sp"
+             android:background="@drawable/btn_long_condition"
+             android:textAlignment="gravity"
+             android:fontFamily="@font/paytone_one"
+             android:paddingBottom="5dp"
+             android:textSize="23sp"
+             app:cornerRadius="2sp"
+             android:visibility="gone"
+             android:textColor="#FFFFFF"
+             android:id="@+id/btn_next"
+             android:paddingTop="5dp"
+             android:text="Next" />
+
+    </LinearLayout>
+
+    <LinearLayout
+         android:layout_height="wrap_content"
+         android:layout_width="match_parent"
+         android:visibility="gone"
+         android:gravity="center_horizontal"
+         android:orientation="vertical"
+         tools:layout_editor_absoluteX="0dp"
+         android:layout_marginTop="260dp"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintVertical_bias="0.263"
+         app:layout_constraintTop_toBottomOf="@+id/textview_difficulty"
+         android:id="@+id/difficulty_two">
 
         <androidx.appcompat.widget.AppCompatButton
              android:layout_height="60dp"
