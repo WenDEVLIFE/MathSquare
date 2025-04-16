@@ -22,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.view.WindowCompat;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -235,69 +236,139 @@ String[] gameTypes = {
     levelSixStar, levelSevenStar, levelEightStar, levelNineStar, levelTenStar
 };
 
-        
-       
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-        
-    String section = sharedPreferences.getSection(this);
-    String grade = sharedPreferences.getGrade(this);
-    String firstName = sharedPreferences.getFirstN(this);
-    String lastName = sharedPreferences.getLastN(this);
+        // Loop through UI levels
+    for (int i = 0; i < levels.length; i++) {
+        String previousLevel = "level_" + (i);
+        String currentLevel = "level_" + (i + 1);
+        String nextLevelToUnlock = "level_" + (i + 2);
+        FrameLayout level = levels[i];
+        ImageView flashbox = flashboxes[i];
+
+        if (i == 0) {
+            // For level 1 (index 0), set as available and flash
+            level.setContentDescription("Available");
+            level.setBackgroundResource(R.drawable.btn_short_condition); // Resource for available state
+            startFlashingAnimation(flashbox);
+        } else {
+            // For all other levels, set as not available
+            level.setContentDescription("Not_Available");
+            level.setBackgroundResource(R.drawable.btn_short_condition_off);
+        }
+
+        // Handle level click actions based on the content description
+        String levelState = (String) level.getContentDescription();
+        if ("Available".equals(levelState)) {
+            level.setOnClickListener(v -> {
+                playSound("click.mp3");
+
+                Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
+                intent.putExtra("operation", operation);
+                intent.putExtra("passing", currentLevel);
+                intent.putExtra("game_type", "Passing");
+                intent.putExtra("passing_world", "world_one");
+                intent.putExtra("passing_next_level", nextLevelToUnlock);
+                intent.putExtra("difficulty", difficultySection);
+
+                animateButtonClick(level);
+                stopButtonFocusAnimation(level);
+                startActivity(intent);
+            });
+        } else {
+            level.setOnClickListener(v ->
+                Toast.makeText(this, "Complete previous " + previousLevel + " to unlock.", Toast.LENGTH_SHORT).show()
+            );
+        }
+    }
     
-    CollectionReference collectionRef = db.collection("Accounts")
+    // Get a reference to the root view for Snackbar, e.g., the activity's content view.
+View rootView = findViewById(android.R.id.content);
+
+// Create and show a loading Snackbar.
+final Snackbar loadingSnackbar = Snackbar.make(rootView, "Loading progress, please wait...", Snackbar.LENGTH_INDEFINITE);
+loadingSnackbar.show();
+
+// Record the start time to measure how long the data fetch takes.
+final long startTime = System.currentTimeMillis();
+
+FirebaseFirestore db = FirebaseFirestore.getInstance();
+String section = sharedPreferences.getSection(this);
+String grade = sharedPreferences.getGrade(this);
+String firstName = sharedPreferences.getFirstN(this);
+String lastName = sharedPreferences.getLastN(this);
+
+CollectionReference collectionRef = db.collection("Accounts")
     .document("Students")
     .collection("MathSquare");
 
-// Query to retrieve the student record
+// Instead of using get(), use addSnapshotListener() for real-time updates.
 collectionRef.whereEqualTo("firstName", firstName)
     .whereEqualTo("lastName", lastName)
     .whereEqualTo("section", section)
     .whereEqualTo("gameType", "Passing")
     .whereEqualTo("grade", grade)
-    .get()
-    .addOnSuccessListener(queryDocumentSnapshots -> {
-        if (queryDocumentSnapshots.isEmpty()) {
-             // Loop through UI levels
-                        for (int i = 0; i < levels.length; i++) {
-                            String currentLevel = "level_" + (i + 1);
-                            String nextLevelToUnlock = "level_" + (i + 2);
-                            FrameLayout level = levels[i];
-                            ImageView flashbox = flashboxes[i];
-                    
-                            level.setContentDescription("Not_Available");
-                            level.setBackgroundResource(R.drawable.btn_short_condition_off);
-                            
-                            startFlashingAnimation(flashbox);
-                            
-                            // Handle level clicks)
-                            String levelState = (String) level.getContentDescription();
-                            if ("Available".equals(levelState)) {
-                                level.setOnClickListener(v -> {
-                                    playSound("click.mp3");
-
-                                    Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
-                                    intent.putExtra("operation", operation);
-                                    intent.putExtra("passing", currentLevel);
-                                    intent.putExtra("game_type", "Passing");
-                                    intent.putExtra("passing_world", "world_one");
-                                    intent.putExtra("passing_next_level", nextLevelToUnlock);
-                                    intent.putExtra("difficulty", difficultySection);
-
-                                    animateButtonClick(level);
-                                    stopButtonFocusAnimation(level);
-                                    startActivity(intent);
-                                });
-                            } else {
-                                level.setBackgroundResource(R.drawable.btn_short_condition_off);
-                                level.setOnClickListener(v ->
-                                    Toast.makeText(this, "Complete previous " + currentLevel + " to unlock.", Toast.LENGTH_SHORT).show()
-                                );
-                            }
-                        }
+    .whereEqualTo("operation_type", operation)
+    .addSnapshotListener((queryDocumentSnapshots, e) -> {
+        // Dismiss the loading Snackbar as soon as we receive any response.
+        loadingSnackbar.dismiss();
+        
+        // Check for errors.
+        if (e != null) {
+            Snackbar.make(rootView, "Error loading data: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
             return;
         }
+        
+        // Check elapsed time and notify if the connection seems slow.
+        long elapsed = System.currentTimeMillis() - startTime;
+        if (elapsed > 3000) {  // if taking longer than 3 seconds
+            Snackbar.make(rootView, "Slow connection detected. Data loaded in " + elapsed / 1000 + " seconds.", 
+                            Snackbar.LENGTH_LONG).show();
+        }
+        
+        // If no documents found, show the default UI for an empty account.
+        if (queryDocumentSnapshots == null || queryDocumentSnapshots.isEmpty()) {
+            for (int i = 0; i < levels.length; i++) {
+                String previousLevel = "level_" + (i);
+                String currentLevel = "level_" + (i + 1);
+                String nextLevelToUnlock = "level_" + (i + 2);
+                FrameLayout level = levels[i];
+                ImageView flashbox = flashboxes[i];
 
-        for (DocumentSnapshot document : queryDocumentSnapshots) {
+                if (i == 0) {
+                    // Level 1 is available.
+                    level.setContentDescription("Available");
+                    level.setBackgroundResource(R.drawable.btn_short_condition); 
+                    startFlashingAnimation(flashbox);
+                } else {
+                    level.setContentDescription("Not_Available");
+                    level.setBackgroundResource(R.drawable.btn_short_condition_off);
+                }
+
+                // Set up click handling based on content description.
+                String levelState = (String) level.getContentDescription();
+                if ("Available".equals(levelState)) {
+                    level.setOnClickListener(v -> {
+                        playSound("click.mp3");
+                        Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
+                        intent.putExtra("operation", operation);
+                        intent.putExtra("passing", currentLevel);
+                        intent.putExtra("game_type", "Passing");
+                        intent.putExtra("passing_world", "world_one");
+                        intent.putExtra("passing_next_level", nextLevelToUnlock);
+                        intent.putExtra("difficulty", difficultySection);
+                        animateButtonClick(level);
+                        stopButtonFocusAnimation(level);
+                        startActivity(intent);
+                    });
+                } else {
+                    level.setOnClickListener(v ->
+                        Toast.makeText(this, "Complete previous " + previousLevel + " to unlock.", Toast.LENGTH_SHORT).show()
+                    );
+                }
+            }
+            return;
+        }
+        
+          for (DocumentSnapshot document : queryDocumentSnapshots) {
             String docId = document.getId();
             DocumentReference studentDocRef = collectionRef.document(docId);
 
@@ -349,7 +420,7 @@ collectionRef.whereEqualTo("firstName", firstName)
 
                     // Update the UI
                     for (int i = 0; i < levels.length; i++) {
-                        String previousLevel = "level_" + (i + 0);
+                        String previousLevel = "level_" + (i);
                         String currentLevel = "level_" + (i + 1);
                         String nextLevelToUnlock = "level_" + (i + 2);
                         FrameLayout level = levels[i];
@@ -418,18 +489,12 @@ collectionRef.whereEqualTo("firstName", firstName)
                         });
                     }
                 })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this,
-                        "Error loading history: " + e.getMessage(),
-                        Toast.LENGTH_LONG).show();
+                .addOnFailureListener(historyError -> {
+                    Snackbar.make(rootView, "Error loading history: " + historyError.getMessage(), Snackbar.LENGTH_LONG).show();
                 });
         }
-    })
-    .addOnFailureListener(e -> {
-        Toast.makeText(this,
-            "Failed to retrieve student: " + e.getMessage(),
-            Toast.LENGTH_SHORT).show();
     });
+
 
    // Apply animations to all levels and flash boxes.
 for (FrameLayout level : levels) {
