@@ -148,7 +148,7 @@ public class Results extends AppCompatActivity {
                 resultIntent.putExtra("game_type", gameType);
 
                 // For quiz game types, pass additional extras
-                if ("quiz".equalsIgnoreCase(gameType)) {
+                if ("Quiz".equals(gameType)) {
                     resultIntent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));
                     resultIntent.putExtra("quizId", getQuiz);
                 } else {
@@ -203,7 +203,7 @@ public class Results extends AppCompatActivity {
                 if (sharedPreferences.StudentIsLoggedIn(Results.this)) {
                     // Show the loading dialog before sending the score
                     loadingDialog.show();
-                    sendScoreResult(getScore, getQuiz, gameType, levelType, levelNext, worldType, difficulty);
+                    sendScoreResult(getScore, getQuiz, gameType, levelType, levelNext, worldType,getOperationText, difficulty);
                 }
                 showMotive.setText("Excellent!");
                 break;
@@ -211,7 +211,7 @@ public class Results extends AppCompatActivity {
                 playSound("victory.mp3");
                 if (sharedPreferences.StudentIsLoggedIn(Results.this)) {
                     loadingDialog.show();
-                    sendScoreResult(getScore, getQuiz, gameType, levelType, levelNext, worldType, difficulty);
+                    sendScoreResult(getScore, getQuiz, gameType, levelType, levelNext, worldType,getOperationText ,difficulty);
                 }
                 showMotive.setText("Keep it Up!");
                 break;
@@ -219,14 +219,14 @@ public class Results extends AppCompatActivity {
                 playSound("victory.mp3");
                 if (sharedPreferences.StudentIsLoggedIn(Results.this)) {
                     loadingDialog.show();
-                    sendScoreResult(getScore, getQuiz, gameType, levelType, levelNext, worldType, difficulty);
+                    sendScoreResult(getScore, getQuiz, gameType, levelType, levelNext, worldType,getOperationText ,difficulty);
                 }
                 showMotive.setText("You can do even better!");
                 break;
             case "Failed":
                 if (sharedPreferences.StudentIsLoggedIn(Results.this)) {
                     loadingDialog.show();
-                    sendScoreResult(getScore, getQuiz, gameType, levelType, levelNext, worldType, difficulty);
+                    sendScoreResult(getScore, getQuiz, gameType, levelType, levelNext, worldType,getOperationText ,difficulty);
                 }
                 showMotive.setText("Try Again!");
                 break;
@@ -289,6 +289,7 @@ public class Results extends AppCompatActivity {
             String levelNum,
             String nextlevel,
             String worldType,
+            String operation,
             String OnTimerDifficulty) {
 
         // Retrieve student-related information from shared preferences.
@@ -372,7 +373,7 @@ public class Results extends AppCompatActivity {
         PracticeData.put("gameType", "Practice");
         PracticeData.put("grade", grade);
         PracticeData.put("quizno_int", number);
-        PracticeData.put("quizno", "Practice");
+        PracticeData.put("quizno", "Practice" + "_" + operation);
         PracticeData.put("timestamp", FieldValue.serverTimestamp());
         PracticeData.put("practice_difficulty", OnTimerDifficulty);
         PracticeData.put("quizscore", String.valueOf(Score));
@@ -385,7 +386,8 @@ public class Results extends AppCompatActivity {
         passingData.put("section", section);
         passingData.put("grade", grade);
         passingData.put("quizno_int", number);
-        passingData.put("quizno", "Passing_" + levelNum);
+        passingData.put("operation_type", operation);
+        passingData.put("quizno", "Passing_" + levelNum + "_" + operation);
         passingData.put("timestamp", FieldValue.serverTimestamp());
         passingData.put("passing_level_must_complete", nextlevel);
         passingData.put("quizscore", String.valueOf(Score));
@@ -429,6 +431,7 @@ public class Results extends AppCompatActivity {
                     .whereEqualTo("firstName", firstName)
                     .whereEqualTo("lastName", lastName)
                     .whereEqualTo("gameType", "Passing")
+                    .whereEqualTo("operation_type", operation)
                     .get()
                     .addOnCompleteListener(
                             task -> {

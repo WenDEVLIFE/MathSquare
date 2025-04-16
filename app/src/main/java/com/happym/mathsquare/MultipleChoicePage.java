@@ -229,7 +229,7 @@ public class MultipleChoicePage extends AppCompatActivity
         selTimer = getIntent().getIntExtra("timerLimit", 10);
         questionLimits = getIntent().getIntExtra("questionLimit", 10);
 
-        if("quiz".equals(gameType)){
+        if("Quiz".equals(gameType)){
            heart_choice.setVisibility(View.GONE);
            timer_choice.setVisibility(View.GONE);
         }else{
@@ -256,7 +256,7 @@ if (operationList == null || operationList.isEmpty()) {
                         ? getIntent().getStringExtra("difficulty")
                         : "";
 
-        if("quiz".equals(gameType)) {
+        if("Quiz".equals(gameType)) {
             
             Toast.makeText(this, operationList.toString() , Toast.LENGTH_SHORT)
                     .show();
@@ -701,7 +701,7 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
                         showPauseDialog();
                         isTimerRunning = false;
                 
-                 if("quiz".equals(gametypeGame)){
+                 if("Quiz".equals(gametypeGame)){
             //No Timer
           }  else {
             
@@ -764,7 +764,7 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
         playEffectSound("correct.mp3");
 
         // For quiz type games, check if the score or question index reaches a threshold
-        if ("quiz".equals(gameType)) {
+        if ("Quiz".equals(gameType)) {
             // If the score has reached 21, or if you want to trigger at the end of the quiz.
             if (score == 21) {
                 // Launch the results activity when the quiz condition is met.
@@ -786,7 +786,7 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
         updateHeartDisplay();
 
         // For quiz type games, if too many questions have been processed.
-        if ("quiz".equals(gameType)) {
+        if ("Quiz".equals(gameType)) {
             if (currentQuestionIndex > 21) {
                 launchResultsActivity(gameType);
                 return;
@@ -800,7 +800,7 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
             }
         }
         
-        if ("quiz".equals(gameType)) {
+        if ("Quiz".equals(gameType)) {
             
             }else{
                  // If only one heart is left, you may want to add a visual effect.
@@ -827,7 +827,7 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
     }
 
     // For quiz games: switch operations every 5 questions.
-    if ("quiz".equals(gameType)) {
+    if ("Quiz".equals(gameType)) {
         if (currentQuestionIndex % 5 == 0 && !operationList.isEmpty()) {
             switchOperation(difficulty);  // Use the current difficulty level when switching.
         }
@@ -838,7 +838,7 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
         // Clear any feedback message.
         feedbackTextView.setText("");
 
-        if ("quiz".equals(gameType)) {
+        if ("Quiz".equals(gameType)) {
             // For quiz mode, check if there are more questions to generate.
             if (currentQuestionIndex < 20) {
                 generateNewQuestionList(currentQuestionIndex, problemSet);
@@ -864,7 +864,7 @@ private void launchResultsActivity(String gameType) {
     Intent intent = new Intent(MultipleChoicePage.this, Results.class);
 
     // Provide feedback messages based on the score.
-    if (("quiz".equals(gameType) && score == 20) || (!"quiz".equals(gameType) && score == 10)) {
+    if (("Quiz".equals(gameType) && score == 20) || (!"quiz".equals(gameType) && score == 10)) {
         intent.putExtra("EXTRA_RESULT", "Congratulations");
     } else if (score > 15 || score > 8) {
         intent.putExtra("EXTRA_RESULT", "Good Job!");
@@ -875,7 +875,7 @@ private void launchResultsActivity(String gameType) {
     }
     
     // Pass necessary extras to the Results activity.
-    if ("quiz".equals(gameType)) {
+    if ("Quiz".equals(gameType)) {
         intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));
     }
     intent.putExtra("quizid", quidId);
