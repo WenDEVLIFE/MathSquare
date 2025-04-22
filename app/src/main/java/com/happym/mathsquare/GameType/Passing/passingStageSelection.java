@@ -4,12 +4,15 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
+import android.graphics.drawable.ColorDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
@@ -430,6 +433,7 @@ collectionRef.whereEqualTo("firstName", firstName)
                         boolean isAvailable = (i == availableIndex);
                         
                         startFlashingAnimation(flashbox);
+    
 
                         if (isCompleted) {
                             level.setContentDescription("Completed");
@@ -449,6 +453,17 @@ collectionRef.whereEqualTo("firstName", firstName)
                             level.setBackgroundResource(R.drawable.btn_short_condition);
                             flashbox.setImageResource(R.drawable.white_box);
                             startFlashingAnimation(flashbox);
+                            
+                            // Show dialog only if on a streak and the level is now available
+        boolean streak5 = isOnStarStreak(starsPerLevel, 1, 5);
+        boolean streak3 = isOnStarStreak(starsPerLevel, 1, 3);
+
+        if (streak5) {
+            showStarStreakDialog("Wow! You're on a 5-level 3-star streak! You're amazing!");
+        } else if (streak3) {
+            showStarStreakDialog("Awesome! You got 3 Stars in a row! Keep it up, star champ!");
+        }
+        
                         } else {
                             level.setContentDescription("Not_Available");
                             level.setBackgroundResource(R.drawable.btn_short_condition_off);
@@ -518,6 +533,38 @@ for (ImageView flash : flashboxes) {
         });
         
     }
+    
+    private boolean isOnStarStreak(Map<String, String> starsPerLevel, int fromLevel, int toLevel) {
+    for (int i = fromLevel; i <= toLevel; i++) {
+        String levelKey = "level_" + i;
+        String stars = starsPerLevel.get(levelKey);
+            if (!"3 Stars".equals(stars)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    private void showStarStreakDialog(String message) {
+    Dialog dialog = new Dialog(this);
+    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+    dialog.setContentView(R.layout.dialog_star_streak);
+    dialog.setCancelable(true);
+
+    TextView messageText = dialog.findViewById(R.id.starStreakMessage);
+    AppCompatButton okBtn = dialog.findViewById(R.id.okBtn);
+
+    messageText.setText(message);
+    okBtn.setOnClickListener(v -> dialog.dismiss());
+
+    if (dialog.getWindow() != null) {
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+    }
+
+    dialog.show();
+}
+
+
     
        private void playSound(String fileName) {
         // Stop any previous sound effect before playing a new one
