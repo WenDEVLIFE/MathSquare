@@ -75,54 +75,55 @@ public class signInUp extends AppCompatActivity {
         
          // Show Loading Dialog
     ProgressDialog loadingDialog = new ProgressDialog(this);
-    loadingDialog.setMessage("Checking account...");
+    loadingDialog.setMessage("Checking Your Account...");
     loadingDialog.setCancelable(true);
     loadingDialog.show();
         
         
              
         if(sharedPreferences.isLoggedIn(this)){
+            
             loadingDialog.dismiss();
-                Intent intent = new Intent(signInUp.this, Dashboard.class);
-                startActivity(intent);
+            Intent intent = new Intent(signInUp.this, Dashboard.class);
+            startActivity(intent);
             Toast.makeText(this, "Welcome back Teacher!", Toast.LENGTH_SHORT).show();
             finish();
             
         }else if(sharedPreferences.StudentIsLoggedIn(this)){
-            
                 
             String section = sharedPreferences.getSection(this);
-    String grade = sharedPreferences.getGrade(this);
-    String firstName = sharedPreferences.getFirstN(this);
-    String lastName = sharedPreferences.getLastN(this);
-
+            String grade = sharedPreferences.getGrade(this);
+            String firstName = sharedPreferences.getFirstN(this);
+            String lastName = sharedPreferences.getLastN(this);
 
     CollectionReference collectionRef = db.collection("Accounts")
             .document("Students")
             .collection("MathSquare");
 
-    // Query to check if a document with the same firstName, lastName, and quizid = "N/A" exists
-    collectionRef
+            // Query to check if a document with the same firstName, lastName, and quizid = "N/A" exists
+            collectionRef
             .whereEqualTo("firstName", firstName)
             .whereEqualTo("lastName", lastName)
             .whereEqualTo("grade", lastName)
             .whereEqualTo("section", lastName)
             .get()
             .addOnCompleteListener(task -> {
-                    loadingDialog.dismiss();
                     if (task.isSuccessful()) {
                         
+                       loadingDialog.dismiss(); 
                        Intent intent = new Intent(signInUp.this, 
-MainActivity.class);
-    startActivity(intent);
+                       MainActivity.class);
+                       startActivity(intent);
             
                         sharedPreferences.setLoggedIn(this, false);
                         finish();
+                        
                     if (!task.getResult().isEmpty()) {
                             Toast.makeText(this, "Account Deleted, Sign Up a new Student Account", Toast.LENGTH_LONG).show();
                             
+                            
                             Intent intenttwo = new Intent(signInUp.this, studentSignUp.class);
-    startActivity(intenttwo);
+                            startActivity(intenttwo);
                             sharedPreferences.setLoggedIn(this, false);
                             finish();
                             }
@@ -132,10 +133,7 @@ MainActivity.class);
             .addOnFailureListener(e -> {
                 Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     
-                   Intent intent = new Intent(signInUp.this, 
-MainActivity.class);
-    startActivity(intent);
-                    finish();
+                   loadingDialog.dismiss();
             });
             
         }else{

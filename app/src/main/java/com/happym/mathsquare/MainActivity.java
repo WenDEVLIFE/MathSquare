@@ -83,8 +83,13 @@ public class MainActivity extends AppCompatActivity {
         startRotationAnimation(txtTitle);
 
         if (sharedPreferences.StudentIsLoggedIn(this)) {
-
-            Toast.makeText(this, "Welcome back Student!", Toast.LENGTH_SHORT).show();
+            
+            String section = sharedPreferences.getSection(this);
+            String grade = sharedPreferences.getGrade(this);
+            String firstName = sharedPreferences.getFirstN(this);
+            String lastName = sharedPreferences.getLastN(this);
+            
+            Toast.makeText(this, "Hi " + firstName + " " + lastName + "! Ready to play?", Toast.LENGTH_SHORT).show();
 
         } else {
 

@@ -95,7 +95,7 @@ public class Results extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_results);
-        
+
         // Firestore instance
         db = FirebaseFirestore.getInstance();
 
@@ -108,70 +108,77 @@ public class Results extends AppCompatActivity {
         operationList = getIntent().getStringArrayListExtra("operationList");
 
         ImageButton imageButton = findViewById(R.id.imgBtn_home);
-        imageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                playSound("click.mp3");
-                // Use .equals() to compare string values.
-                if ("Passing".equals(gameType)) {
-                    Intent intent = new Intent(Results.this, passingStageSelection.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    intent.putExtra("difficulty", getDifficulty);
-                    intent.putExtra("operation", getOperationText);
-                    startActivity(intent);
-                    finish();
-                } else if ("Quiz".equals(gameType)) {
-                    Intent intent = new Intent(Results.this, QuizzesSection.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                    finish();
-                } else {
-                    Intent intent = new Intent(Results.this, MainActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                    finish();
-                }
-            }
-        });
+        imageButton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        playSound("click.mp3");
+                        // Use .equals() to compare string values.
+                        if ("Passing".equals(gameType)) {
+                            Intent intent = new Intent(Results.this, passingStageSelection.class);
+                            intent.addFlags(
+                                    Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.putExtra("difficulty", getDifficulty);
+                            intent.putExtra("operation", getOperationText);
+                            startActivity(intent);
+                            finish();
+                        } else if ("Quiz".equals(gameType)) {
+                            Intent intent = new Intent(Results.this, QuizzesSection.class);
+                            intent.addFlags(
+                                    Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                            finish();
+                        } else {
+                            Intent intent = new Intent(Results.this, MainActivity.class);
+                            intent.addFlags(
+                                    Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                            finish();
+                        }
+                    }
+                });
 
         ImageButton imageButton_pause = findViewById(R.id.imgBtn_retry);
-        imageButton_pause.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                playSound("click.mp3");
-                // Get current data
-                ArrayList<MathProblem> answeredQuestions =
-                        getIntent().getParcelableArrayListExtra("EXTRA_ANSWERED_QUESTIONS");
+        imageButton_pause.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        playSound("click.mp3");
+                        // Get current data
+                        ArrayList<MathProblem> answeredQuestions =
+                                getIntent().getParcelableArrayListExtra("EXTRA_ANSWERED_QUESTIONS");
 
-                // Create an intent to return to MultipleChoicePage
-                Intent resultIntent = new Intent(Results.this, MultipleChoicePage.class);
-                resultIntent.putExtra("game_type", gameType);
+                        // Create an intent to return to MultipleChoicePage
+                        Intent resultIntent = new Intent(Results.this, MultipleChoicePage.class);
+                        resultIntent.putExtra("game_type", gameType);
 
-                // For quiz game types, pass additional extras
-                if ("Quiz".equals(gameType)) {
-                    resultIntent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));
-                    resultIntent.putExtra("quizId", getQuiz);
-                } else {
-                    resultIntent.putExtra("operation", getOperationText);
-                }
-                resultIntent.putExtra("difficulty", getDifficulty);
-                resultIntent.putExtra("heartLimit", selHeart);
-                resultIntent.putExtra("timerLimit", selTimer);
-                startActivity(resultIntent);
-                finish();
-            }
-        });
+                        // For quiz game types, pass additional extras
+                        if ("Quiz".equals(gameType)) {
+                            resultIntent.putStringArrayListExtra(
+                                    "operationList", new ArrayList<>(operationList));
+                            resultIntent.putExtra("quizId", getQuiz);
+                        } else {
+                            resultIntent.putExtra("operation", getOperationText);
+                        }
+                        resultIntent.putExtra("difficulty", getDifficulty);
+                        resultIntent.putExtra("heartLimit", selHeart);
+                        resultIntent.putExtra("timerLimit", selTimer);
+                        startActivity(resultIntent);
+                        finish();
+                    }
+                });
 
         TextView textView = findViewById(R.id.textViewResults);
         textView.setText("");
-        textView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                playSound("click.mp3");
-                Intent intent = new Intent(Results.this, Difficulty.class);
-                startActivity(intent);
-            }
-        });
+        textView.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        playSound("click.mp3");
+                        Intent intent = new Intent(Results.this, Difficulty.class);
+                        startActivity(intent);
+                    }
+                });
 
         String getResult = getIntent().getStringExtra("EXTRA_RESULT");
         String worldType = getIntent().getStringExtra("passingworldtype");
@@ -203,7 +210,15 @@ public class Results extends AppCompatActivity {
                 if (sharedPreferences.StudentIsLoggedIn(Results.this)) {
                     // Show the loading dialog before sending the score
                     loadingDialog.show();
-                    sendScoreResult(getScore, getQuiz, gameType, levelType, levelNext, worldType,getOperationText, difficulty);
+                    sendScoreResult(
+                            getScore,
+                            getQuiz,
+                            gameType,
+                            levelType,
+                            levelNext,
+                            worldType,
+                            getOperationText,
+                            difficulty);
                 }
                 showMotive.setText("Excellent!");
                 break;
@@ -211,7 +226,15 @@ public class Results extends AppCompatActivity {
                 playSound("victory.mp3");
                 if (sharedPreferences.StudentIsLoggedIn(Results.this)) {
                     loadingDialog.show();
-                    sendScoreResult(getScore, getQuiz, gameType, levelType, levelNext, worldType,getOperationText ,difficulty);
+                    sendScoreResult(
+                            getScore,
+                            getQuiz,
+                            gameType,
+                            levelType,
+                            levelNext,
+                            worldType,
+                            getOperationText,
+                            difficulty);
                 }
                 showMotive.setText("Keep it Up!");
                 break;
@@ -219,14 +242,30 @@ public class Results extends AppCompatActivity {
                 playSound("victory.mp3");
                 if (sharedPreferences.StudentIsLoggedIn(Results.this)) {
                     loadingDialog.show();
-                    sendScoreResult(getScore, getQuiz, gameType, levelType, levelNext, worldType,getOperationText ,difficulty);
+                    sendScoreResult(
+                            getScore,
+                            getQuiz,
+                            gameType,
+                            levelType,
+                            levelNext,
+                            worldType,
+                            getOperationText,
+                            difficulty);
                 }
                 showMotive.setText("You can do even better!");
                 break;
             case "Failed":
                 if (sharedPreferences.StudentIsLoggedIn(Results.this)) {
                     loadingDialog.show();
-                    sendScoreResult(getScore, getQuiz, gameType, levelType, levelNext, worldType,getOperationText ,difficulty);
+                    sendScoreResult(
+                            getScore,
+                            getQuiz,
+                            gameType,
+                            levelType,
+                            levelNext,
+                            worldType,
+                            getOperationText,
+                            difficulty);
                 }
                 showMotive.setText("Try Again!");
                 break;
@@ -239,12 +278,13 @@ public class Results extends AppCompatActivity {
         numBGAnimation = new NumBGAnimation(this, numberContainer);
         numBGAnimation.startNumberAnimationLoop();
 
-        backgroundFrame.post(new Runnable() {
-            @Override
-            public void run() {
-                VignetteEffect.apply(Results.this, backgroundFrame);
-            }
-        });
+        backgroundFrame.post(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        VignetteEffect.apply(Results.this, backgroundFrame);
+                    }
+                });
     }
 
     private void playSound(String fileName) {
@@ -395,6 +435,9 @@ public class Results extends AppCompatActivity {
         // Determine star rating based on the score
         String scoreStr = String.valueOf(Score);
         switch (scoreStr) {
+            case "0":
+                starRating = "0 Stars";
+                break;
             case "1":
             case "2":
             case "3":
@@ -408,8 +451,11 @@ public class Results extends AppCompatActivity {
             case "9":
                 starRating = "2 Stars";
                 break;
-            default:
+            case "10":
                 starRating = "3 Stars";
+                break;
+            default:
+                starRating = "0 Stars";
                 break;
         }
 
@@ -426,6 +472,16 @@ public class Results extends AppCompatActivity {
         if ("Passing".equals(gametype)) {
             CollectionReference collectionRef =
                     db.collection("Accounts").document("Students").collection("MathSquare");
+
+            if ("0 Stars".equals(starRating)) {
+                loadingDialog.dismiss();
+                Toast.makeText(
+                                this,
+                                "Oops! You got 0 stars. Try again to save your score!",
+                                Toast.LENGTH_LONG)
+                        .show();
+                return;
+            }
 
             collectionRef
                     .whereEqualTo("firstName", firstName)
