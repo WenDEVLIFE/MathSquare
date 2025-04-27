@@ -311,8 +311,6 @@ collectionRef.whereEqualTo("firstName", firstName)
     .whereEqualTo("grade", grade)
     .whereEqualTo("operation_type", operation)
     .addSnapshotListener((queryDocumentSnapshots, e) -> {
-        // Dismiss the loading Snackbar as soon as we receive any response.
-        loadingSnackbar.dismiss();
         
         // Check for errors.
         if (e != null) {
@@ -368,6 +366,8 @@ collectionRef.whereEqualTo("firstName", firstName)
                     );
                 }
             }
+            
+            loadingSnackbar.dismiss();
             return;
         }
         
@@ -502,6 +502,7 @@ collectionRef.whereEqualTo("firstName", firstName)
                                     Toast.LENGTH_SHORT).show();
                             }
                         });
+                        loadingSnackbar.dismiss();
                     }
                 })
                 .addOnFailureListener(historyError -> {
