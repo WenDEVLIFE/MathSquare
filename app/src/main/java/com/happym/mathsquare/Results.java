@@ -120,6 +120,7 @@ public class Results extends AppCompatActivity {
                                     Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                             intent.putExtra("difficulty", getDifficulty);
                             intent.putExtra("operation", getOperationText);
+                            intent.putExtra("reload_progress", true); 
                             startActivity(intent);
                             finish();
                         } else if ("Quiz".equals(gameType)) {
