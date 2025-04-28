@@ -27,6 +27,7 @@ import androidx.core.view.WindowCompat;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.happym.mathsquare.MusicManager;
@@ -114,7 +115,8 @@ public class passingStageSelection extends AppCompatActivity {
         String operation = getIntent().getStringExtra("operation");
        String difficulty = getIntent().getStringExtra("difficulty");
         String passingWorldType = getIntent().getStringExtra("passing");
-        
+        boolean reloadProgress = getIntent().getBooleanExtra("reload_progress", false);
+
         AppCompatButton btnNext = findViewById(R.id.btn_next);
         AppCompatButton btnBack = findViewById(R.id.btn_back);
         
@@ -239,8 +241,7 @@ String[] gameTypes = {
     levelSixStar, levelSevenStar, levelEightStar, levelNineStar, levelTenStar
 };
 
-        // Loop through UI levels
-    for (int i = 0; i < levels.length; i++) {
+for (int i = 0; i < levels.length; i++) {
         String previousLevel = "level_" + (i);
         String currentLevel = "level_" + (i + 1);
         String nextLevelToUnlock = "level_" + (i + 2);
@@ -282,7 +283,6 @@ String[] gameTypes = {
             );
         }
     }
-    
     // Get a reference to the root view for Snackbar, e.g., the activity's content view.
 View rootView = findViewById(android.R.id.content);
 
@@ -303,29 +303,26 @@ CollectionReference collectionRef = db.collection("Accounts")
     .document("Students")
     .collection("MathSquare");
 
-// Instead of using get(), use addSnapshotListener() for real-time updates.
-collectionRef.whereEqualTo("firstName", firstName)
+Query query = collectionRef
+    .whereEqualTo("firstName", firstName)
     .whereEqualTo("lastName", lastName)
     .whereEqualTo("section", section)
     .whereEqualTo("gameType", "Passing")
     .whereEqualTo("grade", grade)
-    .whereEqualTo("operation_type", operation)
-    .addSnapshotListener((queryDocumentSnapshots, e) -> {
-        
-        // Check for errors.
-        if (e != null) {
-            Snackbar.make(rootView, "Error loading data: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
-            return;
-        }
-        
-        // Check elapsed time and notify if the connection seems slow.
+    .whereEqualTo("operation_type", operation);
+
+if (reloadProgress) {
+    // Force re-fetch
+    query.get()
+           .addOnSuccessListener(queryDocumentSnapshots -> {
+
+        // Same inside here
         long elapsed = System.currentTimeMillis() - startTime;
-        if (elapsed > 3000) {  // if taking longer than 3 seconds
-            Snackbar.make(rootView, "Slow connection detected. Data loaded in " + elapsed / 1000 + " seconds.", 
-                            Snackbar.LENGTH_LONG).show();
+        if (elapsed > 3000) {
+            Snackbar.make(rootView, "Slow connection detected. Data loaded in " + elapsed / 1000 + " seconds.",
+                    Snackbar.LENGTH_LONG).show();
         }
-        
-        // If no documents found, show the default UI for an empty account.
+
         if (queryDocumentSnapshots == null || queryDocumentSnapshots.isEmpty()) {
             for (int i = 0; i < levels.length; i++) {
                 String previousLevel = "level_" + (i);
@@ -335,16 +332,14 @@ collectionRef.whereEqualTo("firstName", firstName)
                 ImageView flashbox = flashboxes[i];
 
                 if (i == 0) {
-                    // Level 1 is available.
                     level.setContentDescription("Available");
-                    level.setBackgroundResource(R.drawable.btn_short_condition); 
+                    level.setBackgroundResource(R.drawable.btn_short_condition);
                     startFlashingAnimation(flashbox);
                 } else {
                     level.setContentDescription("Not_Available");
                     level.setBackgroundResource(R.drawable.btn_short_condition_off);
                 }
 
-                // Set up click handling based on content description.
                 String levelState = (String) level.getContentDescription();
                 if ("Available".equals(levelState)) {
                     level.setOnClickListener(v -> {
@@ -362,66 +357,58 @@ collectionRef.whereEqualTo("firstName", firstName)
                     });
                 } else {
                     level.setOnClickListener(v ->
-                        Toast.makeText(this, "Complete previous " + previousLevel + " to unlock.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "Complete previous " + previousLevel + " to unlock.", Toast.LENGTH_SHORT).show()
                     );
                 }
             }
-            
             loadingSnackbar.dismiss();
             return;
         }
-        
-          for (DocumentSnapshot document : queryDocumentSnapshots) {
+
+        for (DocumentSnapshot document : queryDocumentSnapshots) {
             String docId = document.getId();
             DocumentReference studentDocRef = collectionRef.document(docId);
 
-            // Pull the "passing_level_must_complete" if it exists
             passingNextLevel = document.getString("passing_level_must_complete");
 
-            // Prepare containers
             List<String> completedLevels = new ArrayList<>();
             Map<String, String> starsPerLevel = new HashMap<>();
 
-            // Load PassingHistory
+            // Now fetch PassingHistory once
             studentDocRef.collection("PassingHistory")
                 .get()
                 .addOnSuccessListener(historySnapshots -> {
                     for (DocumentSnapshot historyDoc : historySnapshots) {
-                        // 1) completed levels in this history entry (if you still need them)
                         List<String> levelList = (List<String>) document.get("passing_completed_levels");
                         if (levelList != null) {
                             completedLevels.addAll(levelList);
                         }
 
-                        // 2) parse the "stars_list" entries
                         List<String> starsList = (List<String>) document.get("stars_list");
                         if (starsList != null) {
                             for (String entry : starsList) {
-                                // entry format: "level_3_2 Stars"
                                 int lastUnderscore = entry.lastIndexOf('_');
                                 if (lastUnderscore > 0) {
-                                    String levelKey = entry.substring(0, lastUnderscore);          // "level_3"
-                                    String starRating = entry.substring(lastUnderscore + 1);      // "2 Stars"
+                                    String levelKey = entry.substring(0, lastUnderscore);
+                                    String starRating = entry.substring(lastUnderscore + 1);
                                     starsPerLevel.put(levelKey, starRating);
                                 }
                             }
                         }
                     }
 
-                    // Determine which levels are completed and which is next
                     int maxCompleted = completedLevels.stream()
-                        .map(lvl -> {
-                            String num = lvl.replaceAll("\\D+", "");
-                            return num.isEmpty() ? 0 : Integer.parseInt(num);
-                        })
-                        .max(Integer::compare).orElse(0);
+                            .map(lvl -> {
+                                String num = lvl.replaceAll("\\D+", "");
+                                return num.isEmpty() ? 0 : Integer.parseInt(num);
+                            })
+                            .max(Integer::compare).orElse(0);
 
                     if (passingNextLevel == null || passingNextLevel.isEmpty()) {
                         passingNextLevel = "level_" + (maxCompleted + 1);
                     }
                     int availableIndex = Integer.parseInt(passingNextLevel.replaceAll("\\D+", "")) - 1;
 
-                    // Update the UI
                     for (int i = 0; i < levels.length; i++) {
                         String previousLevel = "level_" + (i);
                         String currentLevel = "level_" + (i + 1);
@@ -431,9 +418,8 @@ collectionRef.whereEqualTo("firstName", firstName)
 
                         boolean isCompleted = completedLevels.contains(currentLevel);
                         boolean isAvailable = (i == availableIndex);
-                        
+
                         startFlashingAnimation(flashbox);
-    
 
                         if (isCompleted) {
                             level.setContentDescription("Completed");
@@ -453,38 +439,23 @@ collectionRef.whereEqualTo("firstName", firstName)
                             level.setBackgroundResource(R.drawable.btn_short_condition);
                             flashbox.setImageResource(R.drawable.white_box);
                             startFlashingAnimation(flashbox);
-                            
-                            // Show dialog only if on a streak and the level is now available
-        boolean streak5 = isOnStarStreak(starsPerLevel, 1, 5);
-        boolean streak3 = isOnStarStreak(starsPerLevel, 1, 3);
 
-        if (streak5) {
-            showStarStreakDialog("Wow! You're on a 5-level 3-star streak! You're amazing!");
-        } else if (streak3) {
-            showStarStreakDialog("Awesome! You got 3 Stars in a row! Keep it up, star champ!");
-        }
-        
+                            boolean streak5 = isOnStarStreak(starsPerLevel, 1, 5);
+                            boolean streak3 = isOnStarStreak(starsPerLevel, 1, 3);
+
+                            if (streak5) {
+                                showStarStreakDialog("Wow! You're on a 5-level 3-star streak! You're amazing!");
+                            } else if (streak3) {
+                                showStarStreakDialog("Awesome! You got 3 Stars in a row! Keep it up, star champ!");
+                            }
                         } else {
                             level.setContentDescription("Not_Available");
                             level.setBackgroundResource(R.drawable.btn_short_condition_off);
                         }
 
-                        // Click handling
                         level.setOnClickListener(v -> {
                             String state = (String) level.getContentDescription();
-                            if ("Available".equals(state)) {
-                                playSound("click.mp3");
-                                Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
-                                intent.putExtra("operation", operation);
-                                intent.putExtra("passing", currentLevel);
-                                intent.putExtra("game_type", "Passing");
-                                intent.putExtra("passing_world", "world_one");
-                                intent.putExtra("passing_next_level", nextLevelToUnlock);
-                                intent.putExtra("difficulty", difficultySection);
-                                animateButtonClick(level);
-                                stopButtonFocusAnimation(level);
-                                startActivity(intent);
-                            }else if ("Completed".equals(state)) {
+                            if ("Available".equals(state) || "Completed".equals(state)) {
                                 playSound("click.mp3");
                                 Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
                                 intent.putExtra("operation", operation);
@@ -498,18 +469,199 @@ collectionRef.whereEqualTo("firstName", firstName)
                                 startActivity(intent);
                             } else {
                                 Toast.makeText(this,
-                                    "Complete previous " + previousLevel + " to unlock.",
-                                    Toast.LENGTH_SHORT).show();
+                                        "Complete previous " + previousLevel + " to unlock.",
+                                        Toast.LENGTH_SHORT).show();
                             }
                         });
                         loadingSnackbar.dismiss();
                     }
                 })
                 .addOnFailureListener(historyError -> {
-                    Snackbar.make(rootView, "Error loading history: " + historyError.getMessage(), Snackbar.LENGTH_LONG).show();
+                    Toast.makeText(this, "Error loading history: " + historyError.getMessage(), Toast.LENGTH_SHORT).show();
                 });
         }
+
+    })
+    .addOnFailureListener(e -> {
+        Toast.makeText(this, "Error loading data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
     });
+} else {
+    // Just normal load
+    query.get()
+           .addOnSuccessListener(queryDocumentSnapshots -> {
+
+        // Same inside here
+        long elapsed = System.currentTimeMillis() - startTime;
+        if (elapsed > 3000) {
+            Snackbar.make(rootView, "Slow connection detected. Data loaded in " + elapsed / 1000 + " seconds.",
+                    Snackbar.LENGTH_LONG).show();
+        }
+
+        if (queryDocumentSnapshots == null || queryDocumentSnapshots.isEmpty()) {
+            for (int i = 0; i < levels.length; i++) {
+                String previousLevel = "level_" + (i);
+                String currentLevel = "level_" + (i + 1);
+                String nextLevelToUnlock = "level_" + (i + 2);
+                FrameLayout level = levels[i];
+                ImageView flashbox = flashboxes[i];
+
+                if (i == 0) {
+                    level.setContentDescription("Available");
+                    level.setBackgroundResource(R.drawable.btn_short_condition);
+                    startFlashingAnimation(flashbox);
+                } else {
+                    level.setContentDescription("Not_Available");
+                    level.setBackgroundResource(R.drawable.btn_short_condition_off);
+                }
+
+                String levelState = (String) level.getContentDescription();
+                if ("Available".equals(levelState)) {
+                    level.setOnClickListener(v -> {
+                        playSound("click.mp3");
+                        Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
+                        intent.putExtra("operation", operation);
+                        intent.putExtra("passing", currentLevel);
+                        intent.putExtra("game_type", "Passing");
+                        intent.putExtra("passing_world", "world_one");
+                        intent.putExtra("passing_next_level", nextLevelToUnlock);
+                        intent.putExtra("difficulty", difficultySection);
+                        animateButtonClick(level);
+                        stopButtonFocusAnimation(level);
+                        startActivity(intent);
+                    });
+                } else {
+                    level.setOnClickListener(v ->
+                            Toast.makeText(this, "Complete previous " + previousLevel + " to unlock.", Toast.LENGTH_SHORT).show()
+                    );
+                }
+            }
+            loadingSnackbar.dismiss();
+            return;
+        }
+
+        for (DocumentSnapshot document : queryDocumentSnapshots) {
+            String docId = document.getId();
+            DocumentReference studentDocRef = collectionRef.document(docId);
+
+            passingNextLevel = document.getString("passing_level_must_complete");
+
+            List<String> completedLevels = new ArrayList<>();
+            Map<String, String> starsPerLevel = new HashMap<>();
+
+            // Now fetch PassingHistory once
+            studentDocRef.collection("PassingHistory")
+                .get()
+                .addOnSuccessListener(historySnapshots -> {
+                    for (DocumentSnapshot historyDoc : historySnapshots) {
+                        List<String> levelList = (List<String>) document.get("passing_completed_levels");
+                        if (levelList != null) {
+                            completedLevels.addAll(levelList);
+                        }
+
+                        List<String> starsList = (List<String>) document.get("stars_list");
+                        if (starsList != null) {
+                            for (String entry : starsList) {
+                                int lastUnderscore = entry.lastIndexOf('_');
+                                if (lastUnderscore > 0) {
+                                    String levelKey = entry.substring(0, lastUnderscore);
+                                    String starRating = entry.substring(lastUnderscore + 1);
+                                    starsPerLevel.put(levelKey, starRating);
+                                }
+                            }
+                        }
+                    }
+
+                    int maxCompleted = completedLevels.stream()
+                            .map(lvl -> {
+                                String num = lvl.replaceAll("\\D+", "");
+                                return num.isEmpty() ? 0 : Integer.parseInt(num);
+                            })
+                            .max(Integer::compare).orElse(0);
+
+                    if (passingNextLevel == null || passingNextLevel.isEmpty()) {
+                        passingNextLevel = "level_" + (maxCompleted + 1);
+                    }
+                    int availableIndex = Integer.parseInt(passingNextLevel.replaceAll("\\D+", "")) - 1;
+
+                    for (int i = 0; i < levels.length; i++) {
+                        String previousLevel = "level_" + (i);
+                        String currentLevel = "level_" + (i + 1);
+                        String nextLevelToUnlock = "level_" + (i + 2);
+                        FrameLayout level = levels[i];
+                        ImageView flashbox = flashboxes[i];
+
+                        boolean isCompleted = completedLevels.contains(currentLevel);
+                        boolean isAvailable = (i == availableIndex);
+
+                        startFlashingAnimation(flashbox);
+
+                        if (isCompleted) {
+                            level.setContentDescription("Completed");
+                            level.setBackgroundResource(R.drawable.btn_short_condition);
+                            flashbox.setImageResource(R.drawable.transparent_box);
+
+                            String starsEarned = starsPerLevel.get(currentLevel);
+                            if ("1 Stars".equals(starsEarned)) {
+                                starViews[i].setImageResource(R.drawable.ic_star_one);
+                            } else if ("2 Stars".equals(starsEarned)) {
+                                starViews[i].setImageResource(R.drawable.ic_star_two);
+                            } else if ("3 Stars".equals(starsEarned)) {
+                                starViews[i].setImageResource(R.drawable.ic_star_three);
+                            }
+                        } else if (isAvailable) {
+                            level.setContentDescription("Available");
+                            level.setBackgroundResource(R.drawable.btn_short_condition);
+                            flashbox.setImageResource(R.drawable.white_box);
+                            startFlashingAnimation(flashbox);
+
+                            boolean streak5 = isOnStarStreak(starsPerLevel, 1, 5);
+                            boolean streak3 = isOnStarStreak(starsPerLevel, 1, 3);
+
+                            if (streak5) {
+                                showStarStreakDialog("Wow! You're on a 5-level 3-star streak! You're amazing!");
+                            } else if (streak3) {
+                                showStarStreakDialog("Awesome! You got 3 Stars in a row! Keep it up, star champ!");
+                            }
+                        } else {
+                            level.setContentDescription("Not_Available");
+                            level.setBackgroundResource(R.drawable.btn_short_condition_off);
+                        }
+
+                        level.setOnClickListener(v -> {
+                            String state = (String) level.getContentDescription();
+                            if ("Available".equals(state) || "Completed".equals(state)) {
+                                playSound("click.mp3");
+                                Intent intent = new Intent(passingStageSelection.this, MultipleChoicePage.class);
+                                intent.putExtra("operation", operation);
+                                intent.putExtra("passing", currentLevel);
+                                intent.putExtra("game_type", "Passing");
+                                intent.putExtra("passing_world", "world_one");
+                                intent.putExtra("passing_next_level", nextLevelToUnlock);
+                                intent.putExtra("difficulty", difficultySection);
+                                animateButtonClick(level);
+                                stopButtonFocusAnimation(level);
+                                startActivity(intent);
+                            } else {
+                                Toast.makeText(this,
+                                        "Complete previous " + previousLevel + " to unlock.",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                        loadingSnackbar.dismiss();
+                    }
+                })
+                .addOnFailureListener(historyError -> {
+                    Toast.makeText(this, "Error loading history: " + historyError.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+        }
+
+    })
+    .addOnFailureListener(e -> {
+        Toast.makeText(this, "Error loading data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+    });
+}
+ 
+
 
 
    // Apply animations to all levels and flash boxes.
