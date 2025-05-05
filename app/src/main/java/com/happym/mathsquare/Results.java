@@ -725,6 +725,7 @@ public class Results extends AppCompatActivity {
             collectionRef
                     .whereEqualTo("firstName", firstName)
                     .whereEqualTo("lastName", lastName)
+                    .whereEqualTo("gameType", "Quiz")
                     .whereEqualTo("quizno_int", number)
                     .get()
                     .addOnCompleteListener(
