@@ -1,270 +1,275 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
-     xmlns:android="http://schemas.android.com/apk/res/android"
-     xmlns:app="http://schemas.android.com/apk/res-auto"
-     xmlns:tools="http://schemas.android.com/tools"
-     android:layout_height="match_parent"
-     android:layout_width="match_parent"
-     android:background="@color/yellowbg"
-     android:id="@+id/main">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:background="@color/yellowbg"
+    android:id="@+id/main">
 
     <FrameLayout
-         android:layout_height="match_parent"
-         android:layout_width="match_parent"
-         android:id="@+id/number_container">
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:id="@+id/number_container">
 
     </FrameLayout>
 
     <LinearLayout
-         android:layout_height="match_parent"
-         android:layout_width="match_parent"
-         android:gravity="center">
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:gravity="center">
 
         <TextView
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:textSize="33sp"
-             android:textColor="#FFFFFF"
-             android:textAlignment="center"
-             app:layout_constraintTop_toTopOf="parent"
-             android:shadowRadius="2"
-             app:layout_constraintStart_toStartOf="parent"
-             android:fontFamily="@font/paytone_one"
-             android:shadowColor="#000000"
-             app:layout_constraintEnd_toEndOf="parent"
-             android:shadowDx="4"
-             android:shadowDy="3"
-             android:id="@+id/operationDisplay"
-             android:text="Multiplication" />
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:textSize="33sp"
+            android:textColor="#FFFFFF"
+            android:textAlignment="center"
+            app:layout_constraintTop_toTopOf="parent"
+            android:shadowRadius="2"
+            app:layout_constraintStart_toStartOf="parent"
+            android:fontFamily="@font/paytone_one"
+            android:shadowColor="#000000"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:shadowDx="4"
+            android:shadowDy="3"
+            android:id="@+id/operationDisplay"
+            android:text="Multiplication" />
 
     </LinearLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-         xmlns:android="http://schemas.android.com/apk/res/android"
-         xmlns:app="http://schemas.android.com/apk/res-auto"
-         xmlns:tools="http://schemas.android.com/tools"
-         android:layout_height="match_parent"
-         android:layout_width="match_parent"
-         android:id="@+id/gameView">
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:id="@+id/gameView">
 
         <TextView
-             android:layout_height="250dp"
-             android:layout_width="250dp"
-             android:background="@drawable/bg_blackboard"
-             app:layout_constraintHorizontal_bias="0.496"
-             app:layout_constraintStart_toStartOf="parent"
-             app:layout_constraintEnd_toEndOf="parent"
-             android:layout_marginTop="100dp"
-             app:layout_constraintTop_toBottomOf="@+id/linearLayout2"
-             android:id="@+id/Border" />
+            android:id="@+id/Border"
+            android:layout_width="308dp"
+            android:layout_height="250dp"
+            android:background="@drawable/bg_blackboard"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.496"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout2" />
 
         <LinearLayout
-             android:layout_height="100dp"
-             android:layout_width="250dp"
-             app:layout_constraintHorizontal_bias="0.496"
-             android:orientation="horizontal"
-             app:layout_constraintStart_toStartOf="parent"
-             app:layout_constraintEnd_toEndOf="parent"
-             android:layout_marginTop="60dp"
-             app:layout_constraintTop_toBottomOf="@+id/Border"
-             android:id="@+id/linearLayout">
+            android:id="@+id/btn_help"
+            android:layout_width="150dp"
+            android:layout_height="60dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:background="@drawable/btn_normal_condition"
+            android:clickable="true"
+            android:elevation="4dp"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            app:layout_constraintBottom_toBottomOf="@+id/Border"
+            app:layout_constraintEnd_toEndOf="parent">
 
-            <androidx.appcompat.widget.AppCompatButton
-                 android:layout_height="100dp"
-                 android:layout_width="100dp"
-                 android:textSize="40sp"
-                 android:layout_marginLeft="20dp"
-                 android:textColor="#FFFFFF"
-                 android:background="@drawable/btn_short_condition"
-                 android:shadowRadius="4"
-                 android:layout_marginRight="10dp"
-                 android:shadowColor="#000000"
-                 android:shadowDx="2"
-                 android:shadowDy="2"
-                 android:id="@+id/btn_choice1"
-                 android:text="7" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                 android:layout_height="100dp"
-                 android:layout_width="100dp"
-                 android:background="@drawable/btn_short_condition"
-                 android:shadowRadius="4"
-                 android:textSize="40sp"
-                 android:layout_marginRight="20dp"
-                 android:shadowColor="#000000"
-                 android:textColor="#FFFFFF"
-                 android:shadowDx="2"
-                 android:shadowDy="2"
-                 android:id="@+id/btn_choice2"
-                 android:text="15" />
+            <TextView
+                android:id="@+id/helpTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/shantell_sans_bold"
+                android:gravity="center"
+                android:text="Need a Help? 3/3"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
 
         </LinearLayout>
 
         <LinearLayout
-             android:layout_height="100dp"
-             android:layout_width="250dp"
-             app:layout_constraintHorizontal_bias="0.496"
-             android:orientation="horizontal"
-             app:layout_constraintStart_toStartOf="parent"
-             app:layout_constraintEnd_toEndOf="parent"
-             android:layout_marginTop="10dp"
-             app:layout_constraintTop_toBottomOf="@+id/linearLayout"
-             android:id="@+id/linearLayout3">
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:orientation="vertical"
+            android:gravity="bottom"
+            app:layout_constraintTop_toBottomOf="@+id/Border"
+            app:layout_constraintBottom_toBottomOf="parent">
 
-            <androidx.appcompat.widget.AppCompatButton
-                 android:layout_height="100dp"
-                 android:layout_width="100dp"
-                 android:textSize="40sp"
-                 android:layout_marginLeft="20dp"
-                 android:textColor="#FFFFFF"
-                 android:background="@drawable/btn_short_condition"
-                 android:shadowRadius="4"
-                 android:layout_marginRight="10dp"
-                 android:shadowColor="#000000"
-                 android:shadowDx="2"
-                 android:shadowDy="2"
-                 android:id="@+id/btn_choice3"
-                 android:text="777" />
+            <RelativeLayout
+                android:id="@+id/drawing_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:background="@drawable/drawing_area_bg">
 
-            <androidx.appcompat.widget.AppCompatButton
-                 android:layout_height="100dp"
-                 android:layout_width="100dp"
-                 android:background="@drawable/btn_short_condition"
-                 android:shadowRadius="4"
-                 android:textSize="40sp"
-                 android:layout_marginRight="20dp"
-                 android:shadowColor="#000000"
-                 android:textColor="#FFFFFF"
-                 android:shadowDx="2"
-                 android:shadowDy="2"
-                 android:id="@+id/btn_choice4"
-                 android:text="50" />
+                <com.happym.mathsquare.Animation.DrawingView
+                    android:id="@+id/drawing_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
 
+                <ImageView
+                    android:id="@+id/btn_clear"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_margin="18dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/bg_clear_circle"
+                    android:clickable="true"
+                    android:elevation="6dp"
+                    android:focusable="true"
+                    android:padding="5dp"
+                    android:src="@drawable/ic_clear" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentBottom="true"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="12dp"
+                    android:letterSpacing="0.1"
+                    android:text="DRAW YOUR ANSWER HERE"
+                    android:textColor="#9E9E9E"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/hint_question_mark"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerInParent="true"
+                    android:layout_marginTop="50dp"
+                    android:fontFamily="@font/shantell_sans_bold"
+                    android:text="?"
+                    android:textColor="#E0E0E0"
+                    android:textSize="100sp" />
+
+            </RelativeLayout>
         </LinearLayout>
 
+
         <LinearLayout
-             android:layout_height="55dp"
-             android:layout_width="455dp"
-             android:gravity="center_vertical"
-             app:layout_constraintTop_toTopOf="parent"
-             android:orientation="horizontal"
-             app:layout_constraintStart_toStartOf="parent"
-             app:layout_constraintEnd_toEndOf="parent"
-             android:layout_marginTop="20dp"
-             android:id="@+id/linearLayout2">
+            android:layout_height="55dp"
+            android:layout_width="455dp"
+            android:gravity="center_vertical"
+            app:layout_constraintTop_toTopOf="parent"
+            android:orientation="horizontal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="20dp"
+            android:id="@+id/linearLayout2">
 
             <LinearLayout
-                 android:layout_height="match_parent"
-                 android:layout_width="wrap_content"
-                 android:orientation="horizontal"
-                 android:layout_marginStart="30dp">
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginStart="30dp">
 
                 <ImageButton
-                     android:layout_height="55dp"
-                     android:layout_width="55dp"
-                     android:background="@drawable/circle_box"
-                     android:layout_marginLeft="25dp"
-                     app:srcCompat="@drawable/ic_home"
-                     android:id="@+id/imgBtn_home" />
+                    android:layout_height="55dp"
+                    android:layout_width="55dp"
+                    android:background="@drawable/circle_box"
+                    android:layout_marginLeft="25dp"
+                    app:srcCompat="@drawable/ic_home"
+                    android:id="@+id/imgBtn_home" />
 
             </LinearLayout>
 
             <TextView
-                 android:layout_height="55dp"
-                 android:layout_width="wrap_content"
-                 android:textSize="20sp"
-                 android:textColor="#FFFFFF"
-                 android:gravity="center"
-                 android:shadowRadius="2"
-                 android:fontFamily="@font/paytone_one"
-                 android:shadowColor="#000000"
-                 android:shadowDx="4"
-                 android:shadowDy="3"
-                 android:layout_weight="1"
-                 android:id="@+id/text_operation"
-                 android:text="Subtraction" />
+                android:layout_height="55dp"
+                android:layout_width="wrap_content"
+                android:textSize="20sp"
+                android:textColor="#FFFFFF"
+                android:gravity="center"
+                android:shadowRadius="2"
+                android:fontFamily="@font/paytone_one"
+                android:shadowColor="#000000"
+                android:shadowDx="4"
+                android:shadowDy="3"
+                android:layout_weight="1"
+                android:id="@+id/text_operation"
+                android:text="Subtraction" />
 
             <LinearLayout
-                 android:layout_height="match_parent"
-                 android:layout_width="wrap_content"
-                 android:layout_marginEnd="30dp"
-                 android:gravity="end"
-                 android:orientation="horizontal">
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
+                android:layout_marginEnd="30dp"
+                android:gravity="end"
+                android:orientation="horizontal">
 
                 <ImageButton
-                     android:layout_height="55dp"
-                     android:layout_width="55dp"
-                     android:background="@drawable/circle_box"
-                     android:layout_marginRight="25dp"
-                     app:srcCompat="@drawable/ic_pause"
-                     android:id="@+id/imgBtn_pause" />
+                    android:layout_height="55dp"
+                    android:layout_width="55dp"
+                    android:background="@drawable/circle_box"
+                    android:layout_marginRight="25dp"
+                    app:srcCompat="@drawable/ic_pause"
+                    android:id="@+id/imgBtn_pause" />
 
             </LinearLayout>
 
         </LinearLayout>
 
         <LinearLayout
-             android:layout_height="55dp"
-             android:layout_width="match_parent"
-             android:gravity="center_vertical"
-             app:layout_constraintTop_toTopOf="parent"
-             android:orientation="horizontal"
-             app:layout_constraintStart_toStartOf="parent"
-             app:layout_constraintEnd_toEndOf="parent"
-             android:layout_marginTop="120dp"
-             android:id="@+id/heartWithTimer">
+            android:layout_height="55dp"
+            android:layout_width="match_parent"
+            android:gravity="center_vertical"
+            app:layout_constraintTop_toTopOf="parent"
+            android:orientation="horizontal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="120dp"
+            android:id="@+id/heartWithTimer">
 
             <LinearLayout
-                 android:layout_height="match_parent"
-                 android:layout_width="wrap_content"
-                 android:orientation="horizontal"
-                 android:layout_marginStart="36dp">
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginStart="36dp">
 
                 <FrameLayout
-                     android:layout_height="40dp"
-                     android:layout_width="96dp"
-                     android:gravity="center"
-                     android:id="@+id/heart_choice">
+                    android:layout_height="40dp"
+                    android:layout_width="96dp"
+                    android:gravity="center"
+                    android:id="@+id/heart_choice">
 
                     <LinearLayout
-                         android:layout_height="match_parent"
-                         android:layout_width="match_parent"
-                         android:background="@drawable/btn_boxsmall"
-                         android:gravity="center|start"
-                         android:orientation="vertical">
+                        android:layout_height="match_parent"
+                        android:layout_width="match_parent"
+                        android:background="@drawable/btn_boxsmall"
+                        android:gravity="center|start"
+                        android:orientation="vertical">
 
                         <LinearLayout
-                             android:layout_height="wrap_content"
-                             android:layout_width="wrap_content"
-                             android:gravity="center|start"
-                             android:orientation="horizontal"
-                             android:layout_marginStart="12dp">
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:gravity="center|start"
+                            android:orientation="horizontal"
+                            android:layout_marginStart="12dp">
 
                             <ImageView
-                                 android:layout_height="35dp"
-                                 android:layout_width="35dp"
-                                 android:scaleType="centerCrop"
-                                 android:src="@drawable/ic_heart"
-                                 android:padding="2dp"
-                                 android:id="@+id/icon_heart"
-                                 android:layout_gravity="center" />
+                                android:layout_height="35dp"
+                                android:layout_width="35dp"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_heart"
+                                android:padding="2dp"
+                                android:id="@+id/icon_heart"
+                                android:layout_gravity="center" />
 
                             <TextView
-                                 android:layout_height="wrap_content"
-                                 android:layout_width="wrap_content"
-                                 android:textSize="23sp"
-                                 android:textColor="@color/white"
-                                 android:layout_marginStart="8dp"
-                                 android:layout_marginBottom="4dp"
-                                 android:gravity="center_horizontal"
-                                 android:shadowRadius="4"
-                                 android:fontFamily="@font/paytone_one"
-                                 android:shadowColor="#000000"
-                                 android:shadowDx="2"
-                                 android:shadowDy="2"
-                                 android:id="@+id/heart_txt"
-                                 android:text="3"
-                                 android:paddingTop="2dp" />
+                                android:layout_height="wrap_content"
+                                android:layout_width="wrap_content"
+                                android:textSize="23sp"
+                                android:textColor="@color/white"
+                                android:layout_marginStart="8dp"
+                                android:layout_marginBottom="4dp"
+                                android:gravity="center_horizontal"
+                                android:shadowRadius="4"
+                                android:fontFamily="@font/paytone_one"
+                                android:shadowColor="#000000"
+                                android:shadowDx="2"
+                                android:shadowDy="2"
+                                android:id="@+id/heart_txt"
+                                android:text="3"
+                                android:paddingTop="2dp" />
 
                         </LinearLayout>
 
@@ -275,73 +280,73 @@
             </LinearLayout>
 
             <TextView
-                 android:layout_height="55dp"
-                 android:layout_width="wrap_content"
-                 android:textSize="23sp"
-                 android:textColor="#FFFFFF"
-                 android:gravity="center"
-                 android:shadowRadius="2"
-                 android:fontFamily="@font/paytone_one"
-                 android:paddingBottom="12dp"
-                 android:shadowColor="#000000"
-                 android:shadowDx="4"
-                 android:shadowDy="3"
-                 android:layout_weight="1"
-                 android:id="@+id/text_question_progress"
-                 android:text="4/10" />
+                android:layout_height="55dp"
+                android:layout_width="wrap_content"
+                android:textSize="23sp"
+                android:textColor="#FFFFFF"
+                android:gravity="center"
+                android:shadowRadius="2"
+                android:fontFamily="@font/paytone_one"
+                android:paddingBottom="12dp"
+                android:shadowColor="#000000"
+                android:shadowDx="4"
+                android:shadowDy="3"
+                android:layout_weight="1"
+                android:id="@+id/text_question_progress"
+                android:text="4/10" />
 
             <LinearLayout
-                 android:layout_height="match_parent"
-                 android:layout_width="wrap_content"
-                 android:layout_marginEnd="36dp"
-                 android:gravity="end"
-                 android:orientation="horizontal">
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
+                android:layout_marginEnd="36dp"
+                android:gravity="end"
+                android:orientation="horizontal">
 
                 <FrameLayout
-                     android:layout_height="40dp"
-                     android:layout_width="96dp"
-                     android:gravity="center"
-                     android:id="@+id/timer_choice">
+                    android:layout_height="40dp"
+                    android:layout_width="96dp"
+                    android:gravity="center"
+                    android:id="@+id/timer_choice">
 
                     <LinearLayout
-                         android:layout_height="match_parent"
-                         android:layout_width="match_parent"
-                         android:background="@drawable/btn_boxsmall"
-                         android:gravity="center|start"
-                         android:orientation="vertical">
+                        android:layout_height="match_parent"
+                        android:layout_width="match_parent"
+                        android:background="@drawable/btn_boxsmall"
+                        android:gravity="center|start"
+                        android:orientation="vertical">
 
                         <LinearLayout
-                             android:layout_height="wrap_content"
-                             android:layout_width="wrap_content"
-                             android:gravity="center|start"
-                             android:orientation="horizontal"
-                             android:layout_marginStart="10dp">
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:gravity="center|start"
+                            android:orientation="horizontal"
+                            android:layout_marginStart="10dp">
 
                             <ImageView
-                                 android:layout_height="35dp"
-                                 android:layout_width="35dp"
-                                 android:scaleType="centerCrop"
-                                 android:src="@drawable/ic_clock"
-                                 android:padding="2dp"
-                                 android:id="@+id/icon_timer"
-                                 android:layout_gravity="center" />
+                                android:layout_height="35dp"
+                                android:layout_width="35dp"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_clock"
+                                android:padding="2dp"
+                                android:id="@+id/icon_timer"
+                                android:layout_gravity="center" />
 
                             <TextView
-                                 android:layout_height="wrap_content"
-                                 android:layout_width="wrap_content"
-                                 android:textSize="16sp"
-                                 android:textColor="@color/white"
-                                 android:layout_marginStart="2dp"
-                                 android:layout_marginBottom="4dp"
-                                 android:gravity="center_horizontal"
-                                 android:shadowRadius="4"
-                                 android:fontFamily="@font/paytone_one"
-                                 android:shadowColor="#000000"
-                                 android:shadowDx="2"
-                                 android:shadowDy="2"
-                                 android:id="@+id/timer_txt"
-                                 android:text="10:00"
-                                 android:paddingTop="4dp" />
+                                android:layout_height="wrap_content"
+                                android:layout_width="wrap_content"
+                                android:textSize="16sp"
+                                android:textColor="@color/white"
+                                android:layout_marginStart="2dp"
+                                android:layout_marginBottom="4dp"
+                                android:gravity="center_horizontal"
+                                android:shadowRadius="4"
+                                android:fontFamily="@font/paytone_one"
+                                android:shadowColor="#000000"
+                                android:shadowDx="2"
+                                android:shadowDy="2"
+                                android:id="@+id/timer_txt"
+                                android:text="10:00"
+                                android:paddingTop="4dp" />
 
                         </LinearLayout>
 
@@ -354,94 +359,239 @@
         </LinearLayout>
 
         <LinearLayout
-             android:layout_height="180dp"
-             android:layout_width="150dp"
-             app:layout_constraintHorizontal_bias="0.50"
-             app:layout_constraintTop_toTopOf="@+id/Border"
-             android:orientation="vertical"
-             app:layout_constraintStart_toStartOf="@+id/Border"
-             app:layout_constraintEnd_toEndOf="@+id/Border"
-             app:layout_constraintBottom_toBottomOf="@+id/Border"
-             app:layout_constraintVertical_bias="0.660">
+            android:id="@+id/linearLayout6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="@+id/Border"
+            app:layout_constraintEnd_toEndOf="@+id/Border"
+            app:layout_constraintHorizontal_bias="0.50"
+            app:layout_constraintStart_toStartOf="@+id/Border"
+            app:layout_constraintTop_toTopOf="@+id/Border"
+            app:layout_constraintVertical_bias="0.660">
 
-            <TextView
-                 android:layout_height="43dp"
-                 android:layout_width="match_parent"
-                 android:gravity="right"
-                 android:paddingRight="5dp"
-                 android:fontFamily="@font/shantell_sans_bold"
-                 android:textSize="33sp"
-                 android:textColor="#FFFFFF"
-                 android:id="@+id/text_givenone"
-                 android:text="55" />
-
+            <!-- Horizontal row for number1 operator number2 -->
             <LinearLayout
-                 android:layout_height="46dp"
-                 android:layout_width="match_parent"
-                 android:orientation="horizontal">
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical|end">
 
                 <TextView
-                     android:layout_height="36dp"
-                     android:layout_width="10dp"
-                     android:gravity="right"
-                     android:fontFamily="@font/shantell_sans_bold"
-                     android:textSize="33dp"
-                     android:textColor="#FFFFFF"
-                     android:layout_weight="1"
-                     android:id="@+id/text_operator"
-                     android:text="+" />
+                    android:id="@+id/text_givenone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/shantell_sans_bold"
+                    android:gravity="center"
+                    android:text="55"
+                    android:textColor="#FFFFFF"
+                    android:textSize="40sp"
+                    android:paddingEnd="8dp"/>
 
                 <TextView
-                     android:layout_height="40dp"
-                     android:layout_width="60dp"
-                     android:gravity="right"
-                     android:paddingRight="5dp"
-                     android:fontFamily="@font/shantell_sans_bold"
-                     android:textSize="33sp"
-                     android:textColor="#FFFFFF"
-                     android:layout_weight="1"
-                     android:id="@+id/text_giventwo"
-                     android:text="999" />
+                    android:id="@+id/text_operator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/shantell_sans_bold"
+                    android:gravity="center"
+                    android:text="+"
+                    android:textColor="#FFFFFF"
+                    android:textSize="40sp"
+                    android:paddingEnd="8dp"/>
 
+                <TextView
+                    android:id="@+id/text_giventwo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/shantell_sans_bold"
+                    android:gravity="center"
+                    android:text="999"
+                    android:textColor="#FFFFFF"
+                    android:textSize="40sp"/>
             </LinearLayout>
-
-            <View
-                 android:layout_height="5dp"
-                 android:layout_width="wrap_content"
-                 android:background="#FFFFFF"
-                 android:layout_marginLeft="25dp" />
-
-            <TextView
-                 android:layout_height="32dp"
-                 android:layout_width="match_parent"
-                 android:fontFamily="@font/shantell_sans_bold"
-                 android:textSize="28sp"
-                 android:textColor="#FFFFFF"
-                 android:paddingLeft="10dp"
-                 android:id="@+id/equal"
-                 android:text="=" />
 
         </LinearLayout>
 
+
         <TextView
-             android:layout_height="wrap_content"
-             android:layout_width="wrap_content"
-             android:visibility="invisible"
-             app:layout_constraintHorizontal_bias="0.498"
-             android:textSize="17sp"
-             android:textColor="@color/white"
-             android:layout_marginTop="20dp"
-             app:layout_constraintTop_toBottomOf="@+id/linearLayout3"
-             android:shadowRadius="2"
-             app:layout_constraintStart_toStartOf="parent"
-             android:fontFamily="@font/paytone_one"
-             android:shadowColor="#000000"
-             app:layout_constraintEnd_toEndOf="parent"
-             android:shadowDx="4"
-             android:shadowDy="3"
-             android:id="@+id/text_feedback"
-             android:text="" />
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:visibility="invisible"
+            app:layout_constraintHorizontal_bias="0.498"
+            android:textSize="17sp"
+            android:textColor="@color/white"
+            android:layout_marginTop="20dp"
+            android:shadowRadius="2"
+            app:layout_constraintStart_toStartOf="parent"
+            android:fontFamily="@font/paytone_one"
+            android:shadowColor="#000000"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:shadowDx="4"
+            android:shadowDy="3"
+            android:id="@+id/text_feedback"
+            android:text="" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <RelativeLayout
+        android:id="@+id/dialogOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#701B1212"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <!-- Success Dialog Card -->
+        <LinearLayout
+            android:id="@+id/customDialogSuccess"
+            android:layout_width="584dp"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="@drawable/dialog_inset_background"
+            android:elevation="12dp"
+            android:gravity="center"
+            android:visibility="gone"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Icon -->
+            <ImageView
+                android:id="@+id/dialogIcon"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_marginBottom="16dp"
+                android:src="@drawable/ic_happy" />
+
+            <!-- Title -->
+            <TextView
+                android:id="@+id/dialogTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:gravity="center"
+                android:text="Amazing Job!"
+                android:fontFamily="@font/shantell_sans_bold"
+                android:textStyle="bold"
+                android:textColor="#3E2723"
+                android:shadowColor="#FFFFFF"
+                android:shadowDx="2"
+                android:shadowDy="2"
+                android:shadowRadius="3"
+                android:textAlignment="center"
+                android:textSize="34sp"/>
+
+            <TextView
+                android:id="@+id/pointsEarnedTxt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+10 Points!"
+                android:fontFamily="@font/paytone_one"
+                android:textColor="#FFD700"
+                android:textSize="30sp"
+                android:shadowColor="#000000"
+                android:shadowDx="2"
+                android:shadowDy="2"
+                android:shadowRadius="2"
+                android:layout_marginBottom="5dp"/>
+
+            <TextView
+                android:id="@+id/bonusTxt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:text="Quick Thinker Bonus!"
+                android:fontFamily="@font/shantell_sans_bold"
+                android:textColor="#4CAF50"
+                android:textSize="18sp"
+                android:layout_marginBottom="10dp"/>
+
+            <!-- Message -->
+            <TextView
+                android:id="@+id/dialogMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:lineSpacingExtra="6dp"
+                android:text="You got it right!\nReady for the next challenge?"
+                android:fontFamily="@font/shantell_sans_bold"
+                android:textColor="#5D4037"
+                android:shadowColor="#FFFFFF"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="2"
+                android:textAlignment="center"
+                android:textSize="24sp"/>
+
+        </LinearLayout>
+
+        <!-- Failed Dialog Card -->
+        <LinearLayout
+            android:id="@+id/customDialogFailed"
+            android:layout_width="584dp"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="@drawable/dialog_inset_background"
+            android:elevation="12dp"
+            android:gravity="center"
+            android:visibility="gone"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Icon -->
+            <ImageView
+                android:id="@+id/dialogIconFailed"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_marginBottom="16dp"
+                android:src="@drawable/ic_error_sad_face" />
+
+            <!-- Title -->
+            <TextView
+                android:id="@+id/dialogTitleFailed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:gravity="center"
+                android:text="Oops! Incorrect"
+                android:fontFamily="@font/shantell_sans_bold"
+                android:textStyle="bold"
+                android:textColor="#B71C1C"
+                android:shadowColor="#FFFFFF"
+                android:shadowDx="2"
+                android:shadowDy="2"
+                android:shadowRadius="3"
+                android:textAlignment="center"
+                android:textSize="34sp"/>
+
+
+            <!-- Message TextView -->
+            <TextView
+                android:id="@+id/dialogMessageFailed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Oops! Try again!"
+                android:textSize="18sp"
+                android:textColor="#B71C1C"
+                android:gravity="center"
+                android:fontFamily="@font/shantell_sans_bold"
+                android:shadowColor="#FFFFFF"
+                android:shadowDx="2"
+                android:shadowDy="3"
+                android:shadowRadius="2"
+                android:layout_marginBottom="12dp"/>
+
+            <!-- Visual container for kid-friendly animation -->
+            <com.google.android.flexbox.FlexboxLayout
+                android:id="@+id/visualContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="15dp"
+                app:flexWrap="wrap"
+                app:justifyContent="center"
+                app:alignItems="center"/>
+
+        </LinearLayout>
+
+    </RelativeLayout>
 
 </FrameLayout>

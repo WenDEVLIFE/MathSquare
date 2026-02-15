@@ -31,6 +31,7 @@ import com.google.firebase.firestore.WriteBatch;
 import com.happym.mathsquare.Model.Sections;
 import com.happym.mathsquare.Model.Student;
 
+import com.happym.mathsquare.Service.FirebaseDb;
 import com.happym.mathsquare.dialog.CreateSection;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -66,7 +67,7 @@ private MediaPlayer bgMediaPlayer;
         setContentView(R.layout.layout_dashboard_section_panel);
 
         // Initialize Firestore
-        db = FirebaseFirestore.getInstance();
+        db = FirebaseDb.getFirestore();
 
         // Replace this with actual logic to get the teacher's email
         teacherEmail = sharedPreferences.getEmail(this);

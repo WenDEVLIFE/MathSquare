@@ -5,18 +5,22 @@ import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +29,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import android.animation.Animator;
@@ -57,6 +62,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -66,11 +72,15 @@ import androidx.core.view.WindowInsetsCompat;
 import android.animation.ObjectAnimator;
 import android.animation.AnimatorSet;
 import android.view.animation.BounceInterpolator;
+
 import java.io.IOException;
 import java.util.Random;
+
 import com.happym.mathsquare.Animation.*;
 import com.happym.mathsquare.GameType.Passing.*;
 import com.happym.mathsquare.GameType.Practice.*;
+import com.happym.mathsquare.Model.LeaderboardEntry;
+import com.happym.mathsquare.Service.FirebaseDb;
 
 public class Results extends AppCompatActivity {
     private FirebaseFirestore db;
@@ -91,13 +101,16 @@ public class Results extends AppCompatActivity {
     String completedLevelsField = "";
     String worldCompletedField = "";
 
+    private int totalPoints;
+    private TextView showPoints;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_results);
 
         // Firestore instance
-        db = FirebaseFirestore.getInstance();
+        db = FirebaseDb.getFirestore();
 
         selHeart = getIntent().getIntExtra("heartLimit", 3);
         selTimer = getIntent().getIntExtra("timerLimit", 10);
@@ -106,6 +119,12 @@ public class Results extends AppCompatActivity {
         final String getOperationText = getIntent().getStringExtra("EXTRA_OPERATIONTEXT");
         final String getDifficulty = getIntent().getStringExtra("EXTRA_DIFFICULTY");
         operationList = getIntent().getStringArrayListExtra("operationList");
+
+        String getResult = getIntent().getStringExtra("EXTRA_RESULT");
+        String worldType = getIntent().getStringExtra("passingworldtype");
+        String levelType = getIntent().getStringExtra("leveltype");
+        String difficulty = getIntent().getStringExtra("EXTRA_DIFFICULTY");
+        String levelNext = getIntent().getStringExtra("passinglevelnext");
 
         ImageButton imageButton = findViewById(R.id.imgBtn_home);
         imageButton.setOnClickListener(
@@ -120,7 +139,7 @@ public class Results extends AppCompatActivity {
                                     Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                             intent.putExtra("difficulty", getDifficulty);
                             intent.putExtra("operation", getOperationText);
-                            intent.putExtra("reload_progress", true); 
+                            intent.putExtra("reload_progress", true);
                             startActivity(intent);
                             finish();
                         } else if ("Quiz".equals(gameType)) {
@@ -140,34 +159,33 @@ public class Results extends AppCompatActivity {
                 });
 
         ImageButton imageButton_pause = findViewById(R.id.imgBtn_retry);
-        imageButton_pause.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        playSound("click.mp3");
-                        // Get current data
-                        ArrayList<MathProblem> answeredQuestions =
-                                getIntent().getParcelableArrayListExtra("EXTRA_ANSWERED_QUESTIONS");
+        imageButton_pause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playSound("click.mp3");
 
-                        // Create an intent to return to MultipleChoicePage
-                        Intent resultIntent = new Intent(Results.this, MultipleChoicePage.class);
-                        resultIntent.putExtra("game_type", gameType);
+                Intent resultIntent = new Intent(Results.this, MultipleChoicePage.class);
+                resultIntent.putExtra("game_type", gameType);
+                resultIntent.putExtra("passingworldtype", worldType); // Pass the world back
+                resultIntent.putExtra("passing", levelType);       // Pass the level back
+                resultIntent.putExtra("passinglevelnext", levelNext); // Pass the next level
+                // --------------------------------
 
-                        // For quiz game types, pass additional extras
-                        if ("Quiz".equals(gameType)) {
-                            resultIntent.putStringArrayListExtra(
-                                    "operationList", new ArrayList<>(operationList));
-                            resultIntent.putExtra("quizId", getQuiz);
-                        } else {
-                            resultIntent.putExtra("operation", getOperationText);
-                        }
-                        resultIntent.putExtra("difficulty", getDifficulty);
-                        resultIntent.putExtra("heartLimit", selHeart);
-                        resultIntent.putExtra("timerLimit", selTimer);
-                        startActivity(resultIntent);
-                        finish();
-                    }
-                });
+                if ("Quiz".equals(gameType)) {
+                    resultIntent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));
+                    resultIntent.putExtra("quizId", getQuiz);
+                } else {
+                    resultIntent.putExtra("operation", getOperationText);
+                }
+
+                resultIntent.putExtra("difficulty", getDifficulty);
+                resultIntent.putExtra("heartLimit", selHeart);
+                resultIntent.putExtra("timerLimit", selTimer);
+
+                startActivity(resultIntent);
+                finish();
+            }
+        });
 
         TextView textView = findViewById(R.id.textViewResults);
         textView.setText("");
@@ -181,14 +199,14 @@ public class Results extends AppCompatActivity {
                     }
                 });
 
-        String getResult = getIntent().getStringExtra("EXTRA_RESULT");
-        String worldType = getIntent().getStringExtra("passingworldtype");
-        String levelType = getIntent().getStringExtra("leveltype");
-        String difficulty = getIntent().getStringExtra("EXTRA_DIFFICULTY");
-        String levelNext = getIntent().getStringExtra("passinglevelnext");
-
         int getScore = getIntent().getIntExtra("EXTRA_SCORE", 0);
         int getTotal = getIntent().getIntExtra("EXTRA_TOTAL", 0);
+
+
+        totalPoints = getIntent().getIntExtra("EXTRA_POINTS", 0);
+
+        showPoints = findViewById(R.id.textViewPoints);
+        showPoints.setText("Points: " + totalPoints);
 
         showResult = findViewById(R.id.textViewResult);
         showScore = findViewById(R.id.textViewScore);
@@ -213,6 +231,7 @@ public class Results extends AppCompatActivity {
                     loadingDialog.show();
                     sendScoreResult(
                             getScore,
+                            totalPoints,
                             getQuiz,
                             gameType,
                             levelType,
@@ -229,6 +248,7 @@ public class Results extends AppCompatActivity {
                     loadingDialog.show();
                     sendScoreResult(
                             getScore,
+                            totalPoints,
                             getQuiz,
                             gameType,
                             levelType,
@@ -245,6 +265,7 @@ public class Results extends AppCompatActivity {
                     loadingDialog.show();
                     sendScoreResult(
                             getScore,
+                            totalPoints,
                             getQuiz,
                             gameType,
                             levelType,
@@ -260,6 +281,7 @@ public class Results extends AppCompatActivity {
                     loadingDialog.show();
                     sendScoreResult(
                             getScore,
+                            totalPoints,
                             getQuiz,
                             gameType,
                             levelType,
@@ -315,16 +337,17 @@ public class Results extends AppCompatActivity {
     /**
      * Sends the score result to the Firebase backend for different game types.
      *
-     * @param Score The score achieved by the student.
-     * @param quizid The quiz identifier.
-     * @param gametype The type of game ("passing_level", "quiz", "OnTimer", or "Practicd").
-     * @param levelNum The level number (e.g., "level_1", "level_10").
-     * @param nextlevel The identifier for the next level to complete.
-     * @param worldType The world in which the level is played (e.g., "world_one", "world_two").
+     * @param Score             The score achieved by the student.
+     * @param quizid            The quiz identifier.
+     * @param gametype          The type of game ("passing_level", "quiz", "OnTimer", or "Practicd").
+     * @param levelNum          The level number (e.g., "level_1", "level_10").
+     * @param nextlevel         The identifier for the next level to complete.
+     * @param worldType         The world in which the level is played (e.g., "world_one", "world_two").
      * @param OnTimerDifficulty The difficulty setting for OnTimer mode.
      */
     private void sendScoreResult(
             int Score,
+            int points,
             String quizid,
             String gametype,
             String levelNum,
@@ -381,10 +404,51 @@ public class Results extends AppCompatActivity {
         String quizname = quizIds;
         String uuid = UUID.randomUUID().toString();
 
+        String achievementBadge;
+
+        if (Score == 10) {
+            if (gametype.equals("Passing")) {
+                achievementBadge = operation + " Master";
+            } else if (gametype.equals("Quiz")) {
+                achievementBadge = "Quiz Whiz";
+            } else if (gametype.equals("OnTimer")) {
+                achievementBadge = "Speed Demon";
+            } else {
+                achievementBadge = "No Badge";
+            }
+        } else if (Score >= 7) {
+            achievementBadge = "Math Explorer";
+        } else {
+            achievementBadge = "No Badge";
+        }
+
+        String badgeField = "achievement_badge_" + levelNum;
+        String leaderboardDocId = firstName + "_" + lastName + "_" + section;
+        DocumentReference leaderboardRef = db.collection("Leaderboards").document(leaderboardDocId);
+
+        leaderboardRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                // Update points if already exists
+                Long existingPoints = documentSnapshot.getLong("points");
+                long newPoints = (existingPoints != null ? existingPoints : 0) + points;
+                leaderboardRef.update("points", newPoints)
+                        .addOnSuccessListener(aVoid -> Log.d("Leaderboard", "Points updated: " + newPoints))
+                        .addOnFailureListener(e -> Log.e("Leaderboard", "Failed to update points", e));
+            } else {
+                // Create new leaderboard entry
+                LeaderboardEntry entry = new LeaderboardEntry(firstName, lastName, section, grade, points);
+                leaderboardRef.set(entry)
+                        .addOnSuccessListener(aVoid -> Log.d("Leaderboard", "Leaderboard entry created"))
+                        .addOnFailureListener(e -> Log.e("Leaderboard", "Failed to create leaderboard entry", e));
+            }
+        }).addOnFailureListener(e -> Log.e("Leaderboard", "Failed to fetch leaderboard document", e));
+
+
         // Common data map
         Map<String, Object> studentDataQuiz = new HashMap<>();
         studentDataQuiz.put("firstName", firstName);
         studentDataQuiz.put("lastName", lastName);
+        studentDataQuiz.put("total_points", points);
         studentDataQuiz.put("section", section);
         studentDataQuiz.put("gameType", "Quiz");
         studentDataQuiz.put("grade", grade);
@@ -392,11 +456,13 @@ public class Results extends AppCompatActivity {
         studentDataQuiz.put("quizno", quizname);
         studentDataQuiz.put("quizno_int", number);
         studentDataQuiz.put("quizscore", String.valueOf(Score));
+        studentDataQuiz.put("achievement_badge", achievementBadge);
 
         // Create a HashMap to store OnTimer mode data.
         HashMap<String, Object> OnTimerData = new HashMap<>();
         OnTimerData.put("firstName", firstName);
         OnTimerData.put("lastName", lastName);
+        OnTimerData.put("total_points", points);
         OnTimerData.put("section", section);
         OnTimerData.put("grade", grade);
         OnTimerData.put("gameType", "OnTimer");
@@ -404,6 +470,7 @@ public class Results extends AppCompatActivity {
         OnTimerData.put("quizno_int", number);
         OnTimerData.put("timestamp", FieldValue.serverTimestamp());
         OnTimerData.put("ontimer_difficulty", OnTimerDifficulty);
+        OnTimerData.put("achievement_badge", achievementBadge);
         OnTimerData.put("quizscore", String.valueOf(Score));
 
         // Create a HashMap to store Practice mode data.
@@ -422,8 +489,10 @@ public class Results extends AppCompatActivity {
         // Create a HashMap for passing level data.
         HashMap<String, Object> passingData = new HashMap<>();
         passingData.put("firstName", firstName);
+        passingData.put(badgeField, achievementBadge);
         passingData.put("gameType", "Passing");
         passingData.put("lastName", lastName);
+        passingData.put("total_points", points);
         passingData.put("section", section);
         passingData.put("grade", grade);
         passingData.put("quizno_int", number);
@@ -544,120 +613,79 @@ public class Results extends AppCompatActivity {
                                                                     iterator.remove();
                                                                 }
                                                             }
-                                                            // Add the new entry
                                                             existingStarsList.add(newStarsEntry);
-                                                            // Sort the list numerically based on
-                                                            // the numeric part of the level string
-                                                            Collections.sort(
-                                                                    existingStarsList,
-                                                                    (a, b) -> {
-                                                                        int numA =
-                                                                                Integer.parseInt(
-                                                                                        a
-                                                                                                .replaceAll(
-                                                                                                        "\\D+",
-                                                                                                        ""));
-                                                                        int numB =
-                                                                                Integer.parseInt(
-                                                                                        b
-                                                                                                .replaceAll(
-                                                                                                        "\\D+",
-                                                                                                        ""));
-                                                                        return Integer.compare(
-                                                                                numA, numB);
-                                                                    });
+                                                            existingStarsList.removeIf(Objects::isNull);
+                                                            existingStarsList.sort((a, b) -> {
+                                                                String valA = a.replaceAll("\\D+", "");
+                                                                String valB = b.replaceAll("\\D+", "");
 
-                                                            // Update the main record if this level
-                                                            // isn't already marked complete.
-                                                            if (!completedLevels.contains(
-                                                                    levelNum)) {
+                                                                int numA = valA.isEmpty() ? 0 : Integer.parseInt(valA);
+                                                                int numB = valB.isEmpty() ? 0 : Integer.parseInt(valB);
+                                                                return Integer.compare(numA, numB);
+                                                            });
+
+                                                            completedLevels.removeIf(Objects::isNull);
+                                                            if (!completedLevels.contains(levelNum)) {
                                                                 completedLevels.add(levelNum);
-                                                                Collections.sort(
-                                                                        completedLevels,
-                                                                        (a, b) -> {
-                                                                            int na =
-                                                                                    Integer
-                                                                                            .parseInt(
-                                                                                                    a
-                                                                                                            .replaceAll(
-                                                                                                                    "\\D+",
-                                                                                                                    ""));
-                                                                            int nb =
-                                                                                    Integer
-                                                                                            .parseInt(
-                                                                                                    b
-                                                                                                            .replaceAll(
-                                                                                                                    "\\D+",
-                                                                                                                    ""));
-                                                                            return Integer.compare(
-                                                                                    na, nb);
-                                                                        });
-                                                                docRef.update(
-                                                                                "passing_completed_levels",
-                                                                                        completedLevels,
-                                                                                "stars_list",
-                                                                                        existingStarsList,
-                                                                                "passing_level_must_complete",
-                                                                                        nextlevel)
-                                                                        .addOnSuccessListener(
-                                                                                aVoid ->
-                                                                                        Toast
-                                                                                                .makeText(
-                                                                                                        this,
-                                                                                                        "Main record updated",
-                                                                                                        Toast
-                                                                                                                .LENGTH_SHORT)
-                                                                                                .show())
-                                                                        .addOnFailureListener(
-                                                                                e ->
-                                                                                        Toast
-                                                                                                .makeText(
-                                                                                                        this,
-                                                                                                        "Update failed: "
-                                                                                                                + e
-                                                                                                                        .getMessage(),
-                                                                                                        Toast
-                                                                                                                .LENGTH_SHORT)
-                                                                                                .show());
                                                             }
 
-                                                            // Create a new PassingHistory entry
-                                                            // that contains the new stars entry.
-                                                            Map<String, Object> historyData =
-                                                                    new HashMap<>();
+                                                            completedLevels.sort((a, b) -> {
+                                                                String valA = a.replaceAll("\\D+", "");
+                                                                String valB = b.replaceAll("\\D+", "");
+                                                                int na = valA.isEmpty() ? 0 : Integer.parseInt(valA);
+                                                                int nb = valB.isEmpty() ? 0 : Integer.parseInt(valB);
+                                                                return Integer.compare(na, nb);
+                                                            });
+
+                                                            docRef.update(
+                                                                    "passing_completed_levels", completedLevels,
+                                                                    "stars_list", existingStarsList,
+                                                                    "quizscore", Score,
+                                                                    "total_points", points,
+                                                                    "timestamp", FieldValue.serverTimestamp(),
+                                                                    "stars_passing_" + levelNum, starRating,
+                                                                    badgeField, achievementBadge
+                                                            );
+                                                            // Prepare history data
+                                                            Map<String, Object> historyData = new HashMap<>();
                                                             historyData.put("level", levelNum);
                                                             historyData.put("score", Score);
+                                                            historyData.put("points", points);
                                                             historyData.put("stars", starRating);
-                                                            historyData.put(
-                                                                    "timestamp",
-                                                                    FieldValue.serverTimestamp());
+                                                            historyData.put("timestamp", FieldValue.serverTimestamp());
 
                                                             docRef.collection("PassingHistory")
-                                                                    .add(historyData)
-                                                                    .addOnSuccessListener(
-                                                                            aVoid -> {
-                                                                                loadingDialog
-                                                                                        .dismiss();
-                                                                                Toast.makeText(
-                                                                                                this,
-                                                                                                "Passing history saved",
-                                                                                                Toast
-                                                                                                        .LENGTH_SHORT)
-                                                                                        .show();
-                                                                            })
-                                                                    .addOnFailureListener(
-                                                                            e -> {
-                                                                                loadingDialog
-                                                                                        .dismiss();
-                                                                                Toast.makeText(
-                                                                                                this,
-                                                                                                "History save failed: "
-                                                                                                        + e
-                                                                                                                .getMessage(),
-                                                                                                Toast
-                                                                                                        .LENGTH_LONG)
-                                                                                        .show();
-                                                                            });
+                                                                    .whereEqualTo("level", levelNum)
+                                                                    .get()
+                                                                    .addOnSuccessListener(historyTask -> {
+
+                                                                        if (!historyTask.isEmpty()) {
+                                                                            // UPDATE EXISTING HISTORY
+                                                                            for (DocumentSnapshot historyDoc : historyTask) {
+                                                                                docRef.collection("PassingHistory")
+                                                                                        .document(historyDoc.getId())
+                                                                                        .update(historyData)
+                                                                                        .addOnSuccessListener(v -> {
+                                                                                            loadingDialog.dismiss();
+                                                                                            Toast.makeText(this, "Passing history updated", Toast.LENGTH_SHORT).show();
+                                                                                        });
+                                                                            }
+                                                                        } else {
+                                                                            // CREATE NEW HISTORY
+                                                                            docRef.collection("PassingHistory")
+                                                                                    .add(historyData)
+                                                                                    .addOnSuccessListener(v -> {
+                                                                                        loadingDialog.dismiss();
+                                                                                        Toast.makeText(this, "Passing history saved", Toast.LENGTH_SHORT).show();
+                                                                                    });
+                                                                        }
+                                                                    })
+                                                                    .addOnFailureListener(e -> {
+                                                                        loadingDialog.dismiss();
+                                                                        Toast.makeText(this, "History save failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                                                    });
+
+
                                                         });
                                     }
                                 } else {
@@ -698,7 +726,7 @@ public class Results extends AppCompatActivity {
                                                                                             this,
                                                                                             "Failed saving history: "
                                                                                                     + e
-                                                                                                            .getMessage(),
+                                                                                                    .getMessage(),
                                                                                             Toast
                                                                                                     .LENGTH_LONG)
                                                                                     .show();
@@ -716,7 +744,8 @@ public class Results extends AppCompatActivity {
                                                     });
                                 }
                             });
-        } else if ("Quiz".equals(gametype)) {
+        }
+        else if ("Quiz".equals(gametype)) {
 
             CollectionReference collectionRef =
                     db.collection("Accounts").document("Students").collection("MathSquare");
@@ -767,7 +796,7 @@ public class Results extends AppCompatActivity {
                                                                                 this,
                                                                                 "Error updating: "
                                                                                         + e
-                                                                                                .getMessage(),
+                                                                                        .getMessage(),
                                                                                 Toast.LENGTH_LONG)
                                                                         .show());
                                     }
@@ -788,7 +817,7 @@ public class Results extends AppCompatActivity {
                                                                             this,
                                                                             "Error adding: "
                                                                                     + e
-                                                                                            .getMessage(),
+                                                                                    .getMessage(),
                                                                             Toast.LENGTH_LONG)
                                                                     .show());
                                 }
@@ -803,7 +832,8 @@ public class Results extends AppCompatActivity {
                                         .show();
                             });
 
-        } else if ("OnTimer".equals(gametype)) {
+        }
+        else if ("OnTimer".equals(gametype)) {
             // Process for OnTimer game type.
             CollectionReference collectionRef =
                     db.collection("Accounts").document("Students").collection("MathSquare");
@@ -839,7 +869,7 @@ public class Results extends AppCompatActivity {
                                                                                 this,
                                                                                 "Error updating: "
                                                                                         + e
-                                                                                                .getMessage(),
+                                                                                        .getMessage(),
                                                                                 Toast.LENGTH_LONG)
                                                                         .show();
                                                             });
@@ -927,7 +957,7 @@ public class Results extends AppCompatActivity {
                                                                                 this,
                                                                                 "Error updating: "
                                                                                         + e
-                                                                                                .getMessage(),
+                                                                                        .getMessage(),
                                                                                 Toast.LENGTH_LONG)
                                                                         .show();
                                                             });

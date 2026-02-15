@@ -2,6 +2,9 @@ package com.happym.mathsquare;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.res.ColorStateList;
+import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputFilter;
 import android.text.TextUtils;
@@ -19,11 +22,14 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.happym.mathsquare.Service.FirebaseDb;
 
 import java.util.HashMap;
 import java.util.UUID;
 
 public class AddAdminActivity extends AppCompatActivity {
+
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +41,7 @@ public class AddAdminActivity extends AppCompatActivity {
         setContentView(R.layout.activity_add_admin);
 
         // Firestore instance
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db = FirebaseDb.getFirestore();
 
         TextInputLayout emailLayout = findViewById(R.id.email_address_layout);
         TextInputLayout firstNameLayout = findViewById(R.id.first_name_layout);
@@ -69,6 +75,49 @@ public class AddAdminActivity extends AppCompatActivity {
             passwordREditText.setFilters(new InputFilter[]{noSpacesFilter});
         }
 
+        int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+
+        if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
+
+            // TEXT COLOR
+            if (firstNameEditText != null) {
+                firstNameEditText.setTextColor(Color.WHITE);
+            }
+
+            if (emailEditText != null) {
+                emailEditText.setTextColor(Color.WHITE);
+            }
+
+            assert passwordEditText != null;
+            passwordEditText.setTextColor(Color.WHITE);
+
+            passwordREditText.setTextColor(Color.WHITE);
+
+            // FLOATING LABEL COLOR
+            firstNameLayout.setHintTextColor(ColorStateList.valueOf(Color.WHITE));
+
+        } else {
+
+            // TEXT COLOR
+            if (firstNameEditText != null) {
+                firstNameEditText.setTextColor(Color.BLACK);
+            }
+
+            if (emailEditText != null) {
+                emailEditText.setTextColor(Color.BLACK);
+            }
+
+            // FLOATING LABEL COLOR
+            firstNameLayout.setHintTextColor(ColorStateList.valueOf(Color.BLACK));
+
+            assert passwordEditText != null;
+            passwordEditText.setTextColor(Color.WHITE);
+
+            passwordREditText.setTextColor(Color.WHITE);
+        }
+
+        ColorStateList whiteStroke = ColorStateList.valueOf(Color.WHITE);
+        ColorStateList blackStroke = ColorStateList.valueOf(Color.BLACK);
 
         submitButton.setOnClickListener(v -> {
             boolean hasError = false;

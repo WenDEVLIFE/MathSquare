@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "562704321125",
-    "project_id": "mathsquare-1cf4b",
-    "storage_bucket": "mathsquare-1cf4b.firebasestorage.app"
+    "project_number": "628897975056",
+    "project_id": "revmmo-db",
+    "storage_bucket": "revmmo-db.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:562704321125:android:165fe315a579013c13d48c",
+        "mobilesdk_app_id": "1:628897975056:android:1132019a7489f54d987395",
         "android_client_info": {
-          "package_name": "com.happym.mathsquare"
+          "package_name": "com.example.revvmo"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDb5OGpFEm2FeLasqM-nqcF0NSHWq5R5_8"
+          "current_key": "AIzaSyCP5LsptK678rEg5G792d0M1LaBGFHUjtg"
         }
       ],
       "services": {
@@ -23,6 +23,45 @@
           "other_platform_oauth_client": []
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:628897975056:android:41fff0c3708d38b2987395",
+        "android_client_info": {
+          "package_name": "com.happym.mathsquare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCP5LsptK678rEg5G792d0M1LaBGFHUjtg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:628897975056:android:39851c22bb082a5d987395",
+        "android_client_info": {
+          "package_name": "com.jrides.revvmo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCP5LsptK678rEg5G792d0M1LaBGFHUjtg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      },
+      "admob_app_id": "ca-app-pub-2164658000148499~3919890988"
     }
   ],
   "configuration_version": "1"

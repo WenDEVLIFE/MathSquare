@@ -3,15 +3,18 @@ package com.happym.mathsquare;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.InputFilter;
 import android.view.ViewGroup;
+
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
+
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -27,160 +30,228 @@ import android.widget.NumberPicker;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
+
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
 import com.happym.mathsquare.MainActivity;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+
+import com.happym.mathsquare.Service.FirebaseDb;
 import com.happym.mathsquare.sharedPreferences;
+
 import androidx.core.view.WindowCompat;
+
 public class studentSignUp extends AppCompatActivity {
-    
+
     private String selectedSectionId;
     private String selectedSectionName;
     private String selectedGradeLevel;
-    
+
+    private FirebaseFirestore db;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         FirebaseApp.initializeApp(this);
-        
+
         setContentView(R.layout.layoutstudent_sign_up);
-        
+
         // Firestore instance
-FirebaseFirestore db = FirebaseFirestore.getInstance();
-        
+        db = FirebaseDb.getFirestore();
+
         AutoCompleteTextView sectionChooser = findViewById(R.id.SectionChooser);
         TextInputLayout firstNameLayout = findViewById(R.id.first_name_layout);
         TextInputLayout lastNameLayout = findViewById(R.id.last_name_layout);
+        TextInputLayout teacherNameLayout = findViewById(R.id.teacher_name_layout);
         AppCompatButton submitButton = findViewById(R.id.btn_submit);
         AutoCompleteTextView numberDropdownPicker = findViewById(R.id.numberDropdownPicker);
         TextView spinnerError = findViewById(R.id.spinnerError);
 
-TextInputEditText firstNameEditText = (TextInputEditText) firstNameLayout.getEditText();
+        TextInputEditText firstNameEditText = (TextInputEditText) firstNameLayout.getEditText();
 
-InputFilter noSpacesFilter = (source, start, end, dest, dstart, dend) -> {
-    if (source.toString().contains(" ")) {
-        return "";
-    }
-    return source;
-};
+        InputFilter noSpacesFilter = (source, start, end, dest, dstart, dend) -> {
+            if (source.toString().contains(" ")) {
+                return "";
+            }
+            return source;
+        };
 
-if (firstNameEditText != null) {
-    firstNameEditText.setFilters(new InputFilter[]{noSpacesFilter});
-}
+        if (firstNameEditText != null) {
+            firstNameEditText.setFilters(new InputFilter[]{noSpacesFilter});
+        }
 
-       TextInputEditText lastNameEditText = (TextInputEditText) lastNameLayout.getEditText();
+        TextInputEditText lastNameEditText = (TextInputEditText) lastNameLayout.getEditText();
+        TextInputEditText teacherNameEditText = (TextInputEditText) teacherNameLayout.getEditText();
 
-if (lastNameEditText != null) {
-    lastNameEditText.setFilters(new InputFilter[]{noSpacesFilter});
-}
-        
-List<String> grades = Arrays.asList("1", "2", "3", "4", "5", "6");
+        if (lastNameEditText != null) {
+            lastNameEditText.setFilters(new InputFilter[]{noSpacesFilter});
+        }
 
-ArrayAdapter<String> adapterGrades = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, grades) {
+        List<String> grades = Arrays.asList("1", "2", "3", "4", "5", "6");
 
-    // Override the method for the spinner’s closed view
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        TextView view = (TextView) super.getView(position, convertView, parent);
-        // Set the padding (using pixel values here)
-        int padding = dpToPx(16); // Convert 16dp to pixels
-        view.setPadding(padding, padding, padding, padding);
-        return view;
-    }
+        ArrayAdapter<String> adapterGrades = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, grades) {
 
-    // Override the method for the drop-down view
-    @Override
-    public View getDropDownView(int position, View convertView, ViewGroup parent) {
-        TextView view = (TextView) super.getDropDownView(position, convertView, parent);
-        int padding = dpToPx(16); // Convert 16dp to pixels
-        view.setPadding(padding, padding, padding, padding);
-        return view;
-    }
+            // Override the method for the spinner’s closed view
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                TextView view = (TextView) super.getView(position, convertView, parent);
+                // Set the padding (using pixel values here)
+                int padding = dpToPx(16); // Convert 16dp to pixels
+                view.setPadding(padding, padding, padding, padding);
+                return view;
+            }
 
-    // Helper method to convert dp to pixels
-    private int dpToPx(int dp) {
-        return Math.round(dp * getContext().getResources().getDisplayMetrics().density);
-    }
-};
+            // Override the method for the drop-down view
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                TextView view = (TextView) super.getDropDownView(position, convertView, parent);
+                int padding = dpToPx(16); // Convert 16dp to pixels
+                view.setPadding(padding, padding, padding, padding);
+                return view;
+            }
 
-adapterGrades.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-numberDropdownPicker.setAdapter(adapterGrades);
+            // Helper method to convert dp to pixels
+            private int dpToPx(int dp) {
+                return Math.round(dp * getContext().getResources().getDisplayMetrics().density);
+            }
+        };
+
+        adapterGrades.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        numberDropdownPicker.setAdapter(adapterGrades);
 
 
         int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
 
         if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
-            
-            
+
+            // TEXT COLOR
+            if (firstNameEditText != null) {
+                firstNameEditText.setTextColor(Color.WHITE);
+            }
+
+            if (lastNameEditText != null) {
+                lastNameEditText.setTextColor(Color.WHITE);
+            }
+
+            if (teacherNameEditText != null) {
+                teacherNameEditText.setTextColor(Color.WHITE);
+            }
+
+            numberDropdownPicker.setTextColor(Color.WHITE);
+            sectionChooser.setTextColor(Color.WHITE);
+
+            // FLOATING LABEL COLOR
+            firstNameLayout.setHintTextColor(ColorStateList.valueOf(Color.WHITE));
+            lastNameLayout.setHintTextColor(ColorStateList.valueOf(Color.WHITE));
+            teacherNameLayout.setHintTextColor(ColorStateList.valueOf(Color.WHITE));
+
         } else {
-            
 
+            // TEXT COLOR
+            if (firstNameEditText != null) {
+                firstNameEditText.setTextColor(Color.BLACK);
+            }
+
+            if (lastNameEditText != null) {
+                lastNameEditText.setTextColor(Color.BLACK);
+            }
+
+            if (teacherNameEditText != null) {
+                teacherNameEditText.setTextColor(Color.BLACK);
+            }
+
+            numberDropdownPicker.setTextColor(Color.BLACK);
+            sectionChooser.setTextColor(Color.BLACK);
+
+            // FLOATING LABEL COLOR
+            firstNameLayout.setHintTextColor(ColorStateList.valueOf(Color.BLACK));
+            lastNameLayout.setHintTextColor(ColorStateList.valueOf(Color.BLACK));
+            teacherNameLayout.setHintTextColor(ColorStateList.valueOf(Color.BLACK));
         }
-        
-numberDropdownPicker.setOnItemClickListener((adapterView, view, position, id) -> {
-    String selectedGrade = adapterGrades.getItem(position);
 
-    if (selectedGrade.matches("[1-6]")) {
-        int gradeNumber = Integer.parseInt(selectedGrade);
+        ColorStateList whiteStroke = ColorStateList.valueOf(Color.WHITE);
+        ColorStateList blackStroke = ColorStateList.valueOf(Color.BLACK);
 
-        db.collection("Sections")
-            .whereEqualTo("Grade_Number", gradeNumber)
-            .get()
-            .addOnSuccessListener(querySnapshot -> {
-                List<String> sectionNames = new ArrayList<>();
-                Map<String, String> sectionIdMap = new HashMap<>();
+        if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
 
-                for (QueryDocumentSnapshot doc : querySnapshot) {
-                    String section = doc.getString("Section");
-                    if (section != null) {
-                        sectionNames.add(section);
-                        sectionIdMap.put(section, doc.getId());
-                    }
-                }
+            firstNameLayout.setBoxStrokeColorStateList(whiteStroke);
+            lastNameLayout.setBoxStrokeColorStateList(whiteStroke);
+            teacherNameLayout.setBoxStrokeColorStateList(whiteStroke);
 
-                if (!sectionNames.isEmpty()) {
-                    ArrayAdapter<String> sectionAdapter = new ArrayAdapter<>(studentSignUp.this, android.R.layout.simple_dropdown_item_1line, sectionNames);
-                    sectionChooser.setAdapter(sectionAdapter);
+        } else {
 
-                    sectionChooser.setOnItemClickListener((adapterView1, view1, i, l) -> {
-                        String selectedSection = sectionAdapter.getItem(i);
-                        String documentId = sectionIdMap.get(selectedSection);
+            firstNameLayout.setBoxStrokeColorStateList(blackStroke);
+            lastNameLayout.setBoxStrokeColorStateList(blackStroke);
+            teacherNameLayout.setBoxStrokeColorStateList(blackStroke);
+        }
 
-                        selectedSectionId = documentId;
-                        selectedSectionName = selectedSection;
-                        selectedGradeLevel = selectedGrade;
-                    });
-                } else {
-                    Toast.makeText(studentSignUp.this, "No sections found for grade " + selectedGrade, Toast.LENGTH_SHORT).show();
-                }
-            })
-            .addOnFailureListener(e -> Toast.makeText(studentSignUp.this, "Error fetching sections: " + e.getMessage(), Toast.LENGTH_LONG).show());
-    }
-});
+        numberDropdownPicker.setOnItemClickListener((adapterView, view, position, id) -> {
+            String selectedGrade = adapterGrades.getItem(position);
 
+            if (Objects.requireNonNull(selectedGrade).matches("[1-6]")) {
+                int gradeNumber = Integer.parseInt(selectedGrade);
+
+                db.collection("Sections")
+                        .whereEqualTo("Grade_Number", gradeNumber)
+                        .get()
+                        .addOnSuccessListener(querySnapshot -> {
+                            List<String> sectionNames = new ArrayList<>();
+                            Map<String, String> sectionIdMap = new HashMap<>();
+
+                            for (QueryDocumentSnapshot doc : querySnapshot) {
+                                String section = doc.getString("Section");
+                                if (section != null) {
+                                    sectionNames.add(section);
+                                    sectionIdMap.put(section, doc.getId());
+                                }
+                            }
+
+                            if (!sectionNames.isEmpty()) {
+                                ArrayAdapter<String> sectionAdapter = new ArrayAdapter<>(studentSignUp.this, android.R.layout.simple_dropdown_item_1line, sectionNames);
+                                sectionChooser.setAdapter(sectionAdapter);
+
+                                sectionChooser.setOnItemClickListener((adapterView1, view1, i, l) -> {
+                                    String selectedSection = sectionAdapter.getItem(i);
+                                    String documentId = sectionIdMap.get(selectedSection);
+
+                                    selectedSectionId = documentId;
+                                    selectedSectionName = selectedSection;
+                                    selectedGradeLevel = selectedGrade;
+                                });
+                            } else {
+                                Toast.makeText(studentSignUp.this, "No sections found for grade " + selectedGrade, Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .addOnFailureListener(e -> Toast.makeText(studentSignUp.this, "Error fetching sections: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            }
+        });
 
 
 // Set up SectionChooser to show dropdown when clicked
-sectionChooser.setOnClickListener(v -> sectionChooser.showDropDown());
+        sectionChooser.setOnClickListener(v -> sectionChooser.showDropDown());
 
 
         // Clear errors on text change for firstName and lastName
-        ((TextInputEditText) firstNameLayout.getEditText()).addTextChangedListener(new TextWatcher() {
+        firstNameLayout.getEditText().addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -188,12 +259,15 @@ sectionChooser.setOnClickListener(v -> sectionChooser.showDropDown());
             }
 
             @Override
-            public void afterTextChanged(Editable editable) {}
+            public void afterTextChanged(Editable editable) {
+            }
         });
 
-        ((TextInputEditText) lastNameLayout.getEditText()).addTextChangedListener(new TextWatcher() {
+        assert lastNameLayout.getEditText() != null;
+        lastNameLayout.getEditText().addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -201,11 +275,27 @@ sectionChooser.setOnClickListener(v -> sectionChooser.showDropDown());
             }
 
             @Override
-            public void afterTextChanged(Editable editable) {}
+            public void afterTextChanged(Editable editable) {
+            }
+        });
+
+        assert teacherNameLayout.getEditText() != null;
+        teacherNameLayout.getEditText().addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                teacherNameLayout.setError(null);
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+            }
         });
 
         animateButtonFocus(submitButton);
-
 
 
         submitButton.setOnClickListener(v -> {
@@ -214,11 +304,12 @@ sectionChooser.setOnClickListener(v -> sectionChooser.showDropDown());
             // Reset errors and hide spinner error initially
             firstNameLayout.setError(null);
             lastNameLayout.setError(null);
+            teacherNameLayout.setError(null);
             sectionChooser.setError(null);
             spinnerError.setVisibility(View.GONE);
 
             // Validate First Name
-            String firstName = ((TextInputEditText) firstNameLayout.getEditText()).getText().toString().trim();
+            String firstName = Objects.requireNonNull(((TextInputEditText) firstNameLayout.getEditText()).getText()).toString().trim();
             if (TextUtils.isEmpty(firstName)) {
                 firstNameLayout.setError("Student First Name is required");
                 animateShakeRotateEditTextErrorAnimation(firstNameLayout);
@@ -226,10 +317,17 @@ sectionChooser.setOnClickListener(v -> sectionChooser.showDropDown());
             }
 
             // Validate Last Name
-            String lastName = ((TextInputEditText) lastNameLayout.getEditText()).getText().toString().trim();
+            String lastName = Objects.requireNonNull(((TextInputEditText) lastNameLayout.getEditText()).getText()).toString().trim();
             if (TextUtils.isEmpty(lastName)) {
                 lastNameLayout.setError("Student Last Name is required");
                 animateShakeRotateEditTextErrorAnimation(lastNameLayout);
+                hasError = true;
+            }
+
+            String teacherName = Objects.requireNonNull(((TextInputEditText) teacherNameLayout.getEditText()).getText()).toString().trim();
+            if (TextUtils.isEmpty(lastName)) {
+                teacherNameLayout.setError("Teacher Name is required");
+                animateShakeRotateEditTextErrorAnimation(teacherNameLayout);
                 hasError = true;
             }
 
@@ -243,11 +341,11 @@ sectionChooser.setOnClickListener(v -> sectionChooser.showDropDown());
 
             // Validate Spinner selection (Grade)
             String grade = numberDropdownPicker.getText().toString().trim();
-if (TextUtils.isEmpty(grade) || !grade.matches("[1-6]")) {
-    spinnerError.setText("Please select your grade");
-    spinnerError.setVisibility(View.VISIBLE);
-    hasError = true;
-}
+            if (TextUtils.isEmpty(grade) || !grade.matches("[1-6]")) {
+                spinnerError.setText("Please select your grade");
+                spinnerError.setVisibility(View.VISIBLE);
+                hasError = true;
+            }
 
             // If no errors, proceed with saving the data
             if (!hasError) {
@@ -256,111 +354,113 @@ if (TextUtils.isEmpty(grade) || !grade.matches("[1-6]")) {
                 HashMap<String, Object> studentData = new HashMap<>();
                 studentData.put("firstName", firstName);
                 studentData.put("lastName", lastName);
+                studentData.put("teacherName", teacherName);
                 studentData.put("section", selectedSectionName);
                 studentData.put("grade", selectedGradeLevel);
                 studentData.put("quizno", "N/A");
-                studentData.put("timestamp", FieldValue.serverTimestamp());           
-                studentData.put("quizscore", "0");    
-                    
+                studentData.put("timestamp", FieldValue.serverTimestamp());
+                studentData.put("quizscore", "0");
 
-               // Query to check if a document with the same firstName and lastName already exists in "Accounts/Students/MathSqure"
-db.collection("Accounts").document("Students")
-        .collection("MathSquare")
-        .whereEqualTo("firstName", firstName) // Match firstName
-        .whereEqualTo("lastName", lastName)   // Match lastName
-        .get() // Execute query
-        .addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                if (!task.getResult().isEmpty()) {
-                    // A student with the same firstName and lastName already exists
-                    animateButtonPushDowm(submitButton);
-                                
-                                sharedPreferences.StudentIsSetLoggedIn(studentSignUp.this, true);
-                                            sharedPreferences.setLoggedIn(studentSignUp.this, false);
-sharedPreferences.saveSection(studentSignUp.this, section);
-                    sharedPreferences.saveGrade(studentSignUp.this, grade);
-                    sharedPreferences.saveFirstN(studentSignUp.this, firstName);
-                    sharedPreferences.saveLastN(studentSignUp.this, lastName);
-                                    
-                                Intent intent = new Intent(this, MainActivity.class);   
-                                startActivity(intent);
-                                  finish(); 
-                                Toast.makeText(this, "Welcome Student!", Toast.LENGTH_SHORT).show();
-                                stopButtonFocusAnimation(submitButton);
-                                animateButtonFocus(submitButton);
-                                          
-                                    
-                } else {
-                    // Student doesn't exist, proceed to save new data with UUID
-                    db.collection("Accounts").document("Students").collection("MathSquare")
-                            .document(uuid)         // Using UUID as document ID
-                            .set(studentData)       // Save the student data
-                            .addOnSuccessListener(documentReference -> {
-                                // Save student data successfully, now handle Sections collection
-                                saveStudentToSection(firstName, lastName, selectedSectionId);  // Save to Sections
 
-                                // Proceed with UI actions (navigate to MainActivity)
-                                animateButtonPushDowm(submitButton);
-                                
-                                sharedPreferences.StudentIsSetLoggedIn(studentSignUp.this, true);
-                                            sharedPreferences.setLoggedIn(studentSignUp.this, false);
-sharedPreferences.saveSection(studentSignUp.this, section);
-                    sharedPreferences.saveGrade(studentSignUp.this, grade);
-                    sharedPreferences.saveFirstN(studentSignUp.this, firstName);
-                    sharedPreferences.saveLastN(studentSignUp.this, lastName);
-                                            
-                                Intent intent = new Intent(this, MainActivity.class);           
-                                startActivity(intent);
-                                 finish();          
-                                Toast.makeText(this, "Welcome Student!", Toast.LENGTH_SHORT).show();
-                                stopButtonFocusAnimation(submitButton);
-                                animateButtonFocus(submitButton);
-                                            
-                            })
-                            .addOnFailureListener(e -> {
-                                // Handle failure in saving data
-                                Toast.makeText(this, "Failed to save student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            });
-                }
-            } else {
-                // Handle error in querying the Firestore collection
-                Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-            }
-        })
-        .addOnFailureListener(e -> {
-            // Handle general failure in the query
-            Toast.makeText(this, "Error checking student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        });
+                // Query to check if a document with the same firstName and lastName already exists in "Accounts/Students/MathSqure"
+                db.collection("Accounts").document("Students")
+                        .collection("MathSquare")
+                        .whereEqualTo("firstName", firstName) // Match firstName
+                        .whereEqualTo("lastName", lastName)   // Match lastName
+                        .get() // Execute query
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                if (!task.getResult().isEmpty()) {
+                                    // A student with the same firstName and lastName already exists
+                                    animateButtonPushDowm(submitButton);
+
+                                    sharedPreferences.StudentIsSetLoggedIn(studentSignUp.this, true);
+                                    sharedPreferences.setLoggedIn(studentSignUp.this, false);
+                                    sharedPreferences.saveSection(studentSignUp.this, section);
+                                    sharedPreferences.saveGrade(studentSignUp.this, grade);
+                                    sharedPreferences.saveFirstN(studentSignUp.this, firstName);
+                                    sharedPreferences.saveLastN(studentSignUp.this, lastName);
+                                    sharedPreferences.saveTeacherN(studentSignUp.this, teacherName);
+
+                                    Intent intent = new Intent(this, MainActivity.class);
+                                    startActivity(intent);
+                                    finish();
+                                    Toast.makeText(this, "Welcome Student!", Toast.LENGTH_SHORT).show();
+                                    stopButtonFocusAnimation(submitButton);
+                                    animateButtonFocus(submitButton);
+
+
+                                } else {
+                                    // Student doesn't exist, proceed to save new data with UUID
+                                    db.collection("Accounts").document("Students").collection("MathSquare")
+                                            .document(uuid)         // Using UUID as document ID
+                                            .set(studentData)       // Save the student data
+                                            .addOnSuccessListener(documentReference -> {
+                                                // Save student data successfully, now handle Sections collection
+                                                saveStudentToSection(firstName, lastName, teacherName, selectedSectionId);  // Save to Sections
+
+                                                // Proceed with UI actions (navigate to MainActivity)
+                                                animateButtonPushDowm(submitButton);
+
+                                                sharedPreferences.StudentIsSetLoggedIn(studentSignUp.this, true);
+                                                sharedPreferences.setLoggedIn(studentSignUp.this, false);
+                                                sharedPreferences.saveSection(studentSignUp.this, section);
+                                                sharedPreferences.saveGrade(studentSignUp.this, grade);
+                                                sharedPreferences.saveFirstN(studentSignUp.this, firstName);
+                                                sharedPreferences.saveLastN(studentSignUp.this, lastName);
+                                                sharedPreferences.saveTeacherN(studentSignUp.this, teacherName);
+
+                                                Intent intent = new Intent(this, MainActivity.class);
+                                                startActivity(intent);
+                                                finish();
+                                                Toast.makeText(this, "Welcome Student!", Toast.LENGTH_SHORT).show();
+                                                stopButtonFocusAnimation(submitButton);
+                                                animateButtonFocus(submitButton);
+
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                // Handle failure in saving data
+                                                Toast.makeText(this, "Failed to save student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                            });
+                                }
+                            } else {
+                                // Handle error in querying the Firestore collection
+                                Toast.makeText(this, "Error checking student data: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            // Handle general failure in the query
+                            Toast.makeText(this, "Error checking student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        });
 
             }
         });
     }
-    
-    
-    private void saveStudentToSection(String firstName, String lastName, String sectionDocId) {
-   
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-    
-    CollectionReference studentsCollection = db.collection("Sections")
-        .document(sectionDocId)
-        .collection("Students");
 
-    //Student data map.
-    Map<String, Object> studentData = new HashMap<>();
-    studentData.put("firstName", firstName);
-    studentData.put("lastName", lastName);
-    studentData.put("section", selectedSectionName);
-    studentData.put("grade", selectedGradeLevel);
-    studentData.put("timestamp", FieldValue.serverTimestamp());
 
-    studentsCollection.add(studentData)
-        .addOnSuccessListener(documentReference -> {
-            Log.d("Firestore", "Student added with ID: " + documentReference.getId());
-            Toast.makeText(this, "Student added successfully!", Toast.LENGTH_SHORT).show();
-        })
-        .addOnFailureListener(e -> {
-            Toast.makeText(this, "Failed to save student: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        });
+    private void saveStudentToSection(String firstName, String lastName, String teacherName, String sectionDocId) {
+
+        CollectionReference studentsCollection = db.collection("Sections")
+                .document(sectionDocId)
+                .collection("Students");
+
+        //Student data map.
+        Map<String, Object> studentData = new HashMap<>();
+        studentData.put("firstName", firstName);
+        studentData.put("lastName", lastName);
+        studentData.put("section", selectedSectionName);
+        studentData.put("grade", selectedGradeLevel);
+        studentData.put("teacherName", teacherName);
+        studentData.put("timestamp", FieldValue.serverTimestamp());
+
+        studentsCollection.add(studentData)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d("Firestore", "Student added with ID: " + documentReference.getId());
+                    Toast.makeText(this, "Student added successfully!", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to save student: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
     }
 
 
@@ -380,80 +480,80 @@ sharedPreferences.saveSection(studentSignUp.this, section);
         animatorSet.playTogether(shakeAnimator, rotateAnimator);
         animatorSet.start();
     }
-    
-private void animateButtonClick(View button) {
-    ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.6f, 1.1f, 1f);
-    ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.6f, 1.1f, 1f);
 
-    // Set duration for the animations
-    scaleX.setDuration(3000);
-    scaleY.setDuration(3000);
+    private void animateButtonClick(View button) {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.6f, 1.1f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.6f, 1.1f, 1f);
 
-    // OvershootInterpolator for game-like snappy effect
-    OvershootInterpolator overshootInterpolator = new OvershootInterpolator(2f);
-    scaleX.setInterpolator(overshootInterpolator);
-    scaleY.setInterpolator(overshootInterpolator);
+        // Set duration for the animations
+        scaleX.setDuration(3000);
+        scaleY.setDuration(3000);
 
-    // Combine animations into a set
-    AnimatorSet animatorSet = new AnimatorSet();
-    animatorSet.playTogether(scaleX, scaleY);
-    animatorSet.start();
-}
+        // OvershootInterpolator for game-like snappy effect
+        OvershootInterpolator overshootInterpolator = new OvershootInterpolator(2f);
+        scaleX.setInterpolator(overshootInterpolator);
+        scaleY.setInterpolator(overshootInterpolator);
+
+        // Combine animations into a set
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(scaleX, scaleY);
+        animatorSet.start();
+    }
 
 
-// Function to animate button focus with a smooth pulsing bounce effect
-private void animateButtonFocus(View button) {
-    ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.06f, 1f);
-    ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 1.06f, 1f);
+    // Function to animate button focus with a smooth pulsing bounce effect
+    private void animateButtonFocus(View button) {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.06f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 1.06f, 1f);
 
-    // Set duration for a slower, smoother pulsing bounce effect
-    scaleX.setDuration(4000);
-    scaleY.setDuration(4000);
+        // Set duration for a slower, smoother pulsing bounce effect
+        scaleX.setDuration(4000);
+        scaleY.setDuration(4000);
 
-    // AccelerateDecelerateInterpolator for smooth pulsing
-    AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
-    scaleX.setInterpolator(interpolator);
-    scaleY.setInterpolator(interpolator);
+        // AccelerateDecelerateInterpolator for smooth pulsing
+        AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
+        scaleX.setInterpolator(interpolator);
+        scaleY.setInterpolator(interpolator);
 
-    // Set repeat count and mode on each ObjectAnimator
-    scaleX.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
-    scaleX.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
-    scaleY.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
-    scaleY.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
+        // Set repeat count and mode on each ObjectAnimator
+        scaleX.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
+        scaleX.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
+        scaleY.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
+        scaleY.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
 
-    // Combine the animations into an AnimatorSet
-    AnimatorSet animatorSet = new AnimatorSet();
-    animatorSet.playTogether(scaleX, scaleY);
-    animatorSet.start();
-}
+        // Combine the animations into an AnimatorSet
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(scaleX, scaleY);
+        animatorSet.start();
+    }
 
     private void animateButtonPushDowm(View button) {
-    ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.95f);  // Scale down slightly
-    ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.95f);  // Scale down slightly
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.95f);  // Scale down slightly
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.95f);  // Scale down slightly
 
-    // Set shorter duration for a quick push effect
-    scaleX.setDuration(200);
-    scaleY.setDuration(200);
+        // Set shorter duration for a quick push effect
+        scaleX.setDuration(200);
+        scaleY.setDuration(200);
 
-    // Use a smooth interpolator
-    AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
-    scaleX.setInterpolator(interpolator);
-    scaleY.setInterpolator(interpolator);
+        // Use a smooth interpolator
+        AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
+        scaleX.setInterpolator(interpolator);
+        scaleY.setInterpolator(interpolator);
 
-    // Combine the animations into an AnimatorSet
-    AnimatorSet animatorSet = new AnimatorSet();
-    animatorSet.playTogether(scaleX, scaleY);
-    
-    // Start the animation
-    animatorSet.start();
-}
+        // Combine the animations into an AnimatorSet
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(scaleX, scaleY);
 
-// Stop Focus Animation
-private void stopButtonFocusAnimation(View button) {
-    AnimatorSet animatorSet = (AnimatorSet) button.getTag();
-    if (animatorSet != null) {
-        animatorSet.cancel();  // Stop the animation when focus is lost
+        // Start the animation
+        animatorSet.start();
     }
-}
-    
+
+    // Stop Focus Animation
+    private void stopButtonFocusAnimation(View button) {
+        AnimatorSet animatorSet = (AnimatorSet) button.getTag();
+        if (animatorSet != null) {
+            animatorSet.cancel();  // Stop the animation when focus is lost
+        }
+    }
+
 }

@@ -22,9 +22,11 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.view.WindowCompat;
+
 import android.graphics.drawable.Drawable;
 
 import com.google.firebase.FirebaseApp;
@@ -36,8 +38,10 @@ import com.happym.mathsquare.dashboard_SectionPanel;
 import com.happym.mathsquare.dialog.CreateSection;
 
 import com.happym.mathsquare.R;
+
 import java.io.IOException;
 import java.util.HashSet;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
@@ -68,6 +72,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -77,21 +82,22 @@ import androidx.core.view.WindowInsetsCompat;
 import android.animation.ObjectAnimator;
 import android.animation.AnimatorSet;
 import android.view.animation.BounceInterpolator;
+
 import java.io.IOException;
 import java.util.Random;
+
 import com.happym.mathsquare.Animation.*;
 
 public class PracticeLevels extends AppCompatActivity {
 
     private FrameLayout levelone, leveltwo, levelthree, levelfour, heartChoice, timerChoice, questionChoice;
-    private ImageView buttonOne, buttonTwo, buttonThree, buttonFour, iconHeart, iconClock, iconQuestion, imgone,imgtwo
-            ,imgthree, imgfour;
+    private ImageView buttonOne, buttonTwo, buttonThree, buttonFour, iconHeart, iconClock, iconQuestion, imgone, imgtwo, imgthree, imgfour;
     private MediaPlayer soundEffectPlayer;
     private TextView heartTxt, timerTxt, questionTxt;
     private String difficulty;
     HashSet<Integer> selectedButtons = new HashSet<>();
     int selectedNumber = 0;
-    
+
     private boolean isButtonOneOn = false;
     private boolean isButtonTwoOn = false;
     private boolean isButtonThreeOn = false;
@@ -100,106 +106,109 @@ public class PracticeLevels extends AppCompatActivity {
     int heartCount = 3;
     int timerCount = 5;
     int questionCount = 10;
-    
-    private FrameLayout numberContainer,backgroundFrame;
+
+    private FrameLayout numberContainer, backgroundFrame;
     private NumBGAnimation numBGAnimation;
-    
+
     private String difficultySection;
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.practice_levels);
 
-         // Initialize the levels
+        // Initialize the levels
         AppCompatButton btnEnter = findViewById(R.id.btn_enter);
-        
+
         heartChoice = findViewById(R.id.heart_choice);
         timerChoice = findViewById(R.id.timer_choice);
-        
-        
+
+
         String operation = getIntent().getStringExtra("operation");
         difficulty = getIntent().getStringExtra("difficulty");
-        
-        ImageView operationDisplayIcon = findViewById(R.id.difficultyImage);
-        
-    // Set images based on the operation
-    if ("Addition".equals(operation)) {
-        operationDisplayIcon.setImageResource(R.drawable.ic_operation_add);
-        
-    } else if ("Subtraction".equals(operation)) {
-        operationDisplayIcon.setImageResource(R.drawable.ic_operation_subtract);
-        
-    } else if ("Multiplication".equals(operation)) {
-        operationDisplayIcon.setImageResource(R.drawable.ic_operation_multiply);
-        
-    } else if ("Division".equals(operation)) {
-        operationDisplayIcon.setImageResource(R.drawable.ic_operation_divide);
-        
-    } else {
-        operationDisplayIcon.setImageResource(R.drawable.btn_operation_add);
-        
-    }
 
-         if ("grade_one".equals(difficulty)) {
-   difficultySection = "Easy";
-} else if ("grade_two".equals(difficulty)) {
-    difficultySection = "Easy";
-} else if ("grade_three".equals(difficulty)) {
-    difficultySection = "Medium";
-} else if ("grade_four".equals(difficulty)) {
-    difficultySection = "Medium";
-} else if ("grade_five".equals(difficulty)) {
-    difficultySection = "Medium";
-} else if ("grade_six".equals(difficulty)) {
-    difficultySection = "Hard";
-} else {
-    difficultySection = "Easy";
-}
+        ImageView operationDisplayIcon = findViewById(R.id.difficultyImage);
+
+        // Set images based on the operation
+        if ("Addition".equals(operation)) {
+            operationDisplayIcon.setImageResource(R.drawable.ic_operation_add);
+
+        } else if ("Subtraction".equals(operation)) {
+            operationDisplayIcon.setImageResource(R.drawable.ic_operation_subtract);
+
+        } else if ("Multiplication".equals(operation)) {
+            operationDisplayIcon.setImageResource(R.drawable.ic_operation_multiply);
+
+        } else if ("Division".equals(operation)) {
+            operationDisplayIcon.setImageResource(R.drawable.ic_operation_divide);
+
+        } else {
+            operationDisplayIcon.setImageResource(R.drawable.btn_operation_add);
+
+        }
+
+        if ("grade_one".equals(difficulty)) {
+            difficultySection = "Easy";
+        } else if ("grade_two".equals(difficulty)) {
+            difficultySection = "Easy";
+        } else if ("grade_three".equals(difficulty)) {
+            difficultySection = "Medium";
+        } else if ("grade_four".equals(difficulty)) {
+            difficultySection = "Medium";
+        } else if ("grade_five".equals(difficulty)) {
+            difficultySection = "Medium";
+        } else if ("grade_six".equals(difficulty)) {
+            difficultySection = "Hard";
+        } else {
+            difficultySection = "Easy";
+        }
 
         animateButtonFocus(btnEnter);
 
-        
+
         heartTxt = findViewById(R.id.heart_txt);
         timerTxt = findViewById(R.id.timer_txt);
-        
-        
+
+
         iconHeart = findViewById(R.id.icon_heart);
         iconClock = findViewById(R.id.icon_timer);
-        
+
         btnEnter.setOnClickListener(v -> {
-                playSound("click.mp3");
+            playSound("click.mp3");
 // Create intent to start MultipleChoicePage
-Intent intent = new Intent(PracticeLevels.this, MultipleChoicePage.class);
-intent.putExtra("operation", operation);
-intent.putExtra("difficulty", difficultySection);
-intent.putExtra("game_type", "practice");
-                intent.putExtra("heartLimit", heartCount);
-intent.putExtra("timerLimit", timerCount);
-intent.putExtra("questionLimit", questionCount);
-                
+            Intent intent = new Intent(PracticeLevels.this, MultipleChoicePage.class);
+            intent.putExtra("operation", operation);
+            intent.putExtra("difficulty", difficultySection);
+            intent.putExtra("game_type", "practice");
+            intent.putExtra("heartLimit", heartCount);
+            intent.putExtra("timerLimit", timerCount);
+            intent.putExtra("questionLimit", questionCount);
+
 // Animate button click and stop animation
-animateButtonClick(btnEnter);
-stopButtonFocusAnimation(btnEnter);
+            animateButtonClick(btnEnter);
+            stopButtonFocusAnimation(btnEnter);
 
 // Start the activity
-startActivity(intent);
-  
+            startActivity(intent);
+
         });
-        
- 
+
+
         heartTxt.setText(String.valueOf(heartCount));
-    timerTxt.setText(String.valueOf(timerCount));
-    
-        
-        // Set onClickListeners for each FrameLayout
+        timerTxt.setText(String.valueOf(timerCount));
+
+
         heartChoice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                    playSound("click.mp3");
-                    animateButtonClick(heartChoice);
+                playSound("click.mp3");
+                animateButtonClick(heartChoice);
+
                 heartCount++;
+                if (heartCount > 10) {
+                    heartCount = 1;
+                }
                 heartTxt.setText(String.valueOf(heartCount));
             }
         });
@@ -207,29 +216,33 @@ startActivity(intent);
         timerChoice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                    playSound("click.mp3");
-                    animateButtonClick(timerChoice);
+                playSound("click.mp3");
+                animateButtonClick(timerChoice);
+
                 timerCount++;
+                if (timerCount > 20) {
+                    timerCount = 1;
+                }
                 timerTxt.setText(String.valueOf(timerCount));
             }
         });
 
-        
+
         animateButtonFocus(iconHeart);
         animateButtonFocus(iconClock);
-        
+
         backgroundFrame = findViewById(R.id.main);
         numberContainer = findViewById(R.id.number_container); // Get FrameLayout from XML
 
         numBGAnimation = new NumBGAnimation(this, numberContainer);
         numBGAnimation.startNumberAnimationLoop();
-        
+
         backgroundFrame.post(() -> {
-        VignetteEffect.apply(this, backgroundFrame);
+            VignetteEffect.apply(this, backgroundFrame);
         });
-        
+
     }
-    
+
     private void playSound(String fileName) {
         // Stop any previous sound effect before playing a new one
         if (soundEffectPlayer != null) {
@@ -253,90 +266,93 @@ startActivity(intent);
             e.printStackTrace();
         }
     }
+
     private void updateSelectedNumber() {
-    selectedNumber = 0;
-    for (int number : selectedButtons) {
-        selectedNumber += number;
+        selectedNumber = 0;
+        for (int number : selectedButtons) {
+            selectedNumber += number;
+        }
     }
-}
-    
+
     private void animateButtonClick(View button) {
-    ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.6f, 1.1f, 1f);
-    ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.6f, 1.1f, 1f);
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.6f, 1.1f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.6f, 1.1f, 1f);
 
-    // Set duration for the animations
-    scaleX.setDuration(1000);
-    scaleY.setDuration(1000);
+        // Set duration for the animations
+        scaleX.setDuration(1000);
+        scaleY.setDuration(1000);
 
-    // OvershootInterpolator for game-like snappy effect
-    OvershootInterpolator overshootInterpolator = new OvershootInterpolator(2f);
-    scaleX.setInterpolator(overshootInterpolator);
-    scaleY.setInterpolator(overshootInterpolator);
+        // OvershootInterpolator for game-like snappy effect
+        OvershootInterpolator overshootInterpolator = new OvershootInterpolator(2f);
+        scaleX.setInterpolator(overshootInterpolator);
+        scaleY.setInterpolator(overshootInterpolator);
 
-    // Combine animations into a set
-    AnimatorSet animatorSet = new AnimatorSet();
-    animatorSet.playTogether(scaleX, scaleY);
-    animatorSet.start();
-}
-
-   // Function to animate button focus with a smooth pulsing bounce effect
-private void animateButtonFocus(View button) {
-    ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.06f, 1f);
-    ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 1.06f, 1f);
-
-    // Set duration for a slower, smoother pulsing bounce effect
-    scaleX.setDuration(1000);
-    scaleY.setDuration(1000);
-
-    // AccelerateDecelerateInterpolator for smooth pulsing
-    AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
-    scaleX.setInterpolator(interpolator);
-    scaleY.setInterpolator(interpolator);
-
-    // Set repeat count and mode on each ObjectAnimator
-    scaleX.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
-    scaleX.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
-    scaleY.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
-    scaleY.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
-
-    // Combine the animations into an AnimatorSet
-    AnimatorSet animatorSet = new AnimatorSet();
-    animatorSet.playTogether(scaleX, scaleY);
-    animatorSet.start();
-}
-
-// Stop Focus Animation
-private void stopButtonFocusAnimation(View button) {
-    AnimatorSet animatorSet = (AnimatorSet) button.getTag();
-    if (animatorSet != null) {
-        animatorSet.cancel();  // Stop the animation when focus is lost
+        // Combine animations into a set
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(scaleX, scaleY);
+        animatorSet.start();
     }
-}
-@Override
+
+    // Function to animate button focus with a smooth pulsing bounce effect
+    private void animateButtonFocus(View button) {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.06f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 1.06f, 1f);
+
+        // Set duration for a slower, smoother pulsing bounce effect
+        scaleX.setDuration(1000);
+        scaleY.setDuration(1000);
+
+        // AccelerateDecelerateInterpolator for smooth pulsing
+        AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
+        scaleX.setInterpolator(interpolator);
+        scaleY.setInterpolator(interpolator);
+
+        // Set repeat count and mode on each ObjectAnimator
+        scaleX.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
+        scaleX.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
+        scaleY.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
+        scaleY.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
+
+        // Combine the animations into an AnimatorSet
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(scaleX, scaleY);
+        animatorSet.start();
+    }
+
+    // Stop Focus Animation
+    private void stopButtonFocusAnimation(View button) {
+        AnimatorSet animatorSet = (AnimatorSet) button.getTag();
+        if (animatorSet != null) {
+            animatorSet.cancel();  // Stop the animation when focus is lost
+        }
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
 
-            MusicManager.resume();
-        
+        MusicManager.resume();
+
     }
-      @Override
-protected void onDestroy() {
-    super.onDestroy();
-    MusicManager.pause();
-}
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        MusicManager.pause();
+    }
 
     @Override
     protected void onResume() {
         super.onResume();
         MusicManager.resume();
-        
+
     }
-    
-@Override
+
+    @Override
     protected void onPause() {
         super.onPause();
         MusicManager.pause();
     }
 
-    
+
 }

@@ -1,6 +1,9 @@
 package com.happym.mathsquare;
 
+import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.os.Bundle;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 
@@ -28,10 +31,13 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
 import com.happym.mathsquare.MainActivity;
+
 import java.util.UUID;
 
 import android.content.Intent;
@@ -39,62 +45,124 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Patterns;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
+
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.HashMap;
 import java.util.UUID;
+
+import com.happym.mathsquare.Service.FirebaseDb;
 import com.happym.mathsquare.sharedPreferences;
+
 import androidx.core.view.WindowCompat;
+
 public class teacherSignUp extends AppCompatActivity {
+    private FirebaseFirestore db;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        
+
         FirebaseApp.initializeApp(this);
-        
+
         setContentView(R.layout.layoutteacher_sign_up);
-        
+
         // Firestore instance
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        
+        db = FirebaseDb.getFirestore();
+
         TextInputLayout emailLayout = findViewById(R.id.email_address_layout);
         TextInputLayout firstNameLayout = findViewById(R.id.first_name_layout);
         TextInputLayout passwordLayout = findViewById(R.id.password);
         TextInputLayout passwordRepeatLayout = findViewById(R.id.password_repeat);
-        
+
         AppCompatButton submitButton = findViewById(R.id.btn_submit);
-        
-       TextInputEditText emailEditText = (TextInputEditText) emailLayout.getEditText();
-TextInputEditText firstNameEditText = (TextInputEditText) firstNameLayout.getEditText();
 
-InputFilter noSpacesFilter = (source, start, end, dest, dstart, dend) -> {
-    if (source.toString().contains(" ")) {
-        return "";
-    }
-    return source;
-};
+        TextInputEditText emailEditText = (TextInputEditText) emailLayout.getEditText();
+        TextInputEditText firstNameEditText = (TextInputEditText) firstNameLayout.getEditText();
 
-if (emailEditText != null) {
-    emailEditText.setFilters(new InputFilter[]{noSpacesFilter});
-           firstNameEditText.setFilters(new InputFilter[]{noSpacesFilter});
-}
+        InputFilter noSpacesFilter = (source, start, end, dest, dstart, dend) -> {
+            if (source.toString().contains(" ")) {
+                return "";
+            }
+            return source;
+        };
 
-       TextInputEditText passwordEditText = (TextInputEditText) passwordLayout.getEditText();
-TextInputEditText passwordREditText = (TextInputEditText) passwordRepeatLayout.getEditText();
+        if (emailEditText != null) {
+            emailEditText.setFilters(new InputFilter[]{noSpacesFilter});
+            firstNameEditText.setFilters(new InputFilter[]{noSpacesFilter});
+        }
+
+        TextInputEditText passwordEditText = (TextInputEditText) passwordLayout.getEditText();
+        TextInputEditText passwordREditText = (TextInputEditText) passwordRepeatLayout.getEditText();
 
 
+        if (passwordEditText != null) {
+            passwordEditText.setFilters(new InputFilter[]{noSpacesFilter});
+            passwordREditText.setFilters(new InputFilter[]{noSpacesFilter});
+        }
 
-if (passwordEditText != null) {
-    passwordEditText.setFilters(new InputFilter[]{noSpacesFilter});
-           passwordREditText.setFilters(new InputFilter[]{noSpacesFilter});
-}
-        
-        
+        int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+
+        if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
+
+            // TEXT COLOR
+            if (firstNameEditText != null) {
+                firstNameEditText.setTextColor(Color.WHITE);
+            }
+
+            if (emailEditText != null) {
+                emailEditText.setTextColor(Color.WHITE);
+            }
+
+            assert passwordEditText != null;
+            passwordEditText.setTextColor(Color.WHITE);
+
+            passwordREditText.setTextColor(Color.WHITE);
+
+            // FLOATING LABEL COLOR
+            firstNameLayout.setHintTextColor(ColorStateList.valueOf(Color.WHITE));
+
+        } else {
+
+            // TEXT COLOR
+            if (firstNameEditText != null) {
+                firstNameEditText.setTextColor(Color.BLACK);
+            }
+
+            if (emailEditText != null) {
+                emailEditText.setTextColor(Color.BLACK);
+            }
+
+            // FLOATING LABEL COLOR
+            firstNameLayout.setHintTextColor(ColorStateList.valueOf(Color.BLACK));
+
+            assert passwordEditText != null;
+            passwordEditText.setTextColor(Color.WHITE);
+
+            passwordREditText.setTextColor(Color.WHITE);
+        }
+
+        ColorStateList whiteStroke = ColorStateList.valueOf(Color.WHITE);
+        ColorStateList blackStroke = ColorStateList.valueOf(Color.BLACK);
+
+        if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
+
+            firstNameLayout.setBoxStrokeColorStateList(whiteStroke);
+            emailLayout.setBoxStrokeColorStateList(whiteStroke);
+
+        } else {
+
+            firstNameLayout.setBoxStrokeColorStateList(blackStroke);
+            emailLayout.setBoxStrokeColorStateList(blackStroke);
+        }
+
         submitButton.setOnClickListener(v -> {
             boolean hasError = false;
             emailLayout.setError(null);
@@ -134,13 +202,13 @@ if (passwordEditText != null) {
             if (!hasError) {
                 // Generate a unique document ID
                 String teacherId = UUID.randomUUID().toString();
-                
+
                 // Prepare data to save
                 HashMap<String, Object> teacherData = new HashMap<>();
                 teacherData.put("firstName", firstName);
                 teacherData.put("email", email);
                 teacherData.put("password", password); // In a real app, password should be hashed
-                    animateButtonClick(submitButton);
+                animateButtonClick(submitButton);
                 // Save teacher data to Firestore
                 db.collection("Accounts")
                         .document("Teachers")
@@ -149,7 +217,7 @@ if (passwordEditText != null) {
                         .set(teacherData)
                         .addOnSuccessListener(aVoid -> {
                             // Account created, navigate to Dashboard
-                           Toast.makeText(teacherSignUp.this, "Teacher account created successfully", Toast.LENGTH_LONG).show();
+                            Toast.makeText(teacherSignUp.this, "Teacher account created successfully", Toast.LENGTH_LONG).show();
                             finish();
                         })
                         .addOnFailureListener(e -> {
@@ -158,8 +226,8 @@ if (passwordEditText != null) {
             }
         });
     }
-    
-        // Shake and rotate animation for error fields
+
+    // Shake and rotate animation for error fields
     private void animateShakeRotateEditTextErrorAnimation(View view) {
         AnimatorSet animatorSet = new AnimatorSet();
 
@@ -175,80 +243,80 @@ if (passwordEditText != null) {
         animatorSet.playTogether(shakeAnimator, rotateAnimator);
         animatorSet.start();
     }
-    
-private void animateButtonClick(View button) {
-    ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.6f, 1.1f, 1f);
-    ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.6f, 1.1f, 1f);
 
-    // Set duration for the animations
-    scaleX.setDuration(3000);
-    scaleY.setDuration(3000);
+    private void animateButtonClick(View button) {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.6f, 1.1f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.6f, 1.1f, 1f);
 
-    // OvershootInterpolator for game-like snappy effect
-    OvershootInterpolator overshootInterpolator = new OvershootInterpolator(2f);
-    scaleX.setInterpolator(overshootInterpolator);
-    scaleY.setInterpolator(overshootInterpolator);
+        // Set duration for the animations
+        scaleX.setDuration(3000);
+        scaleY.setDuration(3000);
 
-    // Combine animations into a set
-    AnimatorSet animatorSet = new AnimatorSet();
-    animatorSet.playTogether(scaleX, scaleY);
-    animatorSet.start();
-}
+        // OvershootInterpolator for game-like snappy effect
+        OvershootInterpolator overshootInterpolator = new OvershootInterpolator(2f);
+        scaleX.setInterpolator(overshootInterpolator);
+        scaleY.setInterpolator(overshootInterpolator);
+
+        // Combine animations into a set
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(scaleX, scaleY);
+        animatorSet.start();
+    }
 
 
-// Function to animate button focus with a smooth pulsing bounce effect
-private void animateButtonFocus(View button) {
-    ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.06f, 1f);
-    ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 1.06f, 1f);
+    // Function to animate button focus with a smooth pulsing bounce effect
+    private void animateButtonFocus(View button) {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.06f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 1.06f, 1f);
 
-    // Set duration for a slower, smoother pulsing bounce effect
-    scaleX.setDuration(4000);
-    scaleY.setDuration(4000);
+        // Set duration for a slower, smoother pulsing bounce effect
+        scaleX.setDuration(4000);
+        scaleY.setDuration(4000);
 
-    // AccelerateDecelerateInterpolator for smooth pulsing
-    AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
-    scaleX.setInterpolator(interpolator);
-    scaleY.setInterpolator(interpolator);
+        // AccelerateDecelerateInterpolator for smooth pulsing
+        AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
+        scaleX.setInterpolator(interpolator);
+        scaleY.setInterpolator(interpolator);
 
-    // Set repeat count and mode on each ObjectAnimator
-    scaleX.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
-    scaleX.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
-    scaleY.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
-    scaleY.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
+        // Set repeat count and mode on each ObjectAnimator
+        scaleX.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
+        scaleX.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
+        scaleY.setRepeatCount(ObjectAnimator.INFINITE);  // Infinite repeat
+        scaleY.setRepeatMode(ObjectAnimator.REVERSE);    // Reverse animation on repeat
 
-    // Combine the animations into an AnimatorSet
-    AnimatorSet animatorSet = new AnimatorSet();
-    animatorSet.playTogether(scaleX, scaleY);
-    animatorSet.start();
-}
+        // Combine the animations into an AnimatorSet
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(scaleX, scaleY);
+        animatorSet.start();
+    }
 
     private void animateButtonPushDowm(View button) {
-    ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.95f);  // Scale down slightly
-    ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.95f);  // Scale down slightly
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.95f);  // Scale down slightly
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.95f);  // Scale down slightly
 
-    // Set shorter duration for a quick push effect
-    scaleX.setDuration(200);
-    scaleY.setDuration(200);
+        // Set shorter duration for a quick push effect
+        scaleX.setDuration(200);
+        scaleY.setDuration(200);
 
-    // Use a smooth interpolator
-    AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
-    scaleX.setInterpolator(interpolator);
-    scaleY.setInterpolator(interpolator);
+        // Use a smooth interpolator
+        AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
+        scaleX.setInterpolator(interpolator);
+        scaleY.setInterpolator(interpolator);
 
-    // Combine the animations into an AnimatorSet
-    AnimatorSet animatorSet = new AnimatorSet();
-    animatorSet.playTogether(scaleX, scaleY);
-    
-    // Start the animation
-    animatorSet.start();
-}
+        // Combine the animations into an AnimatorSet
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(scaleX, scaleY);
 
-// Stop Focus Animation
-private void stopButtonFocusAnimation(View button) {
-    AnimatorSet animatorSet = (AnimatorSet) button.getTag();
-    if (animatorSet != null) {
-        animatorSet.cancel();  // Stop the animation when focus is lost
+        // Start the animation
+        animatorSet.start();
     }
-}
-    
+
+    // Stop Focus Animation
+    private void stopButtonFocusAnimation(View button) {
+        AnimatorSet animatorSet = (AnimatorSet) button.getTag();
+        if (animatorSet != null) {
+            animatorSet.cancel();  // Stop the animation when focus is lost
+        }
+    }
+
 }

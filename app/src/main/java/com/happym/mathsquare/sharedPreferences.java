@@ -12,6 +12,8 @@ public class sharedPreferences {
     private static final String KEY_PROFILE_IMAGE_URI = "user_profileimage";
     private static final String KEY_FIRSTNAME = "user_firstname";
     static final String KEY_LASTNAME = "user_lastname";
+
+    static final String KEY_TEACHERNAME = "teacher_name";
     private static final String KEY_BANK_RESULT_PRIVACY = "bank_result_privacy";
     private static final String KEY_ALLOW_NOTIFICATIONSONE = "allownotifications1";
     private static final String KEY_ALLOW_VIBRATIONS = "allowvibrations";
@@ -108,13 +110,29 @@ public class sharedPreferences {
         editor.apply();
     }
 
+    public static void saveTeacherN(Context context, String studentId) {
+        SharedPreferences.Editor editor = getSharedPreferences(context).edit();
+        editor.putString(KEY_TEACHERNAME, studentId);
+        editor.apply();
+    }
+
     public static String getLastN(Context context) {
         return getSharedPreferences(context).getString(KEY_LASTNAME, null);
+    }
+
+    public static String getTeacherN(Context context) {
+        return getSharedPreferences(context).getString(KEY_TEACHERNAME, null);
     }
 
     public static void clearLastName(Context context) {
         SharedPreferences.Editor editor = getSharedPreferences(context).edit();
         editor.remove(KEY_LASTNAME);
+        editor.apply();
+    }
+
+    public static void clearTeacherName(Context context) {
+        SharedPreferences.Editor editor = getSharedPreferences(context).edit();
+        editor.remove(KEY_TEACHERNAME);
         editor.apply();
     }
 

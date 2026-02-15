@@ -46,7 +46,6 @@
                  android:layout_width="match_parent"
                  android:textColorHint="@color/white"
                  android:fontFamily="@font/paytone_one"
-                 android:textColor="@color/black"
                  android:maxLines="1"
                  android:inputType="textEmailAddress"
                  android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@._" />
@@ -68,7 +67,6 @@
                  android:layout_width="match_parent"
                  android:textColorHint="@color/white"
                  android:fontFamily="@font/paytone_one"
-                android:textColor="@color/black"
                  android:maxLines="1"
                  android:inputType="textPassword" />
 

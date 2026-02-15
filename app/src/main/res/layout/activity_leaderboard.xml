@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/yellowbg">
+
+    <!-- Animated numbers background (like Math Tutorial) -->
+    <FrameLayout
+        android:id="@+id/number_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Main content -->
+    <LinearLayout
+        android:orientation="vertical"
+        android:gravity="top|center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp">
+
+        <!-- Title -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:background="@drawable/btn_long_condition"
+            android:layout_marginLeft="25dp"
+            android:layout_marginRight="25dp"
+            android:layout_marginTop="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:layout_marginHorizontal="20dp"
+                android:shadowRadius="4"
+                android:textSize="23sp"
+                android:fontFamily="@font/paytone_one"
+                android:textColor="@android:color/white"
+                android:shadowColor="#000000"
+                android:shadowDx="2"
+                android:shadowDy="2"
+                android:text="Leaderboards" />
+        </LinearLayout>
+
+        <!-- RecyclerView for leaderboard entries -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/leaderboard_recycler"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingTop="20dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingBottom="40dp"
+            android:clipToPadding="false"
+            android:scrollbars="vertical" />
+
+        <TextView
+            android:id="@+id/text_no_leaderboards"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No Student Leaderboards Yet"
+            android:textColor="@android:color/white"
+            android:textSize="22sp"
+            android:gravity="center"
+            android:fontFamily="@font/paytone_one"
+            android:textStyle="bold"
+            android:shadowColor="#000000"
+            android:shadowDx="2"
+            android:shadowDy="2"
+            android:shadowRadius="4"
+            android:visibility="gone"
+            android:layout_marginTop="30dp"/>
+
+
+    </LinearLayout>
+
+    <!-- Home/Back Button -->
+    <ImageView
+        android:id="@+id/btn_home"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="26dp"
+        android:layout_marginStart="20dp"
+        android:background="@drawable/circle_box"
+        android:padding="12dp"
+        android:src="@drawable/ic_home"
+        android:contentDescription="Home" />
+</FrameLayout>

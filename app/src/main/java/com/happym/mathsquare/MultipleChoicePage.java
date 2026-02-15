@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
@@ -14,6 +15,11 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -21,14 +27,32 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.constraintlayout.widget.ConstraintSet;
+
+import com.google.android.flexbox.AlignItems;
+import com.google.android.flexbox.FlexWrap;
+import com.google.android.flexbox.FlexboxLayout;
+import com.google.android.flexbox.JustifyContent;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.FirebaseApp;
+import com.google.mlkit.common.MlKitException;
+import com.google.mlkit.common.model.DownloadConditions;
+import com.google.mlkit.common.model.RemoteModelManager;
+import com.google.mlkit.vision.digitalink.recognition.DigitalInkRecognition;
+import com.google.mlkit.vision.digitalink.recognition.DigitalInkRecognitionModel;
+import com.google.mlkit.vision.digitalink.recognition.DigitalInkRecognitionModelIdentifier;
+import com.google.mlkit.vision.digitalink.recognition.DigitalInkRecognizer;
+import com.google.mlkit.vision.digitalink.recognition.DigitalInkRecognizerOptions;
+import com.google.mlkit.vision.digitalink.recognition.Ink;
+import com.happym.mathsquare.Model.MathProblemGenerator;
 import com.happym.mathsquare.dialog.PauseDialog;
 import com.happym.mathsquare.dialog.PauseDialog.PauseDialogListener; // Adjust to match your project
 // structure
@@ -76,6 +100,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -85,17 +110,25 @@ import androidx.core.view.WindowInsetsCompat;
 import android.animation.ObjectAnimator;
 import android.animation.AnimatorSet;
 import android.view.animation.BounceInterpolator;
+
 import java.io.IOException;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
+
 import com.happym.mathsquare.Animation.*;
 
 public class MultipleChoicePage extends AppCompatActivity
-        implements PauseDialog.PauseDialogListener {
+        implements PauseDialogListener {
 
     private int questionCount = 0;
+    private int totalPoints = 0;
     private CountDownTimer countDownTimer;
+    private LinearLayout btnHelp;
+    private int helpLimit = 10;
+    private int helpRemaining = helpLimit;
+    private TextView helpTextView;
     private boolean isGameOver = false;
     private boolean repeatTaskUser = false;
     private long timeLeftInMillis; // Stores remaining time
@@ -108,8 +141,9 @@ public class MultipleChoicePage extends AppCompatActivity
     private List<MathProblem> answeredQuestions = new ArrayList<>();
 
     private ImageButton imgBtn_pause;
+    private ImageView clearBtn;
 
-    private String operationText, gametypeGame,difficulty, gametype, quidId, levelid, levelNext, worldType;
+    private String operationText, gametypeGame, difficulty, gametype, quidId, levelid, levelNext, worldType;
     private TextView givenOneTextView,
             givenTwoTextView,
             operationTextView,
@@ -138,40 +172,86 @@ public class MultipleChoicePage extends AppCompatActivity
     private ValueAnimator vignetteAnimator;
     private boolean isRedTransitionApplied = false; // Prevents unnecessary re-animation
     private List<String> usedOperations = new ArrayList<>();
+    private DrawingView drawingView;
+    private TextView hintQuestionMark;
+    private DigitalInkRecognizer recognizer;
+    private Handler checkHandler = new Handler();
+    private Runnable checkRunnable;
+    DigitalInkRecognitionModelIdentifier modelIdentifier =
+            null;
+    Handler handler = new Handler(Looper.getMainLooper());
 
-    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        try {
+            modelIdentifier = DigitalInkRecognitionModelIdentifier.fromLanguageTag("en-US");
+        } catch (MlKitException e) {
+            throw new RuntimeException(e);
+        }
+
+        assert modelIdentifier != null;
+        DigitalInkRecognitionModel model =
+                DigitalInkRecognitionModel.builder(modelIdentifier).build();
+
+        recognizer =
+                DigitalInkRecognition.getClient(
+                        DigitalInkRecognizerOptions.builder(model).build());
+
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_multiplechoice);
         FirebaseApp.initializeApp(this);
         imgBtn_pause = findViewById(R.id.imgBtn_pause);
+        drawingView = findViewById(R.id.drawing_view);
+        hintQuestionMark = findViewById(R.id.hint_question_mark);
 
         operationTextView = findViewById(R.id.text_operation);
-       
-        
+
+
         givenOneTextView = findViewById(R.id.text_givenone);
         givenTwoTextView = findViewById(R.id.text_giventwo);
         feedbackTextView = findViewById(R.id.text_feedback);
-        
+
         text_operator = findViewById(R.id.text_operator);
         heartTxt = findViewById(R.id.heart_txt);
         timerTxt = findViewById(R.id.timer_txt);
         questionProgressTextView = findViewById(R.id.text_question_progress);
 
         gameView = findViewById(R.id.gameView);
-       operationDisplay = findViewById(R.id.operationDisplay);
-        
+        operationDisplay = findViewById(R.id.operationDisplay);
+        btnHelp = findViewById(R.id.btn_help);
+        helpTextView = findViewById(R.id.helpTextView);
         gameView.setVisibility(View.VISIBLE);
-        
-        
+
+        clearBtn = findViewById(R.id.btn_clear);
+
+        clearBtn.setOnClickListener(v -> {
+            drawingView.clearCanvas();
+        });
+
+        updateHelpText();
+
+        btnHelp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (helpRemaining > 0) {
+                    helpRemaining--;                  // decrease remaining
+                    updateHelpText();                 // update the TextView
+                    showHintWithAnimation();          // your existing function
+                } else {
+                    // Optional: disable the button or give feedback
+                    btnHelp.setEnabled(false);
+                }
+            }
+        });
+
         ImageButton imageButton = findViewById(R.id.imgBtn_home);
         imageButton.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                    playSound("click.mp3");
+                        playSound("click.mp3");
                         Intent intent = new Intent(MultipleChoicePage.this, MainActivity.class);
                         intent.addFlags(
                                 Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -184,7 +264,7 @@ public class MultipleChoicePage extends AppCompatActivity
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                    playSound("click.mp3");
+                        playSound("click.mp3");
                         int currentScore = currentQuestionIndex;
                         currentScore++;
                         boolean isPaused = true; // Set based on your conditions
@@ -199,16 +279,19 @@ public class MultipleChoicePage extends AppCompatActivity
                     }
                 });
 
+        /*
         btnChoice1 = findViewById(R.id.btn_choice1);
         btnChoice2 = findViewById(R.id.btn_choice2);
         btnChoice3 = findViewById(R.id.btn_choice3);
         btnChoice4 = findViewById(R.id.btn_choice4);
 
+
         animateButtonFocus(btnChoice1);
         animateButtonFocus(btnChoice2);
         animateButtonFocus(btnChoice3);
         animateButtonFocus(btnChoice4);
-        
+*/
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -218,7 +301,7 @@ public class MultipleChoicePage extends AppCompatActivity
         String gameType = getIntent().getStringExtra("game_type");
         gametypeGame = getIntent().getStringExtra("game_type");
         FrameLayout heart_choice = findViewById(R.id.heart_choice);
-       FrameLayout timer_choice = findViewById(R.id.timer_choice);
+        FrameLayout timer_choice = findViewById(R.id.timer_choice);
         quidId = getIntent().getStringExtra("quizId");
         worldType = getIntent().getStringExtra("passing_world");
         levelid = getIntent().getStringExtra("passing");
@@ -229,65 +312,63 @@ public class MultipleChoicePage extends AppCompatActivity
         selTimer = getIntent().getIntExtra("timerLimit", 10);
         questionLimits = getIntent().getIntExtra("questionLimit", 10);
 
-        if("Quiz".equals(gameType)){
-           heart_choice.setVisibility(View.GONE);
-           timer_choice.setVisibility(View.GONE);
-        }else{
-           
-            
-            updateHeartDisplay();
-        startTimer(timerLimit * 60 * 1000);
-        }
-        
+        if ("Quiz".equals(gameType)) {
+            heart_choice.setVisibility(View.GONE);
+            timer_choice.setVisibility(View.GONE);
+        } else {
 
-        
+
+            updateHeartDisplay();
+            startTimer(timerLimit * 60 * 1000);
+        }
+
+
         operationText =
                 getIntent().getStringExtra("operation");
-        
-       operationList = getIntent().getStringArrayListExtra("operationList");
-        
-if (operationList == null || operationList.isEmpty()) {
-    operationList = new ArrayList<>();
-    operationList.add("Subtraction");
-}
-        
+
+        operationList = getIntent().getStringArrayListExtra("operationList");
+
+        if (operationList == null || operationList.isEmpty()) {
+            operationList = new ArrayList<>();
+            operationList.add("Subtraction");
+        }
+
         difficulty =
                 getIntent().getStringExtra("difficulty") != null
                         ? getIntent().getStringExtra("difficulty")
                         : "";
 
-        if("Quiz".equals(gameType)) {
-            
-            Toast.makeText(this, operationList.toString() , Toast.LENGTH_SHORT)
+        if ("Quiz".equals(gameType)) {
+
+            Toast.makeText(this, operationList.toString(), Toast.LENGTH_SHORT)
                     .show();
-            
-           switchOperation(difficulty);
-            
-        } else{
-            
-            operationDisplay.setVisibility(View.GONE);
-            
-           if (operationText == null ) {
-            Toast.makeText(this, "No Math Operation detected at the moment. :(", Toast.LENGTH_SHORT)
-                    .show();
+
+            switchOperation(difficulty);
+
         } else {
-            operationTextView.setText(operationText);
-            feedbackTextView.setText("Operation detected");
 
-            setupProblemSet(operationText, difficulty);
+            operationDisplay.setVisibility(View.GONE);
 
-            if (repeatTaskUser) {
-
+            if (operationText == null) {
+                Toast.makeText(this, "No Math Operation detected at the moment. :(", Toast.LENGTH_SHORT)
+                        .show();
             } else {
-                generateNewQuestion(currentQuestionIndex, problemSet);
+                operationTextView.setText(operationText);
+                feedbackTextView.setText("Operation detected");
+
+                setupProblemSet(operationText, difficulty);
+
+                if (repeatTaskUser) {
+
+                } else {
+                    generateNewQuestion(currentQuestionIndex, problemSet);
+                }
             }
-        }
-            
-          
+
         }
         
        
-
+/*
         btnChoice1.setOnClickListener(
                 view -> checkAnswer(Integer.parseInt(btnChoice1.getText().toString()), btnChoice1, gameType));
         btnChoice2.setOnClickListener(
@@ -296,118 +377,319 @@ if (operationList == null || operationList.isEmpty()) {
                 view -> checkAnswer(Integer.parseInt(btnChoice3.getText().toString()), btnChoice3, gameType));
         btnChoice4.setOnClickListener(
                 view -> checkAnswer(Integer.parseInt(btnChoice4.getText().toString()), btnChoice4,gameType));
-        
-        
+        */
+
         playBGGame("ingame.mp3");
         backgroundFrame = findViewById(R.id.main);
         numberContainer = findViewById(R.id.number_container); // Get FrameLayout from XML
 
         numBGAnimation = new NumBGAnimation(this, numberContainer);
         numBGAnimation.startNumberAnimationLoop();
-        
- backgroundFrame.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-        @Override
-        public void onGlobalLayout() {
-            backgroundFrame.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-            applyDefaultVignetteEffect(); // Set the default effect first
-            
+
+        backgroundFrame.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                backgroundFrame.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                applyDefaultVignetteEffect(); // Set the default effect first
+
+            }
+        });
+
+
+        drawingView.setOnDrawingListener(new DrawingView.OnDrawingListener() {
+            @Override
+            public void onStrokeStart() {
+                if (checkRunnable != null) {
+                    checkHandler.removeCallbacks(checkRunnable);
+                }
+            }
+
+            @Override
+            public void onDrawingFinished() {
+
+                if (hintQuestionMark.getVisibility() == View.VISIBLE) {
+                    hintQuestionMark.animate()
+                            .alpha(0f)
+                            .setDuration(300)
+                            .withEndAction(() ->
+                                    hintQuestionMark.setVisibility(View.GONE));
+                }
+
+                if (checkRunnable != null) {
+                    checkHandler.removeCallbacks(checkRunnable);
+                }
+
+                checkRunnable = () -> {
+
+                    if (drawingView.getInk().getStrokes().isEmpty()) {
+                        return;
+                    }
+
+                    recognizeDrawing(gameType);
+                };
+                checkHandler.postDelayed(checkRunnable, 1800);
+            }
+        });
+
+    }
+
+    private void updateHelpText() {
+        helpTextView.setText("Need a Help? " + helpRemaining + "/" + helpLimit);
+    }
+
+    private void showHintWithAnimation() {
+        MathProblem currentProblem = problemSet.get(currentQuestionIndex);
+        String answer = String.valueOf(currentProblem.getAnswer());
+
+        drawingView.clearCanvas();
+        if (hintQuestionMark.getVisibility() == View.VISIBLE) {
+            hintQuestionMark.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction(() ->
+                            hintQuestionMark.setVisibility(View.GONE));
         }
-    });
-}
-    
-  
+        drawingView.showAnimatedHint(answer);
 
-private void switchOperation(String difficulty) {
-    if (operationList.isEmpty()) {
-        
-        return;
     }
 
-    // Reset used operations when all are used
-    if (usedOperations.size() == operationList.size()) {
-        usedOperations.clear();
-    }
+    private int resolveGradeLevel(String difficulty) {
+        if (difficulty == null) return 1;
 
-    // Get next unused operation
-     newOperation = null;
-    for (String op : operationList) {
-        if (!usedOperations.contains(op)) {
-            newOperation = op;
-            break;
+        switch (difficulty) {
+            case "grade_one":   return 1;
+            case "grade_two":   return 2;
+            case "grade_three": return 3;
+            case "grade_four":  return 4;
+            case "grade_five":  return 5;
+            case "grade_six":   return 6;
+            default:            return 1;
         }
     }
 
-    // Add to used operations and update UI
-    if (newOperation != null) {
-        usedOperations.add(newOperation);
-        setupProblemSetList(difficulty, newOperation);
+    private void checkAnswer(int btnText, Button btnChoice, String gameType) {
+        if (isGameOver) return;
 
-    } else {
-        Toast.makeText(this, "Error selecting new operation!", Toast.LENGTH_SHORT).show();
+        playEffectSound("click.mp3");
+
+        if (currentQuestionIndex >= problemSet.size()) {
+            launchResultsActivity(gameType);
+            return;
+        }
+
+        MathProblem currentProblem = problemSet.get(currentQuestionIndex);
+        int actualAnswer = currentProblem.getAnswer();
+        boolean isCorrect = (btnText == actualAnswer);
+        String questionText = currentProblem.getQuestion();
+
+        if (isCorrect) {
+            feedbackTextView.setText("Correct!");
+            animateCorrectAnswer();
+            playEffectSound("correct.mp3");
+
+            // --- CLEAR DRAWING VIEW ---
+            if (drawingView != null) {
+                drawingView.clearCanvas();
+            }
+
+            answeredQuestions.add(currentProblem);
+
+            // Advance ONLY for Practice / OnTimer
+            if (!"Quiz".equals(gameType) && !"passing".equals(gameType)) {
+                currentQuestionIndex++;
+            }
+
+            // ---------- END-OF-GAME CHECK ----------
+            if ("Quiz".equals(gameType)) {
+                // Quiz ends by score, NOT question index
+                if (score >= 21) {
+                    launchResultsActivity(gameType);
+                    return;
+                }
+            } else if ("passing".equals(gameType)) {
+                // Passing ends when hearts are gone (handled elsewhere)
+                // Do nothing here
+            } else {
+                // Practice / OnTimer
+                if (currentQuestionIndex >= problemSet.size()) {
+                    launchResultsActivity(gameType);
+                    return;
+                }
+            }
+        } else {
+            feedbackTextView.setText("Wrong! The correct answer is " + actualAnswer);
+
+            feedbackTextView.setText("Wrong! The correct answer is " + actualAnswer);
+
+            heartLimit--;
+            updateHeartDisplay();
+
+            showKidFriendlyErrorAnimated(currentProblem, () -> {
+
+                // ---------- GAME OVER CHECK ----------
+                if (!"Quiz".equals(gameType)) {
+                    if (heartLimit == 0) {
+                        playSound("failed.mp3");
+                        showGameOver(gameType);
+                        return;
+                    }
+                    if (heartLimit == 1) startVignetteEffect();
+                }
+
+                // ---------- TRACK ANSWER ----------
+                answeredQuestions.add(currentProblem);
+
+                // Increment ONLY for Quiz or passing
+                if ("Quiz".equals(gameType) || "passing".equals(gameType)) {
+                    currentQuestionIndex++;
+                }
+
+                // ---------- LOAD NEXT QUESTION ----------
+                if ("Quiz".equals(gameType)) {
+                    if (currentQuestionIndex < 20) {
+                        generateNewQuestionList(currentQuestionIndex, problemSet);
+                    } else {
+                        Toast.makeText(this, "All Questions Completed!", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    if (currentQuestionIndex < problemSet.size()) {
+                        generateNewQuestion(currentQuestionIndex, problemSet);
+                    }
+                }
+
+                feedbackTextView.postDelayed(() -> feedbackTextView.setText(""), 500);
+            });
+
+            if (drawingView != null) {
+                drawingView.setFeedbackColor(false);
+                new Handler(Looper.getMainLooper()).postDelayed(() -> drawingView.clearCanvas(), 1000);
+            }
+            return;
+
+        }
+
+        answeredQuestions.add(currentProblem);
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex >= problemSet.size()) {
+            launchResultsActivity(gameType);
+            return;
+        }
+        if ("Quiz".equals(gameType)) {
+            if (currentQuestionIndex % 5 == 0 && !operationList.isEmpty()) {
+                switchOperation(difficulty);
+            }
+        }
+        feedbackTextView.postDelayed(() -> {
+            feedbackTextView.setText("");
+            if (hintQuestionMark != null) hintQuestionMark.setVisibility(View.VISIBLE);
+
+            if ("Quiz".equals(gameType)) {
+                if (currentQuestionIndex < 20) {
+                    generateNewQuestionList(currentQuestionIndex, problemSet);
+                } else {
+                    Toast.makeText(this, "All Questions Completed!", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                if (currentQuestionIndex < problemSet.size()) {
+                    generateNewQuestion(currentQuestionIndex, problemSet);
+                }
+            }
+        }, 1000);
     }
-}
 
-
-private void setupProblemSetList(String difficulty, String operation) {
-    BufferedReader bufferedReader;
-    CSVProcessor csvProcessor = new CSVProcessor();
-    String fileName = "";
-    text_operator.setText("");
-
-    switch (operation) {
-        case "Addition":
-            fileName = "additionProblemSet.csv";
-            text_operator.setText("+");
-            break;
-        case "Subtraction":
-            fileName = "subtractionProblemSet.csv";
-            text_operator.setText("-");
-            break;
-        case "Multiplication":
-            fileName = "multiplicationProblemSet.csv";
-            text_operator.setText("×");
-            break;
-        case "Division":
-            fileName = "divisionProblemSet.csv";
-            text_operator.setText("÷");
-            break;
+    private void recognizeDrawing(String gameType) {
+        Ink ink = drawingView.getInk();
+        recognizer.recognize(ink)
+                .addOnSuccessListener(result -> {
+                    String candidate = result.getCandidates().get(0).getText();
+                    try {
+                        int drawnNumber = Integer.parseInt(candidate);
+                        checkAnswer(drawnNumber, null, gameType);
+                    } catch (NumberFormatException e) {
+                        feedbackTextView.setText("I can't read that! Try again.");
+                    }
+                });
     }
 
-    try {
-        bufferedReader = new BufferedReader(new InputStreamReader(getAssets().open(fileName)));
-    } catch (IOException e) {
-        throw new RuntimeException(e);
+    private void switchOperation(String difficulty) {
+        if (operationList.isEmpty()) {
+
+            return;
+        }
+
+        // Reset used operations when all are used
+        if (usedOperations.size() == operationList.size()) {
+            usedOperations.clear();
+        }
+
+        // Get next unused operation
+        newOperation = null;
+        for (String op : operationList) {
+            if (!usedOperations.contains(op)) {
+                newOperation = op;
+                break;
+            }
+        }
+
+        // Add to used operations and update UI
+        if (newOperation != null) {
+            usedOperations.add(newOperation);
+            setupProblemSetList(difficulty, newOperation);
+
+        } else {
+            Toast.makeText(this, "Error selecting new operation!", Toast.LENGTH_SHORT).show();
+        }
     }
 
-    List<MathProblem> mathProblemList = csvProcessor.readCSVFile(bufferedReader);
-    List<MathProblem> filteredProblems = csvProcessor.getProblemsByOperation(mathProblemList, difficulty);
+    private void setupProblemSetList(String difficulty, String operation) {
 
-    // 🔹 Clear old problem set
-    problemSet.clear();
+        text_operator.setText(getOperatorSymbol(operation));
 
-    // 🔹 Add only 5 new questions
-    List<MathProblem> selectedProblems = filteredProblems.subList(0, Math.min(5, filteredProblems.size()));
-    problemSet.addAll(selectedProblems);
+        int gradeLevel = resolveGradeLevel(difficulty);
 
-    // 🔹 Ensure the problem set is filled up to 20 questions
-    while (problemSet.size() < 20 && filteredProblems.size() > 0) {
-        problemSet.addAll(selectedProblems);
+        problemSet.clear();
+        problemSet.addAll(
+                MathProblemGenerator.generate(
+                        operation,
+                        gradeLevel,
+                        levelid,
+                        20
+                )
+        );
+
+        currentQuestionIndex = 0;
+        updateUI(operation);
     }
 
-    // Trim if exceeds 20
-    if (problemSet.size() > 20) {
-        problemSet = problemSet.subList(problemSet.size() - 20, problemSet.size());
+    private void setupProblemSet(String operationText, String difficulty) {
+
+        text_operator.setText(getOperatorSymbol(operationText));
+
+        int gradeLevel = resolveGradeLevel(difficulty);
+
+        // Clamp question limits
+        if (questionLimits < 3) questionLimits = 3;
+        if (questionLimits > 20) questionLimits = 20;
+
+        problemSet = MathProblemGenerator.generate(
+                operationText,
+                gradeLevel,
+                levelid,
+                questionLimits
+        );
+
+        currentQuestionIndex = 0;
+
+        questionProgressTextView.setText(
+                (currentQuestionIndex + 1) + "/" + problemSet.size()
+        );
     }
 
-    // 🔹 Reset UI and generate the first question
-    updateUI(operation);
-}
-
-
-private void updateUI(String nextOperation) {
-    String questionProgressText = (currentQuestionIndex + 1) + "/20";
-    questionProgressTextView.setText(questionProgressText);
-operationTextView.setText(nextOperation);
+    private void updateUI(String nextOperation) {
+        String questionProgressText = (currentQuestionIndex + 1) + "/20";
+        questionProgressTextView.setText(questionProgressText);
+        operationTextView.setText(nextOperation);
         operationDisplay.setText(nextOperation);
         gameView.setVisibility(View.GONE);
         operationDisplay.setVisibility(View.VISIBLE);
@@ -421,260 +703,200 @@ operationTextView.setText(nextOperation);
                 });
             }, 2000);
         });
-    
-}
-    
-private void generateNewQuestionList(int currentQIndex, List<MathProblem> sourceQuestions) {
-    if (currentQIndex < sourceQuestions.size()) {
-        MathProblem currentProblem = sourceQuestions.get(currentQIndex);
 
-        int[] givens = currentProblem.getGivenNumbers();
-        num1 = givens[0];
-        num2 = givens[1];
-        givenOneTextView.setText(String.valueOf(num1));
-        givenTwoTextView.setText(String.valueOf(num2));
-
-        List<String> choicesList = new ArrayList<>(Arrays.asList(currentProblem.getChoicesArray()));
-        Collections.shuffle(choicesList);
-
-        btnChoice1.setText(choicesList.get(0));
-        btnChoice2.setText(choicesList.get(1));
-        btnChoice3.setText(choicesList.get(2));
-        btnChoice4.setText(choicesList.get(3));
-
-        questionProgressTextView.setText((currentQIndex + 1) + "/20");
-    } else {
-       
-      int totalQuestions = problemSet.size();
-                    
-                    //Pass Data to Results Activity
-                    Intent intent = new Intent(MultipleChoicePage.this, Results.class);
-                    
-                    if (score == 20) {
-            intent.putExtra("EXTRA_RESULT", "Congratulations");
-        } else if (score > 15) {
-            intent.putExtra("EXTRA_RESULT", "Good Job!");
-        } else if (score > 5) {
-            intent.putExtra("EXTRA_RESULT", "Nice Try!");
-        } else {
-            intent.putExtra("EXTRA_RESULT", "Failed");
-        }
-                    intent.putExtra("quizid", quidId);
-            intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));  
-                    intent.putExtra("passinglevelnext", levelNext);
-                    intent.putExtra("leveltype", levelid);
-                    intent.putExtra("passingworldtype",worldType);
-                    intent.putExtra("gametype",gametypeGame);
-                    intent.putExtra("heartLimit", selHeart);
-                    intent.putExtra("timerLimit",selTimer);
-                    intent.putExtra("EXTRA_SCORE", score);
-                    intent.putExtra("EXTRA_TOTAL", totalQuestions);
-                    intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
-                    intent.putExtra("EXTRA_DIFFICULTY", difficulty);
-                    
-                    startActivity(intent);
     }
-}
-
-private void generateNewQuestion(int currentQIndex, List<MathProblem> sourceQuestions) {
+    private void generateNewQuestionList(int currentQIndex, List<MathProblem> sourceQuestions) {
         if (currentQIndex < sourceQuestions.size()) {
             MathProblem currentProblem = sourceQuestions.get(currentQIndex);
 
+            // Update the Chalkboard Numbers
             int[] givens = currentProblem.getGivenNumbers();
             num1 = givens[0];
             num2 = givens[1];
             givenOneTextView.setText(String.valueOf(num1));
             givenTwoTextView.setText(String.valueOf(num2));
 
-            List<String> choicesList =
-                    new ArrayList<>(Arrays.asList(currentProblem.getChoicesArray()));
-            Collections.shuffle(choicesList);
+            // --- DRAWING BOARD RESET ---
+            // Clear the board for the new question
+            if (drawingView != null) {
+                drawingView.clearCanvas();
+            }
+            // Show the "?" hint again
+            if (hintQuestionMark != null) {
+                hintQuestionMark.setVisibility(View.VISIBLE);
+                hintQuestionMark.setAlpha(0.5f);
+            }
 
-            btnChoice1.setText(choicesList.get(0));
-            btnChoice2.setText(choicesList.get(1));
-            btnChoice3.setText(choicesList.get(2));
-            btnChoice4.setText(choicesList.get(3));
+            // Update Progress
+            questionProgressTextView.setText((currentQIndex + 1) + "/20");
+
+            // NOTE: If you don't have OCR, you need a way to input the answer.
+            // If you are using a single numeric keypad instead of 4 choices,
+            // update that keypad here instead of btnChoice.
+
+        } else {
+            // Handle Results Activity (Final Score Processing)
+            int totalQuestions = problemSet.size();
+            Intent intent = new Intent(MultipleChoicePage.this, Results.class);
+
+            // Result Messaging Logic
+            if (score == 20) {
+                intent.putExtra("EXTRA_RESULT", "Congratulations");
+            } else if (score > 15) {
+                intent.putExtra("EXTRA_RESULT", "Good Job!");
+            } else if (score > 5) {
+                intent.putExtra("EXTRA_RESULT", "Nice Try!");
+            } else {
+                intent.putExtra("EXTRA_RESULT", "Failed");
+            }
+
+            // Pass Session Data
+            intent.putExtra("quizid", quidId);
+            intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));
+            intent.putExtra("passinglevelnext", levelNext);
+            intent.putExtra("leveltype", levelid);
+            intent.putExtra("passingworldtype", worldType);
+            intent.putExtra("gametype", gametypeGame);
+            intent.putExtra("heartLimit", selHeart);
+            intent.putExtra("timerLimit", selTimer);
+            intent.putExtra("EXTRA_SCORE", score);
+            intent.putExtra("EXTRA_TOTAL", totalQuestions);
+            intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
+            intent.putExtra("EXTRA_DIFFICULTY", difficulty);
+
+            startActivity(intent);
+            finish(); // Ensure the quiz page is removed from the stack
+        }
+    }
+    private void generateNewQuestion(int currentQIndex, List<MathProblem> sourceQuestions) {
+        if (currentQIndex < sourceQuestions.size()) {
+            MathProblem currentProblem = sourceQuestions.get(currentQIndex);
+
+            // 1. Set the numbers on the chalkboard
+            int[] givens = currentProblem.getGivenNumbers();
+            num1 = givens[0];
+            num2 = givens[1];
+            givenOneTextView.setText(String.valueOf(num1));
+            givenTwoTextView.setText(String.valueOf(num2));
+
+            // 2. Clear the drawing board for the new question
+            if (drawingView != null) {
+                drawingView.clearCanvas();
+            }
+            if (hintQuestionMark != null) {
+                hintQuestionMark.setVisibility(View.VISIBLE);
+                hintQuestionMark.setAlpha(0.5f);
+            }
+
+            // 3. Shuffle and set the choice buttons (Keep these as the "Submit" mechanism)
+            List<String> choicesList = new ArrayList<>(Arrays.asList(currentProblem.getChoicesArray()));
+            Collections.shuffle(choicesList);
 
             questionProgressTextView.setText((currentQIndex + 1) + "/" + sourceQuestions.size());
         } else {
-            Toast.makeText(this, "All questions repeated.", Toast.LENGTH_SHORT).show();
-            // Navigate to Results or perform other logic here
+            launchResultsActivity(gametypeGame);
         }
     }
-    
 
-    
-    private void setupProblemSet(String operationText, String difficulty) {
-        BufferedReader bufferedReader = null;
-        CSVProcessor csvProcessor = new CSVProcessor();
-        String fileName = "additionProblemSet.csv";
-        text_operator.setText("");
-
-        if (operationText.equalsIgnoreCase("addition")) {
-            fileName = "additionProblemSet.csv";
-            text_operator.setText("+");
-        } else if (operationText.equalsIgnoreCase("subtraction")) {
-            fileName = "subtractionProblemSet.csv";
-            text_operator.setText("-");
-        } else if (operationText.equalsIgnoreCase("multiplication")) {
-            fileName = "multiplicationProblemSet.csv";
-            text_operator.setText("x");
-        } else if (operationText.equalsIgnoreCase("division")) {
-            fileName = "divisionProblemSet.csv";
-            text_operator.setText("÷");
-        }
-
-        try {
-            bufferedReader = new BufferedReader(new InputStreamReader(getAssets().open(fileName)));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        List<MathProblem> mathProblemList = csvProcessor.readCSVFile(bufferedReader);
-        List<MathProblem> filteredProblems =
-                csvProcessor.getProblemsByOperation(mathProblemList, difficulty);
-
-        // Ensure questionLimits is within the allowed range (3 to 10)
-        if (questionLimits < 3) {
-            questionLimits = 3;
-        } else if (questionLimits > 20) {
-            questionLimits = 20;
-        }
-
-        // Trim the problemSet based on the selected limit
-        problemSet = filteredProblems.subList(0, Math.min(questionLimits, filteredProblems.size()));
-
-        String questionProgressText = (currentQuestionIndex + 1) + "/" + problemSet.size();
-        questionProgressTextView.setText(questionProgressText);
-
-        // Detect repeated questions
-        Set<String> questionSet = new HashSet<>();
-        for (MathProblem problem : problemSet) {
-            if (!questionSet.add(problem.getQuestion())) {
-                Toast.makeText(
-                                this,
-                                "Repeated question found: " + problem.getQuestion(),
-                                Toast.LENGTH_SHORT)
-                        .show();
-            }
+    private String getOperatorSymbol(String op) {
+        switch (op.toLowerCase()) {
+            case "addition": return "+";
+            case "subtraction": return "-";
+            case "multiplication": return "×";
+            case "division": return "÷";
+            default: return "";
         }
     }
-    
-// ✅ Apply default vignette effect (not animated)
-private void applyDefaultVignetteEffect() {
-    int width = backgroundFrame.getWidth();
-    int height = backgroundFrame.getHeight();
-    if (width == 0 || height == 0) return;
 
-    // Create a bitmap
-    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-    Canvas canvas = new Canvas(bitmap);
 
-    // Define the default vignette effect
-    RadialGradient gradient = new RadialGradient(
-            width / 2f, height / 2f, 
-            Math.max(width, height) * 0.8f, 
-            new int[]{Color.parseColor("#FFEF47"), Color.parseColor("#898021"), Color.parseColor("#504A31")},
-            new float[]{0.2f, 0.6f, 1f}, 
-            Shader.TileMode.CLAMP);
 
-    Paint paint = new Paint();
-    paint.setShader(gradient);
-    paint.setAlpha(180); 
+    private void applyDefaultVignetteEffect() {
+        int width = backgroundFrame.getWidth();
+        int height = backgroundFrame.getHeight();
+        if (width == 0 || height == 0) return;
 
-    // Draw gradient on the canvas
-    canvas.drawRect(0, 0, width, height, paint);
-    backgroundFrame.setBackground(new BitmapDrawable(getResources(), bitmap));
-}
+        // Create a bitmap
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
 
-// ✅ Smooth transition to red when heartLimit == 1
-private void startVignetteEffect() {
-    if (backgroundFrame.getWidth() == 0 || backgroundFrame.getHeight() == 0) return;
+        // Define the default vignette effect
+        RadialGradient gradient = new RadialGradient(
+                width / 2f, height / 2f,
+                Math.max(width, height) * 0.8f,
+                new int[]{Color.parseColor("#FFEF47"), Color.parseColor("#898021"), Color.parseColor("#504A31")},
+                new float[]{0.2f, 0.6f, 1f},
+                Shader.TileMode.CLAMP);
 
-    if (heartLimit == 1 && !isRedTransitionApplied) {
-        isRedTransitionApplied = true; // Prevents unnecessary re-animation
+        Paint paint = new Paint();
+        paint.setShader(gradient);
+        paint.setAlpha(180);
 
-        ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
-        animator.setDuration(6000); // 1-second transition
-        animator.addUpdateListener(animation -> {
-            float progress = (float) animation.getAnimatedValue();
-
-            // Blend colors from default to red effect
-            int blendedColor1 = blendColors(Color.parseColor("#FFEF47"), Color.parseColor("#DD4E47"), progress);
-            int blendedColor2 = blendColors(Color.parseColor("#898021"), Color.parseColor("#A8403B"), progress);
-            int blendedColor3 = blendColors(Color.parseColor("#504A31"), Color.parseColor("#6C211D"), progress);
-
-            // Create animated vignette effect
-            Bitmap bitmap = Bitmap.createBitmap(backgroundFrame.getWidth(), backgroundFrame.getHeight(), Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmap);
-
-            RadialGradient gradient = new RadialGradient(
-                    backgroundFrame.getWidth() / 2f, backgroundFrame.getHeight() / 2f,
-                    Math.max(backgroundFrame.getWidth(), backgroundFrame.getHeight()) * 0.8f,
-                    new int[]{blendedColor1, blendedColor2, blendedColor3},
-                    new float[]{0.2f, 0.6f, 1f},
-                    Shader.TileMode.CLAMP
-            );
-
-            Paint paint = new Paint();
-            paint.setShader(gradient);
-            paint.setAlpha(200);
-
-            // Draw gradient on canvas
-            canvas.drawRect(0, 0, backgroundFrame.getWidth(), backgroundFrame.getHeight(), paint);
-            backgroundFrame.setBackground(new BitmapDrawable(getResources(), bitmap));
-        });
-
-        animator.start();
+        // Draw gradient on the canvas
+        canvas.drawRect(0, 0, width, height, paint);
+        backgroundFrame.setBackground(new BitmapDrawable(getResources(), bitmap));
     }
-}
+    private void startVignetteEffect() {
+        if (backgroundFrame.getWidth() == 0 || backgroundFrame.getHeight() == 0) return;
 
-// ✅ Color blending function
-private int blendColors(int colorStart, int colorEnd, float ratio) {
-    int startA = (colorStart >> 24) & 0xff;
-    int startR = (colorStart >> 16) & 0xff;
-    int startG = (colorStart >> 8) & 0xff;
-    int startB = colorStart & 0xff;
+        if (heartLimit == 1 && !isRedTransitionApplied) {
+            isRedTransitionApplied = true; // Prevents unnecessary re-animation
 
-    int endA = (colorEnd >> 24) & 0xff;
-    int endR = (colorEnd >> 16) & 0xff;
-    int endG = (colorEnd >> 8) & 0xff;
-    int endB = colorEnd & 0xff;
+            ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
+            animator.setDuration(6000); // 1-second transition
+            animator.addUpdateListener(animation -> {
+                float progress = (float) animation.getAnimatedValue();
 
-    return ((int) (startA + (endA - startA) * ratio) << 24) |
-           ((int) (startR + (endR - startR) * ratio) << 16) |
-           ((int) (startG + (endG - startG) * ratio) << 8) |
-           ((int) (startB + (endB - startB) * ratio));
-}
+                // Blend colors from default to red effect
+                int blendedColor1 = blendColors(Color.parseColor("#FFEF47"), Color.parseColor("#DD4E47"), progress);
+                int blendedColor2 = blendColors(Color.parseColor("#898021"), Color.parseColor("#A8403B"), progress);
+                int blendedColor3 = blendColors(Color.parseColor("#504A31"), Color.parseColor("#6C211D"), progress);
 
+                // Create animated vignette effect
+                Bitmap bitmap = Bitmap.createBitmap(backgroundFrame.getWidth(), backgroundFrame.getHeight(), Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(bitmap);
 
-    /* //Not Working
+                RadialGradient gradient = new RadialGradient(
+                        backgroundFrame.getWidth() / 2f, backgroundFrame.getHeight() / 2f,
+                        Math.max(backgroundFrame.getWidth(), backgroundFrame.getHeight()) * 0.8f,
+                        new int[]{blendedColor1, blendedColor2, blendedColor3},
+                        new float[]{0.2f, 0.6f, 1f},
+                        Shader.TileMode.CLAMP
+                );
 
-        @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+                Paint paint = new Paint();
+                paint.setShader(gradient);
+                paint.setAlpha(200);
 
-        if (requestCode == REQUEST_CODE_RESULTS && resultCode == RESULT_OK && data != null) {
-            String operationText = data.getStringExtra("operation");
-            String difficulty = data.getStringExtra("difficulty");
-            ArrayList<MathProblem> returnedAnsweredQuestions = data.getParcelableArrayListExtra("EXTRA_ANSWERED_QUESTIONS");
-            boolean repeatTask = data.getBooleanExtra("repeatTask", false);
+                // Draw gradient on canvas
+                canvas.drawRect(0, 0, backgroundFrame.getWidth(), backgroundFrame.getHeight(), paint);
+                backgroundFrame.setBackground(new BitmapDrawable(getResources(), bitmap));
+            });
 
-            if (repeatTask) {
-                    recreate();
-            }
+            animator.start();
         }
     }
-        */
+    private int blendColors(int colorStart, int colorEnd, float ratio) {
+        int startA = (colorStart >> 24) & 0xff;
+        int startR = (colorStart >> 16) & 0xff;
+        int startG = (colorStart >> 8) & 0xff;
+        int startB = colorStart & 0xff;
 
+        int endA = (colorEnd >> 24) & 0xff;
+        int endR = (colorEnd >> 16) & 0xff;
+        int endG = (colorEnd >> 8) & 0xff;
+        int endB = colorEnd & 0xff;
+
+        return ((int) (startA + (endA - startA) * ratio) << 24) |
+                ((int) (startR + (endR - startR) * ratio) << 16) |
+                ((int) (startG + (endG - startG) * ratio) << 8) |
+                ((int) (startB + (endB - startB) * ratio));
+    }
     @Override
     public void onResumeGame(boolean resumeGame) {
         if (resumeGame) {
             startTimer(timeLeftInMillis);
         }
     }
-
-    
     private void updateHeartDisplay() {
         heartTxt.setText(String.valueOf(heartLimit));
     }
@@ -689,43 +911,43 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
                         int seconds = (int) (millisUntilFinished / 1000);
                         int minutes = seconds / 60;
                         seconds = seconds % 60;
-                
+
                         numberRunlimit = String.format("%d:%02d", minutes, seconds);
-    timerTxt.setText(numberRunlimit);
-                
+                        timerTxt.setText(numberRunlimit);
+
                     }
 
                     public void onFinish() {
-                numberRunlimit = "0:00";
+                        numberRunlimit = "0:00";
                         timerTxt.setText("0:00");
                         showPauseDialog();
                         isTimerRunning = false;
-                
-                 if("Quiz".equals(gametypeGame)){
-            //No Timer
-          }  else {
-            
-       int totalQuestions = problemSet.size();
-                    
-                    //Pass Data to Results Activity
-                    Intent intent = new Intent(MultipleChoicePage.this, Results.class);
-                    
-                    intent.putExtra("EXTRA_RESULT", "Times Up!");
-                    intent.putExtra("quizid", quidId);
-                    intent.putExtra("passinglevelnext", levelNext);
-                    intent.putExtra("leveltype", levelid);
-                    intent.putExtra("passingworldtype",worldType);
-                    intent.putExtra("gametype",gametypeGame);
-                    intent.putExtra("heartLimit", selHeart);
-                    intent.putExtra("timerLimit",selTimer);
-                    intent.putExtra("EXTRA_SCORE", score);
-                    intent.putExtra("EXTRA_TOTAL", totalQuestions);
-                    intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
-                    intent.putExtra("EXTRA_DIFFICULTY", difficulty);
-                    
-                    startActivity(intent);
-    }   
-                
+
+                        if ("Quiz".equals(gametypeGame)) {
+                            //No Timer
+                        } else {
+
+                            int totalQuestions = problemSet.size();
+
+                            //Pass Data to Results Activity
+                            Intent intent = new Intent(MultipleChoicePage.this, Results.class);
+
+                            intent.putExtra("EXTRA_RESULT", "Times Up!");
+                            intent.putExtra("quizid", quidId);
+                            intent.putExtra("passinglevelnext", levelNext);
+                            intent.putExtra("leveltype", levelid);
+                            intent.putExtra("passingworldtype", worldType);
+                            intent.putExtra("gametype", gametypeGame);
+                            intent.putExtra("heartLimit", selHeart);
+                            intent.putExtra("timerLimit", selTimer);
+                            intent.putExtra("EXTRA_SCORE", score);
+                            intent.putExtra("EXTRA_TOTAL", totalQuestions);
+                            intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
+                            intent.putExtra("EXTRA_DIFFICULTY", difficulty);
+
+                            startActivity(intent);
+                        }
+
                     }
                 }.start();
 
@@ -737,167 +959,52 @@ private int blendColors(int colorStart, int colorEnd, float ratio) {
             startTimer(timeLeftInMillis); // Resume from remaining time
         }
     }
+    /**
+     * Helper method to prepare and launch the Results Activity.
+     * This method creates an intent, adds all necessary extras,
+     * and then starts the new activity. Adjust the threshold and extras as needed.
+     */
+    private void launchResultsActivity(String gameType) {
+        int totalQuestions = problemSet.size();
+        Intent intent = new Intent(MultipleChoicePage.this, Results.class);
 
-    private void checkAnswer(int btnText, Button btnChoice, String gameType) {
-    // If the game is over (e.g., after a win or loss) then ignore further inputs.
-    if (isGameOver) return;
-
-    // Play a sound effect for the click.
-    playEffectSound("click.mp3");
-
-    // Check if the currentQuestionIndex is valid within the problemSet.
-    if (currentQuestionIndex >= problemSet.size()) {
-        // All questions have been processed.
-        launchResultsActivity(gameType);
-        return;
-    }
-
-    // Retrieve the correct answer for the current question.
-    int actualAnswer = problemSet.get(currentQuestionIndex).getAnswer();
-    boolean isCorrect = (btnText == actualAnswer);
-
-    if (isCorrect) {
-        // Increase the score on a correct answer.
-        score++;
-        feedbackTextView.setText("Correct!");
-        animateCorrectAnswer(btnChoice);
-        playEffectSound("correct.mp3");
-
-        // For quiz type games, check if the score or question index reaches a threshold
-        if ("Quiz".equals(gameType)) {
-            // If the score has reached 21, or if you want to trigger at the end of the quiz.
-            if (score == 21) {
-                // Launch the results activity when the quiz condition is met.
-                launchResultsActivity(gameType);
-                return;
-            }
+        // Provide feedback messages based on the score.
+        if (("Quiz".equals(gameType) && score == 20) || (!"quiz".equals(gameType) && score == 10)) {
+            intent.putExtra("EXTRA_RESULT", "Congratulations");
+        } else if (score > 15 || score > 8) {
+            intent.putExtra("EXTRA_RESULT", "Good Job!");
+        } else if (score > 5 || score > 3) {
+            intent.putExtra("EXTRA_RESULT", "Nice Try!");
         } else {
-            // For non-quiz game types, check if the question index has reached the limit.
-            if (currentQuestionIndex == 11) {
-                launchResultsActivity(gameType);
-                return;
-            }
+            intent.putExtra("EXTRA_RESULT", "Failed");
         }
-    } else {  // For an incorrect answer.
-        feedbackTextView.setText("Wrong! The correct answer is " + actualAnswer);
-        animateIncorrectAnswer(btnChoice);
-        playEffectSound("wrong.mp3");
-        heartLimit--; // Reduce a life.
-        updateHeartDisplay();
 
-        // For quiz type games, if too many questions have been processed.
+        // Pass necessary extras to the Results activity.
         if ("Quiz".equals(gameType)) {
-            if (currentQuestionIndex > 21) {
-                launchResultsActivity(gameType);
-                return;
-            }
-        } else {
-            // In non-quiz game types, check if no lives remain.
-            if (heartLimit == 0) {
-                playSound("failed.mp3");
-                showGameOver(gameType);
-                return;
-            }
+            intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));
         }
-        
-        if ("Quiz".equals(gameType)) {
-            
-            }else{
-                 // If only one heart is left, you may want to add a visual effect.
-        if (heartLimit == 1) {
-            startVignetteEffect();
-        }
-            }
-       
+        intent.putExtra("quizid", quidId);
+        intent.putExtra("passinglevelnext", levelNext);
+        intent.putExtra("leveltype", levelid);
+        intent.putExtra("passingworldtype", worldType);
+        intent.putExtra("gametype", gameType);
+        intent.putExtra("heartLimit", selHeart);
+        intent.putExtra("timerLimit", selTimer);
+        intent.putExtra("EXTRA_SCORE", score);
+        intent.putExtra("EXTRA_TOTAL", totalQuestions);
+        intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
+        intent.putExtra("EXTRA_DIFFICULTY", difficulty);
 
-        // Highlight the correct answer for user feedback.
-        highlightCorrectAnswer(actualAnswer);
+        // POINTS FOR THIS ROUND
+        intent.putExtra("EXTRA_POINTS", totalPoints);
+
+        // Start the Results activity.
+        startActivity(intent);
     }
 
-    // Record the answered question.
-    answeredQuestions.add(problemSet.get(currentQuestionIndex));
-    // Move on to the next question.
-    currentQuestionIndex++;
-
-    // Check if we have reached the end of the problemSet.
-    if (currentQuestionIndex >= problemSet.size()) {
-        // All questions have been answered, so launch the results screen.
-        launchResultsActivity(gameType);
-        return;
-    }
-
-    // For quiz games: switch operations every 5 questions.
-    if ("Quiz".equals(gameType)) {
-        if (currentQuestionIndex % 5 == 0 && !operationList.isEmpty()) {
-            switchOperation(difficulty);  // Use the current difficulty level when switching.
-        }
-    }
-
-    // Post a delay before generating the new question, allowing animations or feedback to complete.
-    btnChoice.postDelayed(() -> {
-        // Clear any feedback message.
-        feedbackTextView.setText("");
-
-        if ("Quiz".equals(gameType)) {
-            // For quiz mode, check if there are more questions to generate.
-            if (currentQuestionIndex < 20) {
-                generateNewQuestionList(currentQuestionIndex, problemSet);
-            } else {
-                Toast.makeText(this, "All Questions Completed!", Toast.LENGTH_SHORT).show();
-            }
-        } else {
-            // For non-quiz mode, generate the next question if available.
-            if (currentQuestionIndex < problemSet.size()) {
-                generateNewQuestion(currentQuestionIndex, problemSet);
-            }
-        }
-    }, 1000);
-}
-
-/**
- * Helper method to prepare and launch the Results Activity.
- * This method creates an intent, adds all necessary extras,
- * and then starts the new activity. Adjust the threshold and extras as needed.
- */
-private void launchResultsActivity(String gameType) {
-    int totalQuestions = problemSet.size();
-    Intent intent = new Intent(MultipleChoicePage.this, Results.class);
-
-    // Provide feedback messages based on the score.
-    if (("Quiz".equals(gameType) && score == 20) || (!"quiz".equals(gameType) && score == 10)) {
-        intent.putExtra("EXTRA_RESULT", "Congratulations");
-    } else if (score > 15 || score > 8) {
-        intent.putExtra("EXTRA_RESULT", "Good Job!");
-    } else if (score > 5 || score > 3) {
-        intent.putExtra("EXTRA_RESULT", "Nice Try!");
-    } else {
-        intent.putExtra("EXTRA_RESULT", "Failed");
-    }
-    
-    // Pass necessary extras to the Results activity.
-    if ("Quiz".equals(gameType)) {
-        intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));
-    }
-    intent.putExtra("quizid", quidId);
-    intent.putExtra("passinglevelnext", levelNext);
-    intent.putExtra("leveltype", levelid);
-    intent.putExtra("passingworldtype", worldType);
-    intent.putExtra("gametype", gameType);
-    intent.putExtra("heartLimit", selHeart);
-    intent.putExtra("timerLimit", selTimer);
-    intent.putExtra("EXTRA_SCORE", score);
-    intent.putExtra("EXTRA_TOTAL", totalQuestions);
-    intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
-    intent.putExtra("EXTRA_DIFFICULTY", difficulty);
-
-    // Start the Results activity.
-    startActivity(intent);
-}
-
-    
 
     private void playSound(String fileName) {
-        
+
 
         // Stop any previous sound effect before playing a new one
         if (soundEffectPlayer != null) {
@@ -922,64 +1029,49 @@ private void launchResultsActivity(String gameType) {
         }
     }
 
-private void playEffectSound(String fileName) {
-    
+    private void playEffectSound(String fileName) {
 
-    // Stop any previous sound effect before playing a new one
-    if (soundEffectPlayer != null) {
-        soundEffectPlayer.release();
-        soundEffectPlayer = null;
-    }
 
-    try {
-        AssetFileDescriptor afd = getAssets().openFd(fileName);
-        soundEffectPlayer = new MediaPlayer();
-        soundEffectPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-        soundEffectPlayer.prepare();
-        
-        // Set volume to max
-        soundEffectPlayer.setVolume(1.0f, 1.0f);
-
-        soundEffectPlayer.setOnCompletionListener(mp -> {
-            mp.release();
+        // Stop any previous sound effect before playing a new one
+        if (soundEffectPlayer != null) {
+            soundEffectPlayer.release();
             soundEffectPlayer = null;
-        });
+        }
 
-        soundEffectPlayer.start();
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
-}
-
-
-    private void playBGGame(String fileName) {
-    if (bgMediaPlayer == null) { // Prevent re-initializing
         try {
             AssetFileDescriptor afd = getAssets().openFd(fileName);
-            bgMediaPlayer = new MediaPlayer();
-            bgMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-            bgMediaPlayer.prepare();
-            
-            // Set looping to true
-            bgMediaPlayer.setLooping(true);
+            soundEffectPlayer = new MediaPlayer();
+            soundEffectPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+            soundEffectPlayer.prepare();
 
-            bgMediaPlayer.start();
+            // Set volume to max
+            soundEffectPlayer.setVolume(1.0f, 1.0f);
+
+            soundEffectPlayer.setOnCompletionListener(mp -> {
+                mp.release();
+                soundEffectPlayer = null;
+            });
+
+            soundEffectPlayer.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-}
 
 
-    private void highlightCorrectAnswer(int actualAnswer) {
-        if (Integer.parseInt(btnChoice1.getText().toString()) == actualAnswer) {
-            animateCorrectAnswer(btnChoice1);
-        } else if (Integer.parseInt(btnChoice2.getText().toString()) == actualAnswer) {
-            animateCorrectAnswer(btnChoice2);
-        } else if (Integer.parseInt(btnChoice3.getText().toString()) == actualAnswer) {
-            animateCorrectAnswer(btnChoice3);
-        } else if (Integer.parseInt(btnChoice4.getText().toString()) == actualAnswer) {
-            animateCorrectAnswer(btnChoice4);
+    private void playBGGame(String fileName) {
+        if (bgMediaPlayer == null) { // Prevent re-initializing
+            try {
+                AssetFileDescriptor afd = getAssets().openFd(fileName);
+                bgMediaPlayer = new MediaPlayer();
+                bgMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+                bgMediaPlayer.prepare();
+                bgMediaPlayer.setLooping(true);
+
+                bgMediaPlayer.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -1002,7 +1094,7 @@ private void playEffectSound(String fileName) {
         int totalQuestions = problemSet.size();
 
         // Pass data to Results activity
-        
+
         if (score == 20) {
             intent.putExtra("EXTRA_RESULT", "Congratulations");
         } else if (score > 15) {
@@ -1012,19 +1104,24 @@ private void playEffectSound(String fileName) {
         } else {
             intent.putExtra("EXTRA_RESULT", "Failed");
         }
-        intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));  
+        intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));
+
         intent.putExtra("quizid", quidId);
         intent.putExtra("passinglevelnext", levelNext);
         intent.putExtra("leveltype", levelid);
-        intent.putExtra("passingworldtype",worldType);
-        intent.putExtra("gametype",gameType);
+        intent.putExtra("passingworldtype", worldType);
+        intent.putExtra("gametype", gameType);
         intent.putExtra("heartLimit", selHeart);
-        intent.putExtra("timerLimit",selTimer);
+        intent.putExtra("timerLimit", selTimer);
         intent.putExtra("EXTRA_SCORE", score);
+
+        // POINTS EARNED IN THIS ROUND
+        intent.putExtra("EXTRA_POINTS", totalPoints);
+
         intent.putExtra("EXTRA_TOTAL", totalQuestions);
         intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
         intent.putExtra("EXTRA_DIFFICULTY", difficulty);
-        
+
         startActivity(intent);
     }
 
@@ -1052,128 +1149,217 @@ private void playEffectSound(String fileName) {
         startActivity(intent);
         finish();
     }
+    private void animateCorrectAnswer() {
 
-    private void animateCorrectAnswer(Button button) {
+        playEffectSound("correct.mp3");
 
-        button.setBackgroundResource(R.drawable.btn_condition_create);
-
-        ObjectAnimator bounceAnimator = ObjectAnimator.ofFloat(button, "translationY", 0, -30f, 0);
-        bounceAnimator.setDuration(400);
-        bounceAnimator.setRepeatCount(2);
-
-        bounceAnimator.addListener(
-                new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        // Reset the button background to the specified drawable
-                        button.setBackgroundResource(R.drawable.btn_short_condition);
-                    }
-                });
-
-        bounceAnimator.start();
-    }
-
-    private void animateIncorrectAnswer(Button button) {
-        
-        
-        // Change the background color to red
-        button.setBackgroundResource(R.drawable.btn_condition_red);
-
-        // Create the shake animation
-        ObjectAnimator shakeAnimator =
-                ObjectAnimator.ofFloat(button, "translationX", 0, 20f, -20f, 20f, -20f, 0);
-        shakeAnimator.setDuration(350);
-
-        // Add a listener to change the background back after the animation ends
-        shakeAnimator.addListener(
-                new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        // Reset the button background to the specified drawable
-                        button.setBackgroundResource(R.drawable.btn_short_condition);
-                    
-                    }
-                });
-
-        // Start the animation
-        shakeAnimator.start();
-    }
-
-    private void animateButtonClick(View button) {
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.6f, 1.1f, 1f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.6f, 1.1f, 1f);
-
-        // Set duration for the animations
-        scaleX.setDuration(3000);
-        scaleY.setDuration(3000);
-
-        // OvershootInterpolator for game-like snappy effect
-        OvershootInterpolator overshootInterpolator = new OvershootInterpolator(2f);
-        scaleX.setInterpolator(overshootInterpolator);
-        scaleY.setInterpolator(overshootInterpolator);
-
-        // Combine animations into a set
-        AnimatorSet animatorSet = new AnimatorSet();
-        animatorSet.playTogether(scaleX, scaleY);
-        animatorSet.start();
-    }
-
-    // Function to animate button focus with a smooth pulsing bounce effect
-    private void animateButtonFocus(View button) {
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 1.06f, 1f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 1.06f, 1f);
-
-        // Set duration for a slower, smoother pulsing bounce effect
-        scaleX.setDuration(2000);
-        scaleY.setDuration(2000);
-
-        // AccelerateDecelerateInterpolator for smooth pulsing
-        AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
-        scaleX.setInterpolator(interpolator);
-        scaleY.setInterpolator(interpolator);
-
-        // Set repeat count and mode on each ObjectAnimator
-        scaleX.setRepeatCount(ObjectAnimator.INFINITE); // Infinite repeat
-        scaleX.setRepeatMode(ObjectAnimator.REVERSE); // Reverse animation on repeat
-        scaleY.setRepeatCount(ObjectAnimator.INFINITE); // Infinite repeat
-        scaleY.setRepeatMode(ObjectAnimator.REVERSE); // Reverse animation on repeat
-
-        // Combine the animations into an AnimatorSet
-        AnimatorSet animatorSet = new AnimatorSet();
-        animatorSet.playTogether(scaleX, scaleY);
-        animatorSet.start();
-    }
-
-    private void animateButtonPushDowm(View button) {
-        ObjectAnimator scaleX =
-                ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.95f); // Scale down slightly
-        ObjectAnimator scaleY =
-                ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.95f); // Scale down slightly
-
-        // Set shorter duration for a quick push effect
-        scaleX.setDuration(200);
-        scaleY.setDuration(200);
-
-        // Use a smooth interpolator
-        AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
-        scaleX.setInterpolator(interpolator);
-        scaleY.setInterpolator(interpolator);
-
-        // Combine the animations into an AnimatorSet
-        AnimatorSet animatorSet = new AnimatorSet();
-        animatorSet.playTogether(scaleX, scaleY);
-
-        // Start the animation
-        animatorSet.start();
-    }
-
-    // Stop Focus Animation
-    private void stopButtonFocusAnimation(View button) {
-        AnimatorSet animatorSet = (AnimatorSet) button.getTag();
-        if (animatorSet != null) {
-            animatorSet.cancel(); // Stop the animation when focus is lost
+        int basePoints = 10;
+        int bonusPoints = 0;
+        long totalTimeAllowed = selTimer * 1000L;
+        if (timeLeftInMillis > (totalTimeAllowed / 2)) {
+            bonusPoints = 5;
         }
+
+        int pointsThisRound = basePoints + bonusPoints;
+        totalPoints += pointsThisRound;
+        score++;
+
+        TextView pointsEarnedTxt = findViewById(R.id.pointsEarnedTxt);
+        pointsEarnedTxt.setText("+" + pointsThisRound + " Points!");
+        pointsEarnedTxt.setVisibility(View.VISIBLE);
+
+        if (bonusPoints > 0) {
+            TextView bonusTxt = findViewById(R.id.bonusTxt);
+            bonusTxt.setText("Quick Thinker Bonus! +5");
+            bonusTxt.setVisibility(View.VISIBLE);
+        }
+
+        if (drawingView != null) {
+            drawingView.setFeedbackColor(true);
+
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                drawingView.clearCanvas();
+            }, 1000);
+        }
+
+        RelativeLayout overlay = findViewById(R.id.dialogOverlay);
+        LinearLayout successDialog = findViewById(R.id.customDialogSuccess);
+
+        overlay.setVisibility(View.VISIBLE);
+        successDialog.setVisibility(View.VISIBLE);
+
+        // Pop animation
+        successDialog.setScaleX(0.7f);
+        successDialog.setScaleY(0.7f);
+        successDialog.setAlpha(0f);
+
+        successDialog.animate()
+                .scaleX(1f)
+                .scaleY(1f)
+                .alpha(1f)
+                .setDuration(300)
+                .start();
+
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            drawingView.resetMarkerColor();
+            hintQuestionMark.setVisibility(View.VISIBLE);
+            successDialog.setVisibility(View.GONE);
+            overlay.setVisibility(View.GONE);
+
+        }, 2500);
     }
+    private void showKidFriendlyErrorAnimated(MathProblem problem, Runnable onComplete) {
+        playEffectSound("wrong.mp3");
+        drawingView.setDrawingEnabled(false);
+        drawingView.setFeedbackColor(false);
+
+        new Handler(Looper.getMainLooper()).postDelayed(() -> drawingView.clearCanvas(), 1000);
+
+        RelativeLayout overlay = findViewById(R.id.dialogOverlay);
+        LinearLayout failedDialog = findViewById(R.id.customDialogFailed);
+        FlexboxLayout visualContainer = failedDialog.findViewById(R.id.visualContainer);
+        visualContainer.removeAllViews();
+        TextView messageView = failedDialog.findViewById(R.id.dialogMessageFailed);
+        int[] numbers = problem.getGivenNumbers();
+        String operationName = problem.getOperation();
+        String correctAnswer = String.valueOf(problem.getAnswer());
+
+        overlay.setVisibility(View.VISIBLE);
+        failedDialog.setVisibility(View.VISIBLE);
+        failedDialog.setScaleX(0.7f);
+        failedDialog.setScaleY(0.7f);
+        failedDialog.setAlpha(0f);
+        failedDialog.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(300).start();
+
+        // Create a horizontal LinearLayout for problem display
+        FlexboxLayout problemLayout = new FlexboxLayout(this);
+        problemLayout.setFlexWrap(FlexWrap.WRAP);
+        problemLayout.setJustifyContent(JustifyContent.CENTER);
+        problemLayout.setAlignItems(AlignItems.CENTER);
+        visualContainer.addView(problemLayout);
+
+        // Add first operand apples
+        for (int i = 0; i < numbers[0]; i++) {
+            ImageView apple = new ImageView(this);
+            apple.setImageResource(R.drawable.ic_apple);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(80, 80);
+            lp.setMargins(4, 0, 4, 0);
+            apple.setLayoutParams(lp);
+            problemLayout.addView(apple);
+            addIncreasingBounce(apple, i * 100, 3, 1.2f, 0.05f); // ✅ all apples bounce
+        }
+
+        // Add operator as TextView
+        TextView operatorView = new TextView(this);
+        String operatorSymbol = "";
+        switch (operationName) {
+            case "Addition": operatorSymbol = "+"; break;
+            case "Subtraction": operatorSymbol = "-"; break;
+            case "Multiplication": operatorSymbol = "×"; break;
+            case "Division": operatorSymbol = "÷"; break;
+        }
+        operatorView.setText(operatorSymbol);
+        operatorView.setTextSize(28f);
+        operatorView.setTextColor(Color.parseColor("#3E2723"));
+        operatorView.setPadding(16, 0, 16, 0);
+        problemLayout.addView(operatorView);
+
+        // Add second operand apples (or crosses for subtraction)
+        for (int i = 0; i < numbers[1]; i++) {
+            ImageView img = new ImageView(this);
+            if ("Subtraction".equals(operationName)) img.setImageResource(R.drawable.ic_cross);
+            else img.setImageResource(R.drawable.ic_apple);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(80, 80);
+            lp.setMargins(4, 0, 4, 0);
+            img.setLayoutParams(lp);
+            problemLayout.addView(img);
+            addIncreasingBounce(img, i * 100, 3, 1.2f, 0.05f); // ✅ also bounces
+        }
+
+        if ("Multiplication".equals(operationName)) {
+            visualContainer.removeAllViews();
+            for (int i = 0; i < numbers[0]; i++) {
+                LinearLayout row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setGravity(Gravity.CENTER);
+                visualContainer.addView(row);
+                for (int j = 0; j < numbers[1]; j++) {
+                    ImageView apple = new ImageView(this);
+                    apple.setImageResource(R.drawable.ic_apple);
+                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(80, 80);
+                    lp.setMargins(4, 4, 4, 4);
+                    apple.setLayoutParams(lp);
+                    row.addView(apple);
+                    addIncreasingBounce(apple, (i * numbers[1] + j) * 100, 3, 1.2f, 0.05f); // ✅ bouncing
+                }
+            }
+        }
+
+        if ("Division".equals(operationName)) {
+            visualContainer.removeAllViews();
+            int groups = numbers[1];
+            int perGroup = numbers[0] / groups;
+            for (int i = 0; i < groups; i++) {
+                LinearLayout row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setGravity(Gravity.CENTER);
+                visualContainer.addView(row);
+                for (int j = 0; j < perGroup; j++) {
+                    ImageView apple = new ImageView(this);
+                    apple.setImageResource(R.drawable.ic_apple);
+                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(80, 80);
+                    lp.setMargins(4, 4, 4, 4);
+                    apple.setLayoutParams(lp);
+                    row.addView(apple);
+                    addIncreasingBounce(apple, (i * perGroup + j) * 100, 3, 1.2f, 0.05f); // ✅ bouncing
+                }
+            }
+        }
+        messageView.setText("Correct answer: " + correctAnswer + "\nDon't worry, try again!");
+        messageView.setTextColor(Color.parseColor("#388E3C"));
+
+        // Hide dialog after 5 seconds and re-enable drawing
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            drawingView.resetMarkerColor();
+            hintQuestionMark.setVisibility(View.VISIBLE);
+            failedDialog.setVisibility(View.GONE);
+            overlay.setVisibility(View.GONE);
+            drawingView.setDrawingEnabled(true);
+            if (onComplete != null) onComplete.run();
+        }, 5000);
+    }
+    private void addIncreasingBounce(View view, long startDelay, int bounces, float startScale, float increment) {
+        view.setScaleX(0f);
+        view.setScaleY(0f);
+
+        // Pop in first
+        view.animate()
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(200)
+                .setStartDelay(startDelay)
+                .withEndAction(() -> startBounceLoop(view, 0, bounces, startScale, increment))
+                .start();
+    }
+
+    private void startBounceLoop(View view, int currentBounce, int totalBounces, float scale, float increment) {
+        if (currentBounce >= totalBounces) return;
+
+        float nextScale = scale + increment;
+        view.animate()
+                .scaleX(nextScale)
+                .scaleY(nextScale)
+                .setDuration(150)
+                .withEndAction(() -> view.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(150)
+                        .withEndAction(() -> startBounceLoop(view, currentBounce + 1, totalBounces, nextScale, increment))
+                        .start())
+                .start();
+    }
+
+
 
     @Override
     protected void onDestroy() {
@@ -1199,7 +1385,7 @@ private void playEffectSound(String fileName) {
         if (bgMediaPlayer != null) {
             bgMediaPlayer.pause();
         }
-        
+
     }
 
     @Override

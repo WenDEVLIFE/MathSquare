@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Rounded corners -->
+    <corners android:radius="8dp"/>
+
+    <!-- Gradient background for modern look -->
+    <gradient
+        android:startColor="#FF8C00"
+        android:endColor="#FFA500"
+        android:angle="90"/>
+
+    <!-- Shadow effect -->
+    <solid android:color="#20000000"/> <!-- Slight transparent overlay -->
+</shape>

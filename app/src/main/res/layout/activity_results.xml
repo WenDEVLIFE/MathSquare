@@ -107,6 +107,18 @@
                  android:text="5/10" />
 
             <TextView
+                android:id="@+id/textViewPoints"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:gravity="center"
+                android:fontFamily="@font/marmelad"
+                android:textSize="28sp"
+                android:textColor="#FFD700"
+                android:text="Points: 125"
+                android:textStyle="bold" />
+
+            <TextView
                  android:layout_height="wrap_content"
                  android:layout_width="match_parent"
                  android:layout_marginBottom="20dp"

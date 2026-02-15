@@ -9,9 +9,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.happym.mathsquare" />
-                  <option name="mobileSdkAppId" value="1:562704321125:android:165fe315a579013c13d48c" />
-                  <option name="projectId" value="mathsquare-1cf4b" />
-                  <option name="projectNumber" value="562704321125" />
+                  <option name="mobileSdkAppId" value="1:628897975056:android:41fff0c3708d38b2987395" />
+                  <option name="projectId" value="revmmo-db" />
+                  <option name="projectNumber" value="628897975056" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

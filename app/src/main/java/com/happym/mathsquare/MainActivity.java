@@ -6,6 +6,9 @@ import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.OvershootInterpolator;
@@ -14,7 +17,9 @@ import android.animation.ObjectAnimator;
 import android.animation.AnimatorSet;
 
 // import androidx.activity.EdgeToEdge;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,9 +48,17 @@ import android.view.animation.DecelerateInterpolator;
 // import androidx.activity.EdgeToEdge;
 import android.widget.FrameLayout;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.happym.mathsquare.Animation.*;
+import com.happym.mathsquare.Service.FirebaseDb;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -55,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
     private FrameLayout numberContainer, backgroundFrame;
     private final Random random = new Random();
     private NumBGAnimation numBGAnimation;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
 
         FirebaseApp.initializeApp(this);
 
+        db = FirebaseDb.getFirestore();
+
         MusicManager.playBGGame(this, "music.mp3"); // Replace with actual file
 
         TextView txtTitle = findViewById(R.id.text_title);
@@ -73,28 +89,129 @@ public class MainActivity extends AppCompatActivity {
         Button btnEExit = findViewById(R.id.btn_exitgame);
         LinearLayout btnPlayQuiz = findViewById(R.id.btn_play_quiz);
         LinearLayout btnLogOut = findViewById(R.id.btn_logout);
+        LinearLayout btnLogin = findViewById(R.id.btn_login);
+
+        LinearLayout achievementLayout = findViewById(R.id.achievement_layout);
+        LinearLayout profileLayout = findViewById(R.id.profile_layout);
+
+        achievementLayout.setOnClickListener(v -> {
+            playSound("click.mp3");
+            Intent intent = new Intent(MainActivity.this, LeaderboardsActivity.class);
+            startActivity(intent);
+        });
+        profileLayout.setOnClickListener(v -> {
+            playSound("click.mp3");
+            Intent intent = new Intent(MainActivity.this, StudentProfileActivity.class);
+            startActivity(intent);
+        });
+
+        LinearLayout achievementDialog = findViewById(R.id.customDialogSuccess);
+        RelativeLayout dialogOverlay = findViewById(R.id.dialogOverlay);
+        ImageView achievementIcon = findViewById(R.id.achievementIcon);
+        TextView achievementText = findViewById(R.id.achievementText);
+        dialogOverlay.setVisibility(View.GONE);
+        achievementDialog.setVisibility(View.GONE);
 
         animateButtonFocus(btnLogOut);
         animateButtonFocus(btnPlay);
         animateButtonFocus(btnTutorial);
         animateButtonFocus(btnEExit);
         animateButtonFocus(btnPlayQuiz);
-        animateButtonFocus(btnLogOut);
+        animateButtonFocus(btnLogin);
         startRotationAnimation(txtTitle);
 
         if (sharedPreferences.StudentIsLoggedIn(this)) {
-            
+            // Student logged in
+            btnLogOut.setVisibility(View.VISIBLE);
+            btnLogin.setVisibility(View.GONE);
+            btnPlayQuiz.setVisibility(View.VISIBLE);
+
             String section = sharedPreferences.getSection(this);
             String grade = sharedPreferences.getGrade(this);
             String firstName = sharedPreferences.getFirstN(this);
             String lastName = sharedPreferences.getLastN(this);
-            
+
+            CollectionReference studentCollection = db
+                    .collection("Accounts")
+                    .document("Students")
+                    .collection("MathSquare");
+
+            Query query = studentCollection
+                    .whereEqualTo("firstName", firstName)
+                    .whereEqualTo("lastName", lastName)
+                    .whereEqualTo("section", section)
+                    .whereEqualTo("grade", grade);
+
+            query.get().addOnSuccessListener(querySnapshots -> {
+                for (DocumentSnapshot document : querySnapshots) {
+                    if (document.exists()) {
+                        DocumentReference studentDocRef = document.getReference();
+
+                        // Fetch the latest achievement badge
+                        String achievementBadge = document.getString("achievement_badge");
+                        List<String> displayedAchievements =
+                                (List<String>) document.get("displayed_achievement_screen");
+                        if (displayedAchievements == null) displayedAchievements = new ArrayList<>();
+
+                        if (achievementBadge != null && !displayedAchievements.contains(achievementBadge)) {
+                            dialogOverlay.setVisibility(View.VISIBLE);
+                            achievementDialog.setVisibility(View.VISIBLE);
+                            switch (achievementBadge) {
+                                case "Addition Master":
+                                    achievementIcon.setImageResource(R.drawable.ic_addition_master);
+                                    achievementText.setText("Addition Master!");
+                                    break;
+                                case "Math Explorer":
+                                    achievementIcon.setImageResource(R.drawable.ic_math_explorer);
+                                    achievementText.setText("Math Explorer!");
+                                    break;
+                                case "Quiz Whiz":
+                                    achievementIcon.setImageResource(R.drawable.ic_quiz_whiz);
+                                    achievementText.setText("Quiz Whiz!");
+                                    break;
+                                case "Speed Demon":
+                                    achievementIcon.setImageResource(R.drawable.ic_speed_demon);
+                                    achievementText.setText("Speed Demon!");
+                                    break;
+                                default:
+                                    achievementText.setText(achievementBadge);
+                                    break;
+                            }
+
+                            displayedAchievements.add(achievementBadge);
+                            studentDocRef.update("displayed_achievement_screen", displayedAchievements)
+                                    .addOnSuccessListener(aVoid ->
+                                            Log.d("Achievement", "Achievement marked as displayed"))
+                                    .addOnFailureListener(e ->
+                                            Log.e("Achievement", "Failed to update displayed achievements", e));
+                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                achievementDialog.setVisibility(View.GONE);
+                                dialogOverlay.setVisibility(View.GONE);
+                            }, 4000);
+                        }
+                    }
+                }
+            }).addOnFailureListener(e ->
+                    Log.e("Firestore", "Failed to fetch student document", e));
+
+
             Toast.makeText(this, "Hi " + firstName + " " + lastName + "! Ready to play?", Toast.LENGTH_SHORT).show();
-
         } else {
-
+            // No student logged in
+            btnLogOut.setVisibility(View.GONE);
+            btnLogin.setVisibility(View.VISIBLE);
             btnPlayQuiz.setVisibility(View.GONE);
         }
+
+        btnLogin.setOnClickListener(view -> {
+            animateButtonClick(btnLogin);
+            Intent intent = new Intent(MainActivity.this, signInUp.class);
+            playSound("click.mp3");
+            startActivity(intent);
+            stopButtonFocusAnimation(btnLogin);
+            animateButtonFocus(btnLogin);
+        });
+
 
         btnPlay.setOnClickListener(
                 view -> {
