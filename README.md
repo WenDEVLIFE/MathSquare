@@ -365,10 +365,8 @@ This project is part of a professional portfolio. Usage rights and licensing ter
 ## 📞 Contact & Portfolio
 
 For inquiries about this project or other development work:
-- 📧 Email: [Your Email]
-- 💼 LinkedIn: [Your Profile]
-- 🌐 Portfolio: [Your Website]
-- 🐙 GitHub: [Your GitHub]
+- 📧 Email: myfavoritemappingswar@gmail.com / WenDEVLIFE
+- 🐙 GitHub: https://github.com/Cyzo50218/
 
 ---
 
