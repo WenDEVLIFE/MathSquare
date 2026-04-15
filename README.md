@@ -364,9 +364,30 @@ This project is part of a professional portfolio. Usage rights and licensing ter
 
 ## 📞 Contact & Portfolio
 
-For inquiries about this project or other development work:
-- 📧 Email: myfavoritemappingswar@gmail.com / WenDEVLIFE
-- 🐙 GitHub: https://github.com/Cyzo50218/
+### Connect With Me
+
+I'm passionate about building scalable Android applications and innovative solutions. Let's connect!
+
+| Platform | Link | Username |
+|----------|------|----------|
+| 📧 **Email** | myfavoritemappingswar@gmail.com | — |
+| 🐙 **GitHub** | [github.com/WenDEVLIFE](https://github.com/WenDEVLIFE/) | @WenDEVLIFE |
+| 🔗 **GitHub Alt** | [github.com/Cyzo50218](https://github.com/Cyzo50218/) | @Cyzo50218 |
+
+### About This Repository
+
+- **Repository Owner**: WenDEVLIFE
+- **Primary Branch**: master
+- **Last Updated**: April 2026
+- **Status**: Active Development & Maintenance
+
+### For Collaboration or Inquiries
+
+Feel free to reach out for:
+- 💼 Professional opportunities
+- 🤝 Collaboration and open source projects
+- 💡 Code reviews and technical discussions
+- 📚 Learning resources or mentorship
 
 ---
 
