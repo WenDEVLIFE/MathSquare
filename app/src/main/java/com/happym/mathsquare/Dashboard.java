@@ -1,14 +1,22 @@
 package com.happym.mathsquare;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -20,6 +28,7 @@ import androidx.core.view.WindowCompat;
 
 import com.google.firebase.FirebaseApp;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -27,6 +36,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
+import com.happym.mathsquare.Animation.VignetteEffect;
 import com.happym.mathsquare.Service.FirebaseDb;
 import com.happym.mathsquare.dashboard_StudentsPanel;
 import com.happym.mathsquare.dashboard_SectionPanel;
@@ -65,6 +75,9 @@ public class Dashboard extends AppCompatActivity {
     private ListenerRegistration sectionsListener;
     private String teacherEmail;
 
+    private TextView statStudents, statSections, statQuizzes;
+    private ListenerRegistration studentsListener, sectionsListenerStats, quizzesListener;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,7 +85,7 @@ public class Dashboard extends AppCompatActivity {
         setContentView(R.layout.layout_teacher_dashboard);
         FirebaseApp.initializeApp(this);
 
-        LinearLayout btnLogOut = findViewById(R.id.btn_logout);
+        ImageView btnLogOut = findViewById(R.id.btn_logout);
         animateButtonFocus(btnLogOut);
 
         // Firestore instance
@@ -80,13 +93,12 @@ public class Dashboard extends AppCompatActivity {
 
         teacherEmail = sharedPreferences.getEmail(this);
 
-        switchquiz1 = findViewById(R.id.switch_quiz1);
-        switchquiz2 = findViewById(R.id.switch_quiz2);
+        statStudents = findViewById(R.id.stat_students);
+        statSections = findViewById(R.id.stat_sections);
+        statQuizzes  = findViewById(R.id.stat_quizzes);
 
         firstSection = findViewById(R.id.first_grade);
         firstGrade = findViewById(R.id.first_section);
-        initializeSwitchListeners();
-
         ImageView createsection = findViewById(R.id.createsection);
         quizhistory_panel = findViewById(R.id.quizhistory_panel);
         sections_panel = findViewById(R.id.sections_panel);
@@ -110,30 +122,168 @@ public class Dashboard extends AppCompatActivity {
 
         btnLogOut.setOnClickListener(view -> {
             animateButtonClick(btnLogOut);
-            Intent intent = new Intent(this, signInUp.class);
-            sharedPreferences.StudentIsSetLoggedIn(this, false);
-            sharedPreferences.setLoggedIn(this, false);
-            sharedPreferences.clearSection(this);
-            sharedPreferences.clearGrade(this);
-            sharedPreferences.clearFirstName(this);
-            sharedPreferences.clearLastName(this);
             playSound("click.mp3");
-            startActivity(intent);
-            finish();
-            Toast.makeText(this, "Logout successfully!", Toast.LENGTH_SHORT).show();
             stopButtonFocusAnimation(btnLogOut);
             animateButtonFocus(btnLogOut);
-
+            showLogoutDialog();
         });
 
+    }
+
+    // --- LOGOUT DIALOG ---
+    private void showLogoutDialog() {
+        Dialog logoutDialog = new Dialog(this);
+        logoutDialog.setContentView(R.layout.layout_dialog_logout);
+
+        LinearLayout dialogContainer = logoutDialog.findViewById(R.id.dialog_container);
+        LinearLayout btnNo = logoutDialog.findViewById(R.id.btn_dialog_no);
+        FrameLayout btnYes = logoutDialog.findViewById(R.id.btn_dialog_yes);
+        TextView tvYesText = logoutDialog.findViewById(R.id.tv_yes_text);
+        ProgressBar pbYesLoading = logoutDialog.findViewById(R.id.pb_yes_loading);
+
+        if (dialogContainer != null) {
+            VignetteEffect.apply(this, dialogContainer, 24f);
+        }
+
+        if (logoutDialog.getWindow() != null) {
+            logoutDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            logoutDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            logoutDialog.getWindow().setGravity(Gravity.CENTER);
+            logoutDialog.getWindow().setDimAmount(0.7f);
+        }
+
+        logoutDialog.setCancelable(false);
+
+        btnNo.setOnClickListener(v -> {
+            animateButtonClick(btnNo);
+            logoutDialog.dismiss();
+        });
+
+        btnYes.setOnClickListener(v -> {
+            animateButtonClick(btnYes);
+
+            tvYesText.setVisibility(View.GONE);
+            pbYesLoading.setVisibility(View.VISIBLE);
+
+            btnNo.setEnabled(false);
+            btnYes.setEnabled(false);
+
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                logoutDialog.dismiss();
+                FirebaseAuth.getInstance().signOut();
+                sharedPreferences.StudentIsSetLoggedIn(this, false);
+                sharedPreferences.setLoggedIn(this, false);
+                sharedPreferences.setAdminLoggedIn(this, false);
+                sharedPreferences.clearSection(this);
+                sharedPreferences.clearGrade(this);
+                sharedPreferences.clearFirstName(this);
+                sharedPreferences.clearLastName(this);
+                Intent intent = new Intent(this, signInUp.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                finish();
+
+                Toast.makeText(this, "Logout successfully!", Toast.LENGTH_SHORT).show();
+            }, 1200);
+        });
+
+        logoutDialog.show();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         listenToTeacherSections(firstSection, firstGrade);
+        listenToStats();
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (sectionsListener != null) sectionsListener.remove();
+        if (studentsListener != null) studentsListener.remove();
+        if (sectionsListenerStats != null) sectionsListenerStats.remove();
+        if (quizzesListener != null) quizzesListener.remove();
+    }
+
+    private void listenToStats() {
+        if (teacherEmail == null) return;
+
+        // Listen to Sections Stats
+        sectionsListenerStats = db.collection("Sections")
+                .whereEqualTo("teacherEmail", teacherEmail)
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null || snapshots == null) {
+                        statSections.setText("0");
+                        return;
+                    }
+                    int sectionCount = snapshots.size();
+                    statSections.setText(sectionCount == 0 ? "0" : String.format("%02d", sectionCount));
+                });
+
+        // Listen to Students and Quizzes Stats
+        if (studentsListener != null) studentsListener.remove();
+        if (quizzesListener != null) quizzesListener.remove();
+
+        studentsListener = db.collection("Accounts")
+                .document("Students")
+                .collection("MathSquare")
+                .whereEqualTo("teacherEmail", teacherEmail)
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null || snapshots == null) {
+                        statStudents.setText("0");
+                        statQuizzes.setText("0");
+                        return;
+                    }
+
+                    java.util.Set<String> uniqueStudents = new java.util.HashSet<>();
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        String fn = doc.getString("firstName");
+                        String ln = doc.getString("lastName");
+                        if (fn != null && ln != null) {
+                            uniqueStudents.add((fn + "_" + ln).toLowerCase());
+                        }
+                    }
+
+                    int studentCount = uniqueStudents.size();
+                    statStudents.setText(studentCount == 0 ? "0" : String.format("%02d", studentCount));
+
+                    countQuizHistoryEntries(snapshots.getDocuments());
+                });
+    }
+
+    private void countQuizHistoryEntries(List<DocumentSnapshot> studentDocs) {
+        if (studentDocs.isEmpty()) {
+            statQuizzes.setText("0");
+            return;
+        }
+
+        int[] remaining = {studentDocs.size()};
+        int[] totalQuizCount = {0};
+
+        for (DocumentSnapshot studentDoc : studentDocs) {
+            studentDoc.getReference()
+                    .collection("QuizHistory")
+                    .get()
+                    .addOnSuccessListener(quizHistorySnap -> {
+                        totalQuizCount[0] += quizHistorySnap.size();
+                        remaining[0]--;
+
+                        if (remaining[0] == 0) {
+                            statQuizzes.setText(String.format("%02d", totalQuizCount[0]));
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        remaining[0]--;
+                        Log.e("QuizStats", "Failed to count QuizHistory: " + e.getMessage());
+
+                        if (remaining[0] == 0) {
+                            statQuizzes.setText(String.format("%02d", totalQuizCount[0]));
+                        }
+                    });
+        }
+    }
     private void listenToTeacherSections(TextView gradeTextView, TextView sectionTextView) {
         sectionsListener = db.collection("Sections")
                 .orderBy("timestamp", Query.Direction.DESCENDING) // Sort by most recent
@@ -243,11 +393,6 @@ public class Dashboard extends AppCompatActivity {
         }
     }
 
-    // Call this in onCreate() or appropriate lifecycle method
-    private void initializeSwitchListeners() {
-        setupSwitchListener(switchquiz1, "quiz_1");
-        setupSwitchListener(switchquiz2, "quiz_2");
-    }
     //Game Button Animation Press
 
     private void animateButtonClick(View button) {

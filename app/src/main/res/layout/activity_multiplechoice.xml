@@ -94,8 +94,7 @@
             <RelativeLayout
                 android:id="@+id/drawing_container"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
+                android:layout_height="match_parent"
                 android:background="@drawable/drawing_area_bg">
 
                 <com.happym.mathsquare.Animation.DrawingView
@@ -105,12 +104,11 @@
 
                 <ImageView
                     android:id="@+id/btn_clear"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
+                    android:layout_width="@dimen/clear_btn_size"
+                    android:layout_height="@dimen/clear_btn_size"
                     android:layout_alignParentStart="true"
                     android:layout_alignParentTop="true"
                     android:layout_margin="18dp"
-                    android:layout_marginBottom="10dp"
                     android:background="@drawable/bg_clear_circle"
                     android:clickable="true"
                     android:elevation="6dp"
@@ -122,26 +120,22 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentTop="true"
-                    android:layout_alignParentBottom="true"
                     android:layout_centerHorizontal="true"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginTop="16dp"
                     android:letterSpacing="0.1"
                     android:text="DRAW YOUR ANSWER HERE"
                     android:textColor="#9E9E9E"
-                    android:textSize="14sp" />
+                    android:textSize="@dimen/draw_label_text_size" />
 
                 <TextView
                     android:id="@+id/hint_question_mark"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentTop="true"
                     android:layout_centerInParent="true"
-                    android:layout_marginTop="50dp"
                     android:fontFamily="@font/shantell_sans_bold"
                     android:text="?"
                     android:textColor="#E0E0E0"
-                    android:textSize="100sp" />
+                    android:textSize="@dimen/hint_question_mark_size" />
 
             </RelativeLayout>
         </LinearLayout>
@@ -437,29 +431,47 @@
         android:id="@+id/dialogOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#701B1212"
+        android:background="#B0000000"
         android:gravity="center"
         android:visibility="gone">
 
-        <!-- Success Dialog Card -->
+        <!-- ═══════════════════════════════════════ -->
+        <!--           SUCCESS DIALOG CARD          -->
+        <!-- ═══════════════════════════════════════ -->
         <LinearLayout
             android:id="@+id/customDialogSuccess"
             android:layout_width="584dp"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:background="@drawable/dialog_inset_background"
-            android:elevation="12dp"
+            android:background="@drawable/dialog_success_game_bg"
+            android:elevation="16dp"
             android:gravity="center"
             android:visibility="gone"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:padding="28dp">
+
+            <!-- Star burst / top badge strip -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/badge_correct_bg"
+                android:text="✓  CORRECT!"
+                android:fontFamily="@font/paytone_one"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:letterSpacing="0.15"
+                android:paddingStart="18dp"
+                android:paddingEnd="18dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:layout_marginBottom="14dp" />
 
             <!-- Icon -->
             <ImageView
                 android:id="@+id/dialogIcon"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_marginBottom="16dp"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:layout_marginBottom="12dp"
                 android:src="@drawable/ic_happy" />
 
             <!-- Title -->
@@ -467,43 +479,57 @@
                 android:id="@+id/dialogTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="8dp"
                 android:gravity="center"
                 android:text="Amazing Job!"
                 android:fontFamily="@font/shantell_sans_bold"
                 android:textStyle="bold"
-                android:textColor="#3E2723"
+                android:textColor="@color/gameBrown"
                 android:shadowColor="#FFFFFF"
-                android:shadowDx="2"
-                android:shadowDy="2"
-                android:shadowRadius="3"
+                android:shadowDx="0"
+                android:shadowDy="3"
+                android:shadowRadius="0"
                 android:textAlignment="center"
-                android:textSize="34sp"/>
+                android:textSize="36sp"/>
 
+            <!-- Divider line (gold) -->
+            <View
+                android:layout_width="180dp"
+                android:layout_height="3dp"
+                android:background="@color/gameGold"
+                android:layout_marginBottom="12dp"/>
+
+            <!-- Points earned -->
             <TextView
                 android:id="@+id/pointsEarnedTxt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="+10 Points!"
                 android:fontFamily="@font/paytone_one"
-                android:textColor="#FFD700"
-                android:textSize="30sp"
-                android:shadowColor="#000000"
+                android:textColor="@color/gameGold"
+                android:textSize="32sp"
+                android:shadowColor="#7A5900"
                 android:shadowDx="2"
-                android:shadowDy="2"
-                android:shadowRadius="2"
-                android:layout_marginBottom="5dp"/>
+                android:shadowDy="3"
+                android:shadowRadius="0"
+                android:layout_marginBottom="6dp"/>
 
+            <!-- Bonus label -->
             <TextView
                 android:id="@+id/bonusTxt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
-                android:text="Quick Thinker Bonus!"
+                android:background="@drawable/badge_bonus_bg"
+                android:text="⚡ Quick Thinker Bonus!"
                 android:fontFamily="@font/shantell_sans_bold"
-                android:textColor="#4CAF50"
-                android:textSize="18sp"
-                android:layout_marginBottom="10dp"/>
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:layout_marginBottom="12dp"/>
 
             <!-- Message -->
             <TextView
@@ -514,35 +540,53 @@
                 android:lineSpacingExtra="6dp"
                 android:text="You got it right!\nReady for the next challenge?"
                 android:fontFamily="@font/shantell_sans_bold"
-                android:textColor="#5D4037"
+                android:textColor="@color/gameShadowBrown"
                 android:shadowColor="#FFFFFF"
                 android:shadowDx="1"
                 android:shadowDy="1"
                 android:shadowRadius="2"
                 android:textAlignment="center"
-                android:textSize="24sp"/>
+                android:textSize="20sp"/>
 
         </LinearLayout>
 
-        <!-- Failed Dialog Card -->
+        <!-- ═══════════════════════════════════════ -->
+        <!--            FAILED DIALOG CARD          -->
+        <!-- ═══════════════════════════════════════ -->
         <LinearLayout
             android:id="@+id/customDialogFailed"
             android:layout_width="584dp"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:background="@drawable/dialog_inset_background"
-            android:elevation="12dp"
+            android:background="@drawable/dialog_failed_game_bg"
+            android:elevation="16dp"
             android:gravity="center"
             android:visibility="gone"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:padding="28dp">
+
+            <!-- Top strip -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/badge_wrong_bg"
+                android:text="✗  INCORRECT"
+                android:fontFamily="@font/paytone_one"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:letterSpacing="0.15"
+                android:paddingStart="18dp"
+                android:paddingEnd="18dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:layout_marginBottom="14dp" />
 
             <!-- Icon -->
             <ImageView
                 android:id="@+id/dialogIconFailed"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_marginBottom="16dp"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:layout_marginBottom="12dp"
                 android:src="@drawable/ic_error_sad_face" />
 
             <!-- Title -->
@@ -550,45 +594,70 @@
                 android:id="@+id/dialogTitleFailed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="8dp"
                 android:gravity="center"
                 android:text="Oops! Incorrect"
                 android:fontFamily="@font/shantell_sans_bold"
                 android:textStyle="bold"
-                android:textColor="#B71C1C"
+                android:textColor="@color/gameRed"
                 android:shadowColor="#FFFFFF"
-                android:shadowDx="2"
-                android:shadowDy="2"
-                android:shadowRadius="3"
+                android:shadowDx="0"
+                android:shadowDy="3"
+                android:shadowRadius="0"
                 android:textAlignment="center"
-                android:textSize="34sp"/>
+                android:textSize="36sp"/>
 
+            <!-- Divider -->
+            <View
+                android:layout_width="180dp"
+                android:layout_height="3dp"
+                android:background="@color/gameRed"
+                android:layout_marginBottom="12dp"/>
 
-            <!-- Message TextView -->
+            <!-- Message -->
             <TextView
                 android:id="@+id/dialogMessageFailed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Oops! Try again!"
-                android:textSize="18sp"
-                android:textColor="#B71C1C"
+                android:text="Don't give up! Try again!"
+                android:textSize="20sp"
+                android:textColor="@color/gameShadowBrown"
                 android:gravity="center"
                 android:fontFamily="@font/shantell_sans_bold"
                 android:shadowColor="#FFFFFF"
-                android:shadowDx="2"
-                android:shadowDy="3"
+                android:shadowDx="1"
+                android:shadowDy="2"
                 android:shadowRadius="2"
-                android:layout_marginBottom="12dp"/>
+                android:layout_marginBottom="14dp"/>
 
-            <!-- Visual container for kid-friendly animation -->
+            <!-- Visual flexbox container -->
             <com.google.android.flexbox.FlexboxLayout
                 android:id="@+id/visualContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="15dp"
+                android:background="@drawable/visual_container_bg"
+                android:padding="12dp"
                 app:flexWrap="wrap"
                 app:justifyContent="center"
                 app:alignItems="center"/>
+
+            <!-- Bottom decoration -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp"
+                android:gravity="center">
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="💡" android:textSize="22sp" android:layout_marginEnd="6dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Keep Thinking!" android:textSize="15sp"
+                    android:fontFamily="@font/shantell_sans_bold"
+                    android:textColor="@color/gameShadowBrown"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="💡" android:textSize="22sp" android:layout_marginStart="6dp"/>
+            </LinearLayout>
 
         </LinearLayout>
 

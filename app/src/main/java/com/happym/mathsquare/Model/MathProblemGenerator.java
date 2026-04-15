@@ -8,7 +8,8 @@ public final class MathProblemGenerator {
 
     private static final Random rand = new Random();
 
-    private MathProblemGenerator() {}
+    private MathProblemGenerator() {
+    }
 
     public static List<MathProblem> generate(
             String operation,
@@ -72,9 +73,15 @@ public final class MathProblemGenerator {
         int r = n[0];
         for (int i = 1; i < n.length; i++) {
             switch (op.toLowerCase()) {
-                case "addition": r += n[i]; break;
-                case "subtraction": r -= n[i]; break;
-                case "multiplication": r *= n[i]; break;
+                case "addition":
+                    r += n[i];
+                    break;
+                case "subtraction":
+                    r -= n[i];
+                    break;
+                case "multiplication":
+                    r *= n[i];
+                    break;
                 case "division":
                     if (n[i] == 0 || r % n[i] != 0) return -1;
                     r /= n[i];
@@ -109,52 +116,105 @@ public final class MathProblemGenerator {
         int max;
         int operands;
 
-        static DifficultyConfig from(
-                int grade,
-                String operation,
-                int levelIndex
-        ) {
+        static DifficultyConfig from(int grade, String operation, int levelIndex) {
             DifficultyConfig d = new DifficultyConfig();
 
-            // ---------- BASELINE BY GRADE ----------
             switch (grade) {
                 case 1:
-                    d.min = 0; d.max = 10; d.operands = 2;
+                    d.min = 1;
+                    d.max = 10;
+                    d.operands = 2;
                     break;
                 case 2:
-                    d.min = 0; d.max = 20; d.operands = 2;
+                    d.min = 1;
+                    d.max = 20;
+                    d.operands = 2;
                     break;
                 case 3:
-                    d.min = 0; d.max = 100; d.operands = 2;
+                    d.min = 1;
+                    d.max = 100;
+                    d.operands = 2;
                     break;
                 case 4:
-                    d.min = 0; d.max = 100; d.operands = 2;
+                    d.min = 1;
+                    d.max = 500;
+                    d.operands = 2;
                     break;
                 case 5:
-                    d.min = 0; d.max = 1000; d.operands = 2;
+                    d.min = 1;
+                    d.max = 1000;
+                    d.operands = 2;
                     break;
                 case 6:
-                    d.min = 0; d.max = 10000; d.operands = 2;
+                    d.min = 1;
+                    d.max = 10000;
+                    d.operands = 2;
                     break;
                 default:
-                    d.min = 0; d.max = 10; d.operands = 2;
+                    d.min = 1;
+                    d.max = 10;
+                    d.operands = 2;
             }
 
-            // ---------- OPERATION ADJUSTMENTS ----------
+            // Multiplication: kids learn times tables, cap per grade
             if ("multiplication".equalsIgnoreCase(operation)) {
-                d.max = Math.min(d.max / 5, 50);
+                switch (grade) {
+                    case 1:
+                        d.max = 5;
+                        break; // 1×1 to 5×5
+                    case 2:
+                        d.max = 10;
+                        break; // times tables up to 10
+                    case 3:
+                        d.max = 12;
+                        break; // times tables up to 12
+                    case 4:
+                        d.max = 20;
+                        break;
+                    case 5:
+                        d.max = 50;
+                        break;
+                    case 6:
+                        d.max = 100;
+                        break;
+                }
             }
 
+            // Division: keep divisor and quotient manageable
             if ("division".equalsIgnoreCase(operation)) {
-                d.max = Math.min(d.max / 5, 100);
+                switch (grade) {
+                    case 1:
+                        d.max = 10;
+                        break; // 10 ÷ 2 = 5 style
+                    case 2:
+                        d.max = 20;
+                        break;
+                    case 3:
+                        d.max = 50;
+                        break;
+                    case 4:
+                        d.max = 100;
+                        break;
+                    case 5:
+                        d.max = 200;
+                        break;
+                    case 6:
+                        d.max = 500;
+                        break;
+                }
             }
 
-            // ---------- LEVEL SCALING ----------
-            float scale = 1f + (levelIndex * 0.2f);
-            d.max = Math.round(d.max * scale);
+            if ("subtraction".equalsIgnoreCase(operation) && grade <= 2) {
+                d.min = 1;
+            }
 
-            if (levelIndex >= 3) {
-                d.operands = Math.min(3, d.operands + 1);
+            // Level scaling within a grade (for practice mode levels)
+            if (levelIndex > 0) {
+                float scale = 1f + (levelIndex * 0.15f);
+                d.max = Math.round(d.max * scale);
+                if (levelIndex >= 3) {
+                    d.operands = Math.min(3, d.operands + 1);
+                }
             }
 
             return d;

@@ -3,7 +3,11 @@ package com.happym.mathsquare;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
+import android.app.Activity;
+import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
@@ -14,10 +18,12 @@ import android.graphics.RadialGradient;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -43,13 +49,19 @@ import android.animation.AnimatorSet;
 import android.view.animation.BounceInterpolator;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import android.view.View;
 
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import com.google.firebase.firestore.SetOptions;
 import com.happym.mathsquare.Service.FirebaseDb;
 import com.happym.mathsquare.studentSignUp;
 import com.happym.mathsquare.teacherSignUp;
@@ -66,6 +78,8 @@ public class signInUp extends AppCompatActivity {
     private FrameLayout numberContainer, backgroundFrame;
     private final Random random = new Random();
 
+    private Dialog loadingDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,22 +91,32 @@ public class signInUp extends AppCompatActivity {
 
         db = FirebaseDb.getFirestore();
 
-        // Show Loading Dialog
-        ProgressDialog loadingDialog = new ProgressDialog(this);
-        loadingDialog.setMessage("Checking Your Account...");
-        loadingDialog.setCancelable(true);
-        loadingDialog.show();
+        boolean isGuestCheckingIn = getIntent().getBooleanExtra("guest_checkingin_for_login", false);
 
+        showCustomLoadingDialog("Checking Your Account...");
+        boolean isGuest = sharedPreferences.getGuestAccountStatus(this);
 
-        if (sharedPreferences.isLoggedIn(this)) {
-
-            loadingDialog.dismiss();
+        if (sharedPreferences.isAdminLoggedIn(this) && !isGuestCheckingIn) {
+            dismissLoadingDialog();
+            Intent intent = new Intent(signInUp.this, AdminActivity.class);
+            startActivity(intent);
+            finish();
+        }
+        else if (sharedPreferences.isLoggedIn(this) && !isGuestCheckingIn) {
+            dismissLoadingDialog();
             Intent intent = new Intent(signInUp.this, Dashboard.class);
             startActivity(intent);
-            Toast.makeText(this, "Welcome back Teacher!", Toast.LENGTH_SHORT).show();
             finish();
-
-        } else if (sharedPreferences.StudentIsLoggedIn(this)) {
+        }
+        else if (isGuest && !isGuestCheckingIn) {
+            dismissLoadingDialog();
+            Intent intent = new Intent(signInUp.this, MainActivity.class);
+            startActivity(intent);
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+            finish();
+            Toast.makeText(this, "Welcome back, Guest!", Toast.LENGTH_SHORT).show();
+        }
+        else if (sharedPreferences.StudentIsLoggedIn(this) && !isGuest && !isGuestCheckingIn) {
 
             String section = sharedPreferences.getSection(this);
             String grade = sharedPreferences.getGrade(this);
@@ -103,45 +127,54 @@ public class signInUp extends AppCompatActivity {
                     .document("Students")
                     .collection("MathSquare");
 
-            // Query to check if a document with the same firstName, lastName, and quizid = "N/A" exists
-            collectionRef
-                    .whereEqualTo("firstName", firstName)
-                    .whereEqualTo("lastName", lastName)
-                    .whereEqualTo("grade", lastName)
-                    .whereEqualTo("section", lastName)
-                    .get()
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
+            String studentDocId = (firstName.toLowerCase() + "_" +
+                    lastName.toLowerCase() + "_" +
+                    grade.toLowerCase() + "_" +
+                    section.toLowerCase()).replaceAll("\\s+", "");
 
-                            loadingDialog.dismiss();
-                            Intent intent = new Intent(signInUp.this,
-                                    MainActivity.class);
-                            startActivity(intent);
+            DocumentReference docRef = db.collection("Accounts")
+                    .document("Students")
+                    .collection("MathSquare")
+                    .document(studentDocId);
 
-                            sharedPreferences.setLoggedIn(this, false);
-                            finish();
+            docRef.get().addOnCompleteListener(task -> {
+                dismissLoadingDialog();
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
 
-                            if (!task.getResult().isEmpty()) {
-                                Toast.makeText(this, "Account Deleted, Sign Up a new Student Account", Toast.LENGTH_LONG).show();
+                    if (document.exists()) {
+                        Intent intent = new Intent(signInUp.this, MainActivity.class);
+                        startActivity(intent);
+                        // Added Fade Transition
+                        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                        finish();
+                        Toast.makeText(this, "Welcome back, " + firstName + "!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "Account not found. Please Sign Up again.", Toast.LENGTH_LONG).show();
 
+                        sharedPreferences.StudentIsSetLoggedIn(signInUp.this, false);
 
-                                Intent intenttwo = new Intent(signInUp.this, studentSignUp.class);
-                                startActivity(intenttwo);
-                                sharedPreferences.setLoggedIn(this, false);
-                                finish();
-                            }
-                        }
+                        Intent intent = new Intent(signInUp.this, studentSignUp.class);
+                        startActivity(intent);
+                        // Added Fade Transition
+                        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                        finish();
+                    }
+                }
+            }).addOnFailureListener(e -> {
+                dismissLoadingDialog();
+                Toast.makeText(this, "Error checking account: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            });
 
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(this, "Error fetching student data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+        else {
+            dismissLoadingDialog();
+            if (isGuestCheckingIn) {
+                Toast.makeText(this, "Select an account type to log in", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Select to Sign Up", Toast.LENGTH_SHORT).show();
+            }
 
-                        loadingDialog.dismiss();
-                    });
-
-        } else {
-            loadingDialog.dismiss();
-            Toast.makeText(this, "Select to Sign Up", Toast.LENGTH_SHORT).show();
             LinearLayout btnEnterStudent = findViewById(R.id.btn_playgame_as_student);
             LinearLayout btnEnterTeacher = findViewById(R.id.btn_signinteacher);
             LinearLayout btnEnterAsGuest = findViewById(R.id.btn_playgame_as_guest);
@@ -158,6 +191,8 @@ public class signInUp extends AppCompatActivity {
                 animateButtonPushDowm(btnEnterStudent);
                 Intent intent = new Intent(signInUp.this, studentSignUp.class);
                 startActivity(intent);
+                // Added Fade Transition
+                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
 
                 stopButtonFocusAnimation(btnEnterStudent);
                 animateButtonFocus(btnEnterStudent);
@@ -168,6 +203,9 @@ public class signInUp extends AppCompatActivity {
                 animateButtonPushDowm(btnEnterTeacher);
                 Intent intent = new Intent(signInUp.this, teacherLogIn.class);
                 startActivity(intent);
+                // Added Fade Transition
+                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+
                 stopButtonFocusAnimation(btnEnterTeacher);
                 animateButtonFocus(btnEnterTeacher);
             });
@@ -175,10 +213,46 @@ public class signInUp extends AppCompatActivity {
             btnEnterAsGuest.setOnClickListener(view -> {
                 playSound("click.mp3");
                 animateButtonPushDowm(btnEnterAsGuest);
-                Intent intent = new Intent(signInUp.this, MainActivity.class);
-                startActivity(intent);
-                stopButtonFocusAnimation(btnEnterAsGuest);
-                animateButtonFocus(btnEnterAsGuest);
+
+                String guestId = sharedPreferences.getOrCreateGuestId(this);
+                String guestFirstName = "Guest";
+                String guestLastName = guestId.substring(0, 8);
+                String defaultSection = "GuestSection";
+                String defaultGrade = "GuestGrade";
+
+                sharedPreferences.saveFirstN(this, guestFirstName);
+                sharedPreferences.saveLastN(this, guestLastName);
+                sharedPreferences.saveSection(this, defaultSection);
+                sharedPreferences.saveGrade(this, defaultGrade);
+                sharedPreferences.StudentIsSetLoggedIn(this, true);
+                sharedPreferences.notifyGuestAccountStatus(this, true);
+                sharedPreferences.saveTeacherN(this, "");
+
+                Map<String, Object> guestData = new HashMap<>();
+                guestData.put("firstName", guestFirstName);
+                guestData.put("lastName", guestLastName);
+                guestData.put("section", defaultSection);
+                guestData.put("grade", defaultGrade);
+                guestData.put("gameType", "Passing");
+                guestData.put("operation_type", "Addition");
+                guestData.put("timestamp", FieldValue.serverTimestamp());
+                showCustomLoadingDialog("Logging you in as Guest...");
+
+                db.collection("Accounts").document("Students")
+                        .collection("MathSquare")
+                        .document(guestId)
+                        .set(guestData, SetOptions.merge())
+                        .addOnSuccessListener(aVoid -> {
+                            dismissLoadingDialog();
+                            Intent intent = new Intent(signInUp.this, MainActivity.class);
+                            startActivity(intent);
+                            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                            finish();
+                        })
+                        .addOnFailureListener(e -> {
+                            dismissLoadingDialog();
+                            Toast.makeText(this, "Guest Sync Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
             });
 
             btnExit.setOnClickListener(view -> {
@@ -188,63 +262,59 @@ public class signInUp extends AppCompatActivity {
                 System.exit(0);
             });
 
-// Focus Listeners
             btnEnterStudent.setOnTouchListener((v, event) -> {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        animateButtonClick(btnEnterStudent);  // Start touch animation
+                        animateButtonClick(btnEnterStudent);
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
-                        stopButtonFocusAnimation(btnEnterStudent);  // Stop animation when touch is released or canceled
+                        stopButtonFocusAnimation(btnEnterStudent);
                         break;
                 }
-                return false;  // Return false to allow long click events to be handled
+                return false;
             });
 
             btnEnterStudent.setOnLongClickListener(v -> {
-                animateButtonPushDowm(btnEnterStudent);  // Start long press animation
-                return true;  // Return true to indicate the long press was handled
+                animateButtonPushDowm(btnEnterStudent);
+                return true;
             });
-
 
             btnEnterTeacher.setOnTouchListener((v, event) -> {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        animateButtonClick(btnEnterTeacher);  // Start touch animation
+                        animateButtonClick(btnEnterTeacher);
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
-                        stopButtonFocusAnimation(btnEnterTeacher);  // Stop animation when touch is released or canceled
+                        stopButtonFocusAnimation(btnEnterTeacher);
                         break;
                 }
-                return false;  // Return false to allow long click events to be handled
+                return false;
             });
 
             btnEnterTeacher.setOnLongClickListener(v -> {
-                animateButtonPushDowm(btnEnterTeacher);  // Start long press animation
-                return true;  // Return true to indicate the long press was handled
+                animateButtonPushDowm(btnEnterTeacher);
+                return true;
             });
-
 
             btnExit.setOnTouchListener((v, event) -> {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        animateButtonClick(btnExit);  // Start touch animation
+                        animateButtonClick(btnExit);
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
-                        stopButtonFocusAnimation(btnExit);  // Stop animation when touch is released or canceled
+                        stopButtonFocusAnimation(btnExit);
                         break;
                 }
-                return false;  // Return false to allow long click events to be handled
+                return false;
             });
 
             btnExit.setOnLongClickListener(v -> {
-                animateButtonPushDowm(btnExit);  // Start long press animation
-                return true;  // Return true to indicate the long press was handled
+                animateButtonPushDowm(btnExit);
+                return true;
             });
-
 
             ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
                 Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -253,16 +323,64 @@ public class signInUp extends AppCompatActivity {
             });
 
         }
+
         backgroundFrame = findViewById(R.id.main);
-        numberContainer = findViewById(R.id.number_container); // Get FrameLayout from XML
+        numberContainer = findViewById(R.id.number_container);
 
         numBGAnimation = new NumBGAnimation(this, numberContainer);
         numBGAnimation.startNumberAnimationLoop();
 
         backgroundFrame.post(() -> {
-            VignetteEffect.apply(this, backgroundFrame);
+            VignetteEffect.apply(this, backgroundFrame, 0);
         });
 
+    }
+
+    private void showCustomLoadingDialog(String message) {
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            TextView loadingText = loadingDialog.findViewById(R.id.loading_text);
+            if (loadingText != null) loadingText.setText(message);
+            return;
+        }
+
+        if (!isFinishing() && !isDestroyed()) {
+            loadingDialog = new Dialog(this);
+            loadingDialog.setContentView(R.layout.dialog_checking_account);
+
+            LinearLayout dialogContainer = loadingDialog.findViewById(R.id.dialog_container);
+            TextView loadingText = loadingDialog.findViewById(R.id.loading_text);
+            if (loadingText != null) {
+                loadingText.setText(message);
+            }
+
+            if (dialogContainer != null) {
+                VignetteEffect.apply(this, dialogContainer, 24f);
+            }
+
+            if (loadingDialog.getWindow() != null) {
+                loadingDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                loadingDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+                loadingDialog.getWindow().setGravity(Gravity.CENTER);
+                loadingDialog.getWindow().setDimAmount(0.7f);
+            }
+
+            loadingDialog.setCancelable(false);
+            loadingDialog.show();
+        }
+    }
+
+    private void dismissLoadingDialog() {
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            Context context = ((ContextWrapper) loadingDialog.getContext()).getBaseContext();
+            if (context instanceof Activity) {
+                if (!((Activity) context).isFinishing() && !((Activity) context).isDestroyed()) {
+                    loadingDialog.dismiss();
+                }
+            } else {
+                loadingDialog.dismiss();
+            }
+        }
+        loadingDialog = null;
     }
 
     private void playBGGame(String fileName) {

@@ -120,84 +120,90 @@ public class MainActivity extends AppCompatActivity {
         animateButtonFocus(btnLogin);
         startRotationAnimation(txtTitle);
 
-        if (sharedPreferences.StudentIsLoggedIn(this)) {
-            // Student logged in
-            btnLogOut.setVisibility(View.VISIBLE);
-            btnLogin.setVisibility(View.GONE);
-            btnPlayQuiz.setVisibility(View.VISIBLE);
+        boolean isGuest = sharedPreferences.getGuestAccountStatus(this);
 
+        if (sharedPreferences.StudentIsLoggedIn(this)) {
+            if (isGuest) {
+                // GUEST: Only show Login (so they can upgrade), hide Logout and Quiz
+                btnLogOut.setVisibility(View.GONE);
+                btnLogin.setVisibility(View.VISIBLE);
+                btnPlayQuiz.setVisibility(View.GONE);
+            } else {
+                // REGULAR STUDENT: Show Logout and Quiz, hide Login
+                btnLogOut.setVisibility(View.VISIBLE);
+                btnLogin.setVisibility(View.GONE);
+                btnPlayQuiz.setVisibility(View.VISIBLE);
+            }
+
+            // Get profile data
             String section = sharedPreferences.getSection(this);
             String grade = sharedPreferences.getGrade(this);
             String firstName = sharedPreferences.getFirstN(this);
             String lastName = sharedPreferences.getLastN(this);
+            String studentDocId;
+            if (isGuest) {
+                studentDocId = sharedPreferences.getOrCreateGuestId(this);
+            } else {
+                studentDocId = (firstName.toLowerCase() + "_" +
+                        lastName.toLowerCase() + "_" +
+                        grade.toLowerCase() + "_" +
+                        section.toLowerCase()).replaceAll("\\s+", "");
+            }
 
-            CollectionReference studentCollection = db
-                    .collection("Accounts")
+            DocumentReference studentDocRef = db.collection("Accounts")
                     .document("Students")
-                    .collection("MathSquare");
+                    .collection("MathSquare")
+                    .document(studentDocId);
 
-            Query query = studentCollection
-                    .whereEqualTo("firstName", firstName)
-                    .whereEqualTo("lastName", lastName)
-                    .whereEqualTo("section", section)
-                    .whereEqualTo("grade", grade);
+            studentDocRef.get().addOnSuccessListener(document -> {
+                if (document.exists()) {
+                    String achievementBadge = document.getString("achievement_badge");
+                    List<String> displayedAchievements = (List<String>) document.get("displayed_achievement_screen");
+                    if (displayedAchievements == null) displayedAchievements = new ArrayList<>();
+                    if (achievementBadge != null &&
+                            !achievementBadge.equals("No Badge") &&
+                            !displayedAchievements.contains(achievementBadge)) {
 
-            query.get().addOnSuccessListener(querySnapshots -> {
-                for (DocumentSnapshot document : querySnapshots) {
-                    if (document.exists()) {
-                        DocumentReference studentDocRef = document.getReference();
+                        dialogOverlay.setVisibility(View.VISIBLE);
+                        achievementDialog.setVisibility(View.VISIBLE);
 
-                        // Fetch the latest achievement badge
-                        String achievementBadge = document.getString("achievement_badge");
-                        List<String> displayedAchievements =
-                                (List<String>) document.get("displayed_achievement_screen");
-                        if (displayedAchievements == null) displayedAchievements = new ArrayList<>();
-
-                        if (achievementBadge != null && !displayedAchievements.contains(achievementBadge)) {
-                            dialogOverlay.setVisibility(View.VISIBLE);
-                            achievementDialog.setVisibility(View.VISIBLE);
-                            switch (achievementBadge) {
-                                case "Addition Master":
-                                    achievementIcon.setImageResource(R.drawable.ic_addition_master);
-                                    achievementText.setText("Addition Master!");
-                                    break;
-                                case "Math Explorer":
-                                    achievementIcon.setImageResource(R.drawable.ic_math_explorer);
-                                    achievementText.setText("Math Explorer!");
-                                    break;
-                                case "Quiz Whiz":
-                                    achievementIcon.setImageResource(R.drawable.ic_quiz_whiz);
-                                    achievementText.setText("Quiz Whiz!");
-                                    break;
-                                case "Speed Demon":
-                                    achievementIcon.setImageResource(R.drawable.ic_speed_demon);
-                                    achievementText.setText("Speed Demon!");
-                                    break;
-                                default:
-                                    achievementText.setText(achievementBadge);
-                                    break;
-                            }
-
-                            displayedAchievements.add(achievementBadge);
-                            studentDocRef.update("displayed_achievement_screen", displayedAchievements)
-                                    .addOnSuccessListener(aVoid ->
-                                            Log.d("Achievement", "Achievement marked as displayed"))
-                                    .addOnFailureListener(e ->
-                                            Log.e("Achievement", "Failed to update displayed achievements", e));
-                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                                achievementDialog.setVisibility(View.GONE);
-                                dialogOverlay.setVisibility(View.GONE);
-                            }, 4000);
+                        switch (achievementBadge) {
+                            case "Addition Master":
+                                achievementIcon.setImageResource(R.drawable.ic_addition_master);
+                                achievementText.setText("Addition Master!");
+                                break;
+                            case "Math Explorer":
+                                achievementIcon.setImageResource(R.drawable.ic_math_explorer);
+                                achievementText.setText("Math Explorer!");
+                                break;
+                            case "Quiz Whiz":
+                                achievementIcon.setImageResource(R.drawable.ic_quiz_whiz);
+                                achievementText.setText("Quiz Whiz!");
+                                break;
+                            case "Speed Demon":
+                                achievementIcon.setImageResource(R.drawable.ic_speed_demon);
+                                achievementText.setText("Speed Demon!");
+                                break;
+                            default:
+                                achievementText.setText(achievementBadge);
+                                break;
                         }
+                        displayedAchievements.add(achievementBadge);
+                        studentDocRef.update("displayed_achievement_screen", displayedAchievements);
+
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                            achievementDialog.setVisibility(View.GONE);
+                            dialogOverlay.setVisibility(View.GONE);
+                        }, 4000);
                     }
                 }
-            }).addOnFailureListener(e ->
-                    Log.e("Firestore", "Failed to fetch student document", e));
+            }).addOnFailureListener(e -> Log.e("Firestore", "Error: " + e.getMessage()));
 
-
-            Toast.makeText(this, "Hi " + firstName + " " + lastName + "! Ready to play?", Toast.LENGTH_SHORT).show();
+            if (!isGuest) {
+                Toast.makeText(this, "Hi " + firstName + "! Ready to play?", Toast.LENGTH_SHORT).show();
+            }
         } else {
-            // No student logged in
+            // NO ONE LOGGED IN
             btnLogOut.setVisibility(View.GONE);
             btnLogin.setVisibility(View.VISIBLE);
             btnPlayQuiz.setVisibility(View.GONE);
@@ -206,6 +212,8 @@ public class MainActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(view -> {
             animateButtonClick(btnLogin);
             Intent intent = new Intent(MainActivity.this, signInUp.class);
+            intent.putExtra("guest_checkingin_for_login", true);
+
             playSound("click.mp3");
             startActivity(intent);
             stopButtonFocusAnimation(btnLogin);
@@ -228,6 +236,7 @@ public class MainActivity extends AppCompatActivity {
                     animateButtonClick(btnLogOut);
                     Intent intent = new Intent(this, signInUp.class);
                     sharedPreferences.StudentIsSetLoggedIn(this, false);
+                    sharedPreferences.notifyGuestAccountStatus(this, false);
                     sharedPreferences.setLoggedIn(this, false);
                     sharedPreferences.clearSection(this);
                     sharedPreferences.clearGrade(this);
@@ -293,6 +302,12 @@ public class MainActivity extends AppCompatActivity {
                 () -> {
                     VignetteEffect.apply(this, backgroundFrame);
                 });
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private void playSound(String fileName) {

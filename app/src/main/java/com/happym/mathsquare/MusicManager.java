@@ -8,20 +8,44 @@ import java.util.List;
 
 public class MusicManager {
     private static MediaPlayer bgMediaPlayer;
+    private static MediaPlayer leaderboardMediaPlayer;
 
     public static void playBGGame(Context context, String fileName) {
-        if (bgMediaPlayer == null) { // Prevent multiple instances
+        if (bgMediaPlayer == null) {
             try {
                 AssetFileDescriptor afd = context.getAssets().openFd(fileName);
                 bgMediaPlayer = new MediaPlayer();
                 bgMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-                bgMediaPlayer.setLooping(true); // ✅ Ensure continuous play
+                bgMediaPlayer.setLooping(true);
                 bgMediaPlayer.prepare();
-                
                 bgMediaPlayer.start();
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public static void playLeaderboard(Context context, String fileName) {
+        if (leaderboardMediaPlayer == null) {
+            try {
+                AssetFileDescriptor afd = context.getAssets().openFd(fileName);
+                leaderboardMediaPlayer = new MediaPlayer();
+                leaderboardMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+                leaderboardMediaPlayer.setLooping(true);
+                leaderboardMediaPlayer.setVolume(0.5f, 0.5f); // gentle ambient volume
+                leaderboardMediaPlayer.prepare();
+                leaderboardMediaPlayer.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void stopLeaderboard() {
+        if (leaderboardMediaPlayer != null) {
+            leaderboardMediaPlayer.stop();
+            leaderboardMediaPlayer.release();
+            leaderboardMediaPlayer = null;
         }
     }
 

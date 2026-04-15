@@ -2,6 +2,8 @@ package com.happym.mathsquare;
 
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,6 +24,7 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.FrameLayout;
 import android.widget.NumberPicker;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -30,6 +33,7 @@ import android.widget.Toast;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Arrays;
@@ -58,12 +62,15 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import com.happym.mathsquare.Service.FirebaseDb;
+import com.happym.mathsquare.Utils.PasswordUtils;
 import com.happym.mathsquare.sharedPreferences;
 
 import androidx.core.view.WindowCompat;
 
 public class teacherSignUp extends AppCompatActivity {
     private FirebaseFirestore db;
+    private FrameLayout loadingContainer;
+    FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,11 +83,13 @@ public class teacherSignUp extends AppCompatActivity {
 
         // Firestore instance
         db = FirebaseDb.getFirestore();
+        mAuth = FirebaseAuth.getInstance();
 
         TextInputLayout emailLayout = findViewById(R.id.email_address_layout);
         TextInputLayout firstNameLayout = findViewById(R.id.first_name_layout);
         TextInputLayout passwordLayout = findViewById(R.id.password);
         TextInputLayout passwordRepeatLayout = findViewById(R.id.password_repeat);
+        loadingContainer = findViewById(R.id.loading_container);
 
         AppCompatButton submitButton = findViewById(R.id.btn_submit);
 
@@ -200,33 +209,65 @@ public class teacherSignUp extends AppCompatActivity {
             }
 
             if (!hasError) {
-                // Generate a unique document ID
-                String teacherId = UUID.randomUUID().toString();
+                // START LOADING: Apply grayscale, alpha, and show spinner
+                showLoading(true, submitButton);
 
-                // Prepare data to save
-                HashMap<String, Object> teacherData = new HashMap<>();
-                teacherData.put("firstName", firstName);
-                teacherData.put("email", email);
-                teacherData.put("password", password); // In a real app, password should be hashed
-                animateButtonClick(submitButton);
-                // Save teacher data to Firestore
-                db.collection("Accounts")
-                        .document("Teachers")
-                        .collection(email)
-                        .document("MyProfile")
-                        .set(teacherData)
-                        .addOnSuccessListener(aVoid -> {
-                            // Account created, navigate to Dashboard
-                            Toast.makeText(teacherSignUp.this, "Teacher account created successfully", Toast.LENGTH_LONG).show();
-                            finish();
-                        })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(teacherSignUp.this, "Error creating teacher account: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                // 1. Create the user in Firebase Auth
+                mAuth.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                String teacherUid = task.getResult().getUser().getUid();
+                                HashMap<String, Object> teacherData = new HashMap<>();
+                                teacherData.put("teacherId", teacherUid);
+                                teacherData.put("firstName", firstName);
+                                teacherData.put("email", email);
+                                teacherData.put("password", PasswordUtils.hashPassword(password));
+                                db.collection("Accounts")
+                                        .document("Teachers")
+                                        .collection(email)
+                                        .document("MyProfile")
+                                        .set(teacherData)
+                                        .addOnSuccessListener(aVoid -> {
+                                            Toast.makeText(teacherSignUp.this, "Teacher account created successfully", Toast.LENGTH_LONG).show();
+                                            finish();
+                                            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            showLoading(false, submitButton);
+                                            Toast.makeText(teacherSignUp.this, "Error saving profile: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                        });
+                            } else {
+                                showLoading(false, submitButton);
+                                Toast.makeText(teacherSignUp.this, "Auth Error: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                            }
                         });
             }
         });
     }
 
+    private void showLoading(boolean isLoading, AppCompatButton button) {
+        if (isLoading) {
+            button.setEnabled(false);
+            button.setAlpha(0.5f);
+            ColorMatrix matrix = new ColorMatrix();
+            matrix.setSaturation(0);
+            ColorMatrixColorFilter filter = new ColorMatrixColorFilter(matrix);
+            if (button.getBackground() != null) {
+                button.getBackground().setColorFilter(filter);
+            }
+            button.setTextColor(Color.LTGRAY);
+            loadingContainer.setVisibility(View.VISIBLE);
+
+        } else {
+            button.setEnabled(true);
+            button.setAlpha(1.0f);
+            if (button.getBackground() != null) {
+                button.getBackground().clearColorFilter();
+            }
+            button.setTextColor(Color.WHITE);
+            loadingContainer.setVisibility(View.GONE);
+        }
+    }
     // Shake and rotate animation for error fields
     private void animateShakeRotateEditTextErrorAnimation(View view) {
         AnimatorSet animatorSet = new AnimatorSet();

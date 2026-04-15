@@ -20,9 +20,11 @@ public class sharedPreferences {
     private static final String KEY_SAVED_SCANSOUND = "Scan_sound";
     private static final String KEY_IS_LOGGED_IN = "101";
     private static final String KEY_STUDENT_LOGIN = "202";
+
+    private static final String KEY_ADMIN_IS_LOGGED_IN = "303";
     private static final String KEY_SECTION = "section";
     private static final String KEY_GRADE = "grade";
-    
+    private static final String KEY_GRADE_DIFFICULTY = "grade_difficulty";
     private static final String KEY_USER_AGREE = "status_useragreed";
     private static final String KEY_IS_SUBSCRIBED = "billing_check";
     private static final String KEY_BILLING_YEARLY = "billing_check_yearly";
@@ -39,6 +41,21 @@ public class sharedPreferences {
     
     private static SharedPreferences getSharedPreferences(Context context) {
         return context.getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE);
+    }
+    public static void saveGradeDifficulty(Context context, String difficulty) {
+        SharedPreferences.Editor editor = getSharedPreferences(context).edit();
+        editor.putString(KEY_GRADE_DIFFICULTY, difficulty);
+        editor.apply();
+    }
+
+    public static String getGradeDifficulty(Context context) {
+        return getSharedPreferences(context).getString(KEY_GRADE_DIFFICULTY, null);
+    }
+
+    public static void clearGradeDifficulty(Context context) {
+        SharedPreferences.Editor editor = getSharedPreferences(context).edit();
+        editor.remove(KEY_GRADE_DIFFICULTY);
+        editor.apply();
     }
     public static void saveGrade(Context context, String emailId) {
         SharedPreferences.Editor editor = getSharedPreferences(context).edit();
@@ -69,6 +86,16 @@ public class sharedPreferences {
     public static void clearSection(Context context) {
         SharedPreferences.Editor editor = getSharedPreferences(context).edit();
         editor.remove(KEY_SECTION);
+        editor.apply();
+    }
+
+    public static boolean isAdminLoggedIn(Context context) {
+        return getSharedPreferences(context).getBoolean(KEY_ADMIN_IS_LOGGED_IN, false);
+    }
+
+    public static void setAdminLoggedIn(Context context, boolean isLoggedIn) {
+        SharedPreferences.Editor editor = getSharedPreferences(context).edit();
+        editor.putBoolean(KEY_ADMIN_IS_LOGGED_IN, isLoggedIn);
         editor.apply();
     }
 

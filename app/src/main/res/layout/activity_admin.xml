@@ -5,27 +5,31 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/yellowbg"
     tools:context=".AdminActivity">
 
     <FrameLayout
+        android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:id="@+id/fragment_container"
-        tools:layout_editor_absoluteX="1dp"
         app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
         app:layout_constraintTop_toTopOf="parent">
 
     </FrameLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:background="@color/white"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_bottom_nav_game"
+        app:itemIconTint="@color/bottom_nav_item_colors"
+        app:itemTextColor="@color/bottom_nav_item_colors"
+        app:itemRippleColor="#80FFFFFF"
+        app:labelVisibilityMode="labeled"
+        android:elevation="12dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:menu="@menu/adminmenu"
-        app:itemIconTint="@color/colorAccent"
-        android:id="@+id/bottomNavigationView" />
+        app:menu="@menu/adminmenu" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

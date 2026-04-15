@@ -6,11 +6,14 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
+
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,10 +47,9 @@ public class QuizzesSection extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        setContentView(R.layout.layout_quizzes_section); // your layout file
+        setContentView(R.layout.layout_quizzes_section);
 
         FirebaseApp.initializeApp(this);
 
@@ -58,7 +60,6 @@ public class QuizzesSection extends AppCompatActivity {
         LinearLayout quizfive = findViewById(R.id.quiz_5);
         LinearLayout quizsix = findViewById(R.id.quiz_6);
 
-        // Firestore instance
         db = FirebaseDb.getFirestore();
 
         animateButtonFocus(quizone);
@@ -68,24 +69,112 @@ public class QuizzesSection extends AppCompatActivity {
         animateButtonFocus(quizfive);
         animateButtonFocus(quizsix);
 
-        // Set OnClickListeners and update status for each quiz
-        setupQuizButton("quiz_1", quizone);
-        setupQuizButton("quiz_2", quiztwo);
-        setupQuizButton("quiz_3", quizthree);
-        setupQuizButton("quiz_4", quizfour);
-        setupQuizButton("quiz_5", quizfive);
-        setupQuizButton("quiz_6", quizsix);
+        // Retrieve student's grade and section from SharedPreferences
+        String studentGrade = sharedPreferences.getGrade(this);       // e.g. "3"
+        String studentSection = sharedPreferences.getSection(this);   // e.g. "Sampaguita"
+
+        setupQuizButton("quiz_1", quizone, studentGrade, studentSection);
+        setupQuizButton("quiz_2", quiztwo, studentGrade, studentSection);
+        setupQuizButton("quiz_3", quizthree, studentGrade, studentSection);
+        setupQuizButton("quiz_4", quizfour, studentGrade, studentSection);
+        setupQuizButton("quiz_5", quizfive, studentGrade, studentSection);
+        setupQuizButton("quiz_6", quizsix, studentGrade, studentSection);
+
         backgroundFrame = findViewById(R.id.main);
-        numberContainer = findViewById(R.id.number_container); // Get FrameLayout from XML
+        numberContainer = findViewById(R.id.number_container);
 
         numBGAnimation = new NumBGAnimation(this, numberContainer);
         numBGAnimation.startNumberAnimationLoop();
 
-        backgroundFrame.post(
-                () -> {
-                    VignetteEffect.apply(this, backgroundFrame);
-                });
+        backgroundFrame.post(() -> VignetteEffect.apply(this, backgroundFrame));
     }
+
+    /**
+     * Sets up a quiz button with Firestore status check and click listener
+     */
+    private void setupQuizButton(String quizId, LinearLayout quizButton,
+                                 String studentGrade, String studentSection) {
+
+        fetchQuizStatus(quizId, quizButton, studentGrade, studentSection);
+
+        quizButton.setOnClickListener(view -> {
+            if (!quizButton.isEnabled()) return;
+
+            playSound("click.mp3");
+            Intent intent = new Intent(view.getContext(), MultipleChoicePage.class);
+
+            String[] operations = {"Addition", "Multiplication", "Division", "Subtraction"};
+            List<String> operationList = new ArrayList<>(Arrays.asList(operations));
+            Collections.shuffle(operationList);
+
+            String difficulty;
+            switch (quizId) {
+                case "quiz_1": case "quiz_2": difficulty = "Easy";   break;
+                case "quiz_3": case "quiz_4": difficulty = "Medium"; break;
+                case "quiz_5": case "quiz_6": difficulty = "Hard";   break;
+                default: difficulty = "Easy";
+            }
+
+            intent.putExtra("quizId", quizId);
+            intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));
+            intent.putExtra("difficulty", difficulty);
+            intent.putExtra("game_type", "Quiz");
+            intent.putExtra("student_grade", studentGrade);
+
+            view.getContext().startActivity(intent);
+        });
+    }
+    /**
+     * Fetches quiz status from the teacher-created document:
+     * Quizzes/{quizId}/{quizId}/quiz_{N}_grade{G}_section{S}
+     * <p>
+     * Matches exactly how the teacher dashboard saves it via buildSectionQuizSwitches().
+     */
+    private void fetchQuizStatus(String quizId, LinearLayout quizButton,
+                                 String studentGrade, String studentSection) {
+
+        // Build the same docId the teacher dashboard uses
+        // e.g. "quiz_1_grade3_sectionSampaguita"
+        String docId = quizId + "_grade" + studentGrade + "_section" + studentSection;
+
+        DocumentReference statusRef = db.collection("Quizzes")
+                .document(quizId)
+                .collection(quizId)   // sub-collection matches teacher's write path
+                .document(docId);
+
+        // Default to disabled while loading
+        setQuizButtonState(quizButton, false);
+
+        statusRef.addSnapshotListener((snapshot, e) -> {
+            if (e != null) {
+                Log.e("Quiz", "Failed to listen to status for " + docId, e);
+                setQuizButtonState(quizButton, false);
+                return;
+            }
+
+            if (snapshot != null && snapshot.exists()) {
+                String status = snapshot.getString("status");
+                boolean isOpen = "open".equalsIgnoreCase(status);
+                setQuizButtonState(quizButton, isOpen);
+                Log.d("Quiz", docId + " status: " + status);
+            } else {
+                // No document yet — teacher hasn't configured this quiz for this section
+                setQuizButtonState(quizButton, false);
+                Log.d("Quiz", docId + " not found — defaulting to closed");
+            }
+        });
+    }
+
+    /**
+     * Updates quiz button UI based on open/closed status
+     */
+    private void setQuizButtonState(LinearLayout quizButton, boolean isOpen) {
+        quizButton.setBackgroundResource(
+                isOpen ? R.drawable.btn_short_condition : R.drawable.btn_short_condition_off);
+        quizButton.setClickable(isOpen);
+        quizButton.setEnabled(isOpen);
+    }
+
 
     private void playSound(String fileName) {
         // Stop any previous sound effect before playing a new one
@@ -109,161 +198,6 @@ public class QuizzesSection extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    /** Sets up a quiz button with Firestore status check and click listener */
-    private void setupQuizButton(String quizId, LinearLayout quizButton) {
-        // Fetch Firestore status and create if missing
-        fetchOrCreateQuizStatus(quizId, quizButton);
-
-        // Set click listener
-        quizButton.setOnClickListener(view -> {
-            if (!quizButton.isEnabled()) return;
-
-            playSound("click.mp3");
-            Intent intent = new Intent(view.getContext(), MultipleChoicePage.class);
-
-            // Shuffle operations
-            String[] operations = {"Addition", "Multiplication", "Division", "Subtraction"};
-            List<String> operationList = new ArrayList<>(Arrays.asList(operations));
-            Collections.shuffle(operationList);
-
-            // Determine difficulty
-            String difficulty;
-            switch (quizId) {
-                case "quiz_1":
-                case "quiz_2":
-                    difficulty = "Easy";
-                    break;
-                case "quiz_3":
-                case "quiz_4":
-                    difficulty = "Medium";
-                    break;
-                case "quiz_5":
-                case "quiz_6":
-                    difficulty = "Hard";
-                    break;
-                default:
-                    difficulty = "Easy";
-            }
-
-            intent.putExtra("quizId", quizId);
-            intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));
-            intent.putExtra("difficulty", difficulty);
-            intent.putExtra("game_type", "Quiz");
-
-            view.getContext().startActivity(intent);
-        });
-    }
-
-    /** Fetches quiz status or creates it if it doesn't exist */
-    private void fetchOrCreateQuizStatus(String quizId, LinearLayout quizButton) {
-        DocumentReference statusRef = db.collection("Quizzes").document(quizId);
-
-        statusRef.get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        // Document exists, read status
-                        String status = documentSnapshot.getString("status");
-                        boolean isOpen = "open".equalsIgnoreCase(status);
-                        setQuizButtonState(quizButton, isOpen);
-                        Log.d("Quiz", quizId + " status: " + status);
-                    } else {
-                        // Document doesn't exist, create with default status "closed"
-                        Map<String, Object> defaultStatus = new HashMap<>();
-                        defaultStatus.put("status", "closed");
-
-                        statusRef.set(defaultStatus)
-                                .addOnSuccessListener(aVoid -> {
-                                    setQuizButtonState(quizButton, false);
-                                    Log.d("Quiz", quizId + " status document created with default 'closed'");
-                                })
-                                .addOnFailureListener(e -> {
-                                    Log.e("Quiz", "Failed to create status for " + quizId, e);
-                                    setQuizButtonState(quizButton, false);
-                                });
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Quiz", "Failed to fetch status for " + quizId, e);
-                    setQuizButtonState(quizButton, false);
-                });
-    }
-
-    /** Updates quiz button UI based on status */
-    private void setQuizButtonState(LinearLayout quizButton, boolean isOpen) {
-        quizButton.setBackgroundResource(
-                isOpen ? R.drawable.btn_short_condition : R.drawable.btn_short_condition_off);
-        quizButton.setClickable(isOpen);
-        quizButton.setEnabled(isOpen);
-    }
-
-
-    private void updateQuizStatus(String quizId, LinearLayout quizButton) {
-        db.collection("Quizzes")
-                .document("Status")
-                .collection(quizId)
-                .document("status")
-                .get()
-                .addOnSuccessListener(
-                        documentSnapshot -> {
-                            if (documentSnapshot.exists()) {
-                                String status = documentSnapshot.getString("status");
-
-                                if ("closed".equalsIgnoreCase(status)) {
-                                    quizButton.setBackgroundResource(
-                                            R.drawable.btn_short_condition_off);
-                                    quizButton.setClickable(false);
-                                } else {
-                                    quizButton.setBackgroundResource(
-                                            R.drawable.btn_short_condition);
-                                    quizButton.setClickable(true);
-                                }
-                            } else {
-                                // Document doesn't exist; create with default status "open"
-                                Map<String, String> defaultStatus = new HashMap<>();
-                                defaultStatus.put("status", "open");
-                                db.collection("Quizzes")
-                                        .document("Status")
-                                        .collection(quizId)
-                                        .document("status")
-                                        .set(defaultStatus)
-                                        .addOnSuccessListener(
-                                                aVoid ->
-                                                        Log.d(
-                                                                "Quiz",
-                                                                quizId
-                                                                        + " created with default status"))
-                                        .addOnFailureListener(
-                                                e ->
-                                                        Log.e(
-                                                                "Quiz",
-                                                                "Failed to create document for "
-                                                                        + quizId,
-                                                                e));
-                            }
-                        })
-                .addOnFailureListener(
-                        e -> Log.e("Quiz", "Failed to retrieve status for " + quizId, e));
-    }
-
-    private void animateButtonClick(View button) {
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.6f, 1.1f, 1f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.6f, 1.1f, 1f);
-
-        // Set duration for the animations
-        scaleX.setDuration(1000);
-        scaleY.setDuration(1000);
-
-        // OvershootInterpolator for game-like snappy effect
-        OvershootInterpolator overshootInterpolator = new OvershootInterpolator(2f);
-        scaleX.setInterpolator(overshootInterpolator);
-        scaleY.setInterpolator(overshootInterpolator);
-
-        // Combine animations into a set
-        AnimatorSet animatorSet = new AnimatorSet();
-        animatorSet.playTogether(scaleX, scaleY);
-        animatorSet.start();
     }
 
     // Function to animate button focus with a smooth pulsing bounce effect
@@ -292,13 +226,6 @@ public class QuizzesSection extends AppCompatActivity {
         animatorSet.start();
     }
 
-    // Stop Focus Animation
-    private void stopButtonFocusAnimation(View button) {
-        AnimatorSet animatorSet = (AnimatorSet) button.getTag();
-        if (animatorSet != null) {
-            animatorSet.cancel(); // Stop the animation when focus is lost
-        }
-    }
 
     @Override
     protected void onStart() {

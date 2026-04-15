@@ -90,6 +90,7 @@
 
             </FrameLayout>
 
+
             <ImageView
                 android:id="@+id/appImage"
                 android:layout_width="0dp"
@@ -273,6 +274,7 @@
                         android:layout_marginLeft="8dp"
                         android:fontFamily="@font/paytone_one"
                         android:text="Log In"
+                        android:gravity="center"
                         android:textAllCaps="true"
                         android:textColor="@color/white"
                         android:textSize="27sp" />

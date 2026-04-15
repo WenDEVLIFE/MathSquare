@@ -124,6 +124,9 @@ public class MultipleChoicePage extends AppCompatActivity
 
     private int questionCount = 0;
     private int totalPoints = 0;
+
+    private int studentGradeLevel = 1;
+
     private CountDownTimer countDownTimer;
     private LinearLayout btnHelp;
     private int helpLimit = 10;
@@ -161,7 +164,8 @@ public class MultipleChoicePage extends AppCompatActivity
     private static final String PREFS_NAME = "MathAppPrefs";
     private static final String KEY_OPERATION_SET = "selectedOperationSet";
     private static final int REQUEST_CODE_RESULTS = 1;
-    private String currentOperation, newOperation;
+    private int onTimerLevel;
+    private String currentOperation, newOperation, sectionId;
     private FrameLayout numberContainer;
     private FrameLayout backgroundFrame;
     private ArrayList<String> operationList;
@@ -304,6 +308,7 @@ public class MultipleChoicePage extends AppCompatActivity
         FrameLayout timer_choice = findViewById(R.id.timer_choice);
         quidId = getIntent().getStringExtra("quizId");
         worldType = getIntent().getStringExtra("passing_world");
+        sectionId = getIntent().getStringExtra("sectionId");
         levelid = getIntent().getStringExtra("passing");
         levelNext = getIntent().getStringExtra("passing_next_level");
         heartLimit = getIntent().getIntExtra("heartLimit", 3);
@@ -311,8 +316,16 @@ public class MultipleChoicePage extends AppCompatActivity
         selHeart = getIntent().getIntExtra("heartLimit", 3);
         selTimer = getIntent().getIntExtra("timerLimit", 10);
         questionLimits = getIntent().getIntExtra("questionLimit", 10);
-
+        onTimerLevel = getIntent().getIntExtra("ontimer_level", 0);
         if ("Quiz".equals(gameType)) {
+            String studentGradeStr = getIntent().getStringExtra("student_grade");
+            if (studentGradeStr != null) {
+                try {
+                    studentGradeLevel = Integer.parseInt(studentGradeStr.trim());
+                } catch (NumberFormatException e) {
+                    studentGradeLevel = 1;
+                }
+            }
             heart_choice.setVisibility(View.GONE);
             timer_choice.setVisibility(View.GONE);
         } else {
@@ -386,14 +399,10 @@ public class MultipleChoicePage extends AppCompatActivity
         numBGAnimation = new NumBGAnimation(this, numberContainer);
         numBGAnimation.startNumberAnimationLoop();
 
-        backgroundFrame.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                backgroundFrame.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                applyDefaultVignetteEffect(); // Set the default effect first
-
-            }
-        });
+        backgroundFrame.post(
+                () -> {
+                    VignetteEffect.apply(this, backgroundFrame);
+                });
 
 
         drawingView.setOnDrawingListener(new DrawingView.OnDrawingListener() {
@@ -433,6 +442,12 @@ public class MultipleChoicePage extends AppCompatActivity
 
     }
 
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+    }
+
     private void updateHelpText() {
         helpTextView.setText("Need a Help? " + helpRemaining + "/" + helpLimit);
     }
@@ -457,13 +472,20 @@ public class MultipleChoicePage extends AppCompatActivity
         if (difficulty == null) return 1;
 
         switch (difficulty) {
-            case "grade_one":   return 1;
-            case "grade_two":   return 2;
-            case "grade_three": return 3;
-            case "grade_four":  return 4;
-            case "grade_five":  return 5;
-            case "grade_six":   return 6;
-            default:            return 1;
+            case "grade_one":
+                return 1;
+            case "grade_two":
+                return 2;
+            case "grade_three":
+                return 3;
+            case "grade_four":
+                return 4;
+            case "grade_five":
+                return 5;
+            case "grade_six":
+                return 6;
+            default:
+                return 1;
         }
     }
 
@@ -568,9 +590,6 @@ public class MultipleChoicePage extends AppCompatActivity
 
         }
 
-        answeredQuestions.add(currentProblem);
-        currentQuestionIndex++;
-
         if (currentQuestionIndex >= problemSet.size()) {
             launchResultsActivity(gameType);
             return;
@@ -642,11 +661,30 @@ public class MultipleChoicePage extends AppCompatActivity
         }
     }
 
+    /**
+     * Maps the student's actual grade + quiz difficulty tier
+     * to a generator grade level so number ranges are always
+     * age-appropriate but still scale within the student's grade.
+     *
+     * Easy   → slightly below grade level (builds confidence)
+     * Medium → at grade level
+     * Hard   → slightly above grade level (stretches ability)
+     */
+    private int resolveQuizGradeLevel(int actualGrade, String difficulty) {
+        switch (difficulty) {
+            case "Easy":
+                return Math.max(1, actualGrade - 1);
+            case "Medium":
+                return actualGrade;
+            case "Hard":
+                return Math.min(6, actualGrade + 1);
+            default:
+                return actualGrade;
+        }
+    }
     private void setupProblemSetList(String difficulty, String operation) {
-
         text_operator.setText(getOperatorSymbol(operation));
-
-        int gradeLevel = resolveGradeLevel(difficulty);
+        int gradeLevel = resolveQuizGradeLevel(studentGradeLevel, difficulty);
 
         problemSet.clear();
         problemSet.addAll(
@@ -705,6 +743,7 @@ public class MultipleChoicePage extends AppCompatActivity
         });
 
     }
+
     private void generateNewQuestionList(int currentQIndex, List<MathProblem> sourceQuestions) {
         if (currentQIndex < sourceQuestions.size()) {
             MathProblem currentProblem = sourceQuestions.get(currentQIndex);
@@ -740,11 +779,11 @@ public class MultipleChoicePage extends AppCompatActivity
             Intent intent = new Intent(MultipleChoicePage.this, Results.class);
 
             // Result Messaging Logic
-            if (score == 20) {
+            if (score == 20 || score == 10) {
                 intent.putExtra("EXTRA_RESULT", "Congratulations");
-            } else if (score > 15) {
+            } else if (score > 15 || score > 8) {
                 intent.putExtra("EXTRA_RESULT", "Good Job!");
-            } else if (score > 5) {
+            } else if (score > 5 || score > 3) {
                 intent.putExtra("EXTRA_RESULT", "Nice Try!");
             } else {
                 intent.putExtra("EXTRA_RESULT", "Failed");
@@ -768,6 +807,7 @@ public class MultipleChoicePage extends AppCompatActivity
             finish(); // Ensure the quiz page is removed from the stack
         }
     }
+
     private void generateNewQuestion(int currentQIndex, List<MathProblem> sourceQuestions) {
         if (currentQIndex < sourceQuestions.size()) {
             MathProblem currentProblem = sourceQuestions.get(currentQIndex);
@@ -800,14 +840,18 @@ public class MultipleChoicePage extends AppCompatActivity
 
     private String getOperatorSymbol(String op) {
         switch (op.toLowerCase()) {
-            case "addition": return "+";
-            case "subtraction": return "-";
-            case "multiplication": return "×";
-            case "division": return "÷";
-            default: return "";
+            case "addition":
+                return "+";
+            case "subtraction":
+                return "-";
+            case "multiplication":
+                return "×";
+            case "division":
+                return "÷";
+            default:
+                return "";
         }
     }
-
 
 
     private void applyDefaultVignetteEffect() {
@@ -835,6 +879,7 @@ public class MultipleChoicePage extends AppCompatActivity
         canvas.drawRect(0, 0, width, height, paint);
         backgroundFrame.setBackground(new BitmapDrawable(getResources(), bitmap));
     }
+
     private void startVignetteEffect() {
         if (backgroundFrame.getWidth() == 0 || backgroundFrame.getHeight() == 0) return;
 
@@ -875,6 +920,7 @@ public class MultipleChoicePage extends AppCompatActivity
             animator.start();
         }
     }
+
     private int blendColors(int colorStart, int colorEnd, float ratio) {
         int startA = (colorStart >> 24) & 0xff;
         int startR = (colorStart >> 16) & 0xff;
@@ -891,47 +937,41 @@ public class MultipleChoicePage extends AppCompatActivity
                 ((int) (startG + (endG - startG) * ratio) << 8) |
                 ((int) (startB + (endB - startB) * ratio));
     }
+
     @Override
     public void onResumeGame(boolean resumeGame) {
         if (resumeGame) {
             startTimer(timeLeftInMillis);
         }
     }
+
     private void updateHeartDisplay() {
         heartTxt.setText(String.valueOf(heartLimit));
     }
 
     private void startTimer(long millisInFuture) {
-        timeLeftInMillis = millisInFuture; // Set the time left
-
+        timeLeftInMillis = millisInFuture;
         countDownTimer =
                 new CountDownTimer(timeLeftInMillis, 1000) {
                     public void onTick(long millisUntilFinished) {
-                        timeLeftInMillis = millisUntilFinished; // Update remaining time
+                        timeLeftInMillis = millisUntilFinished;
                         int seconds = (int) (millisUntilFinished / 1000);
                         int minutes = seconds / 60;
                         seconds = seconds % 60;
 
                         numberRunlimit = String.format("%d:%02d", minutes, seconds);
                         timerTxt.setText(numberRunlimit);
-
                     }
 
                     public void onFinish() {
                         numberRunlimit = "0:00";
                         timerTxt.setText("0:00");
-                        showPauseDialog();
                         isTimerRunning = false;
 
                         if ("Quiz".equals(gametypeGame)) {
-                            //No Timer
                         } else {
-
                             int totalQuestions = problemSet.size();
-
-                            //Pass Data to Results Activity
                             Intent intent = new Intent(MultipleChoicePage.this, Results.class);
-
                             intent.putExtra("EXTRA_RESULT", "Times Up!");
                             intent.putExtra("quizid", quidId);
                             intent.putExtra("passinglevelnext", levelNext);
@@ -944,10 +984,19 @@ public class MultipleChoicePage extends AppCompatActivity
                             intent.putExtra("EXTRA_TOTAL", totalQuestions);
                             intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
                             intent.putExtra("EXTRA_DIFFICULTY", difficulty);
+                            long totalTimeMillis = (long) selTimer * 60 * 1000;
+                            intent.putExtra("EXTRA_ONTIMER_LEVEL", onTimerLevel);
+                            intent.putExtra("EXTRA_SECTION_ID", sectionId);
+
+                            Log.d("MathSquare", "[NodeSync] GRADELEVEL EXISTS ON FINISH TIMER: " + sectionId);
+                            Log.d("MathSquare", "[NodeSync] LEVEL EXISTS ON FINISH TIMER: " + onTimerLevel);
+                            intent.putExtra("EXTRA_TOTAL_TIME", totalTimeMillis);
+                            intent.putExtra("EXTRA_TIME_LEFT", 0L);
+                            intent.putExtra("EXTRA_POINTS", totalPoints);
 
                             startActivity(intent);
+                            finish();
                         }
-
                     }
                 }.start();
 
@@ -956,19 +1005,12 @@ public class MultipleChoicePage extends AppCompatActivity
 
     private void resumeTimer() {
         if (!isTimerRunning) {
-            startTimer(timeLeftInMillis); // Resume from remaining time
+            startTimer(timeLeftInMillis);
         }
     }
-    /**
-     * Helper method to prepare and launch the Results Activity.
-     * This method creates an intent, adds all necessary extras,
-     * and then starts the new activity. Adjust the threshold and extras as needed.
-     */
     private void launchResultsActivity(String gameType) {
         int totalQuestions = problemSet.size();
         Intent intent = new Intent(MultipleChoicePage.this, Results.class);
-
-        // Provide feedback messages based on the score.
         if (("Quiz".equals(gameType) && score == 20) || (!"quiz".equals(gameType) && score == 10)) {
             intent.putExtra("EXTRA_RESULT", "Congratulations");
         } else if (score > 15 || score > 8) {
@@ -978,8 +1020,6 @@ public class MultipleChoicePage extends AppCompatActivity
         } else {
             intent.putExtra("EXTRA_RESULT", "Failed");
         }
-
-        // Pass necessary extras to the Results activity.
         if ("Quiz".equals(gameType)) {
             intent.putStringArrayListExtra("operationList", new ArrayList<>(operationList));
         }
@@ -995,13 +1035,18 @@ public class MultipleChoicePage extends AppCompatActivity
         intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
         intent.putExtra("EXTRA_DIFFICULTY", difficulty);
 
-        // POINTS FOR THIS ROUND
-        intent.putExtra("EXTRA_POINTS", totalPoints);
+        Log.d("MathSquare", "[NodeSync] LEVEL EXISTS COMPLETE: " + onTimerLevel);
+        Log.d("MathSquare", "[NodeSync] GRADELEVEL EXISTS COMPLETE: " + sectionId);
 
-        // Start the Results activity.
+        intent.putExtra("EXTRA_ONTIMER_LEVEL", onTimerLevel);
+        intent.putExtra("EXTRA_SECTION_ID", sectionId);
+
+        long totalTimeMillis = (long) selTimer * 60 * 1000;
+        intent.putExtra("EXTRA_TOTAL_TIME", totalTimeMillis);
+        intent.putExtra("EXTRA_TIME_LEFT", timeLeftInMillis);
+        intent.putExtra("EXTRA_POINTS", totalPoints);
         startActivity(intent);
     }
-
 
     private void playSound(String fileName) {
 
@@ -1095,11 +1140,11 @@ public class MultipleChoicePage extends AppCompatActivity
 
         // Pass data to Results activity
 
-        if (score == 20) {
+        if (score == 20 || score == 10) {
             intent.putExtra("EXTRA_RESULT", "Congratulations");
-        } else if (score > 15) {
+        } else if (score > 15 || score > 8) {
             intent.putExtra("EXTRA_RESULT", "Good Job!");
-        } else if (score > 5) {
+        } else if (score > 5 || score > 3) {
             intent.putExtra("EXTRA_RESULT", "Nice Try!");
         } else {
             intent.putExtra("EXTRA_RESULT", "Failed");
@@ -1121,6 +1166,16 @@ public class MultipleChoicePage extends AppCompatActivity
         intent.putExtra("EXTRA_TOTAL", totalQuestions);
         intent.putExtra("EXTRA_OPERATIONTEXT", operationText);
         intent.putExtra("EXTRA_DIFFICULTY", difficulty);
+
+        intent.putExtra("EXTRA_ONTIMER_LEVEL", onTimerLevel);
+        intent.putExtra("EXTRA_SECTION_ID", sectionId);
+        Log.d("MathSquare", "[NodeSync] GRADELEVEL EXISTS ON GAMEOVER: " + sectionId);
+        Log.d("MathSquare", "[NodeSync] LEVEL EXISTS ON GAMEOVER: " + onTimerLevel);
+
+        long totalTimeMillis = (long) selTimer * 60 * 1000;
+        intent.putExtra("EXTRA_TOTAL_TIME", totalTimeMillis);
+        intent.putExtra("EXTRA_TIME_LEFT", timeLeftInMillis);
+        intent.putExtra("EXTRA_POINTS", totalPoints);
 
         startActivity(intent);
     }
@@ -1149,6 +1204,7 @@ public class MultipleChoicePage extends AppCompatActivity
         startActivity(intent);
         finish();
     }
+
     private void animateCorrectAnswer() {
 
         playEffectSound("correct.mp3");
@@ -1170,13 +1226,12 @@ public class MultipleChoicePage extends AppCompatActivity
 
         if (bonusPoints > 0) {
             TextView bonusTxt = findViewById(R.id.bonusTxt);
-            bonusTxt.setText("Quick Thinker Bonus! +5");
+            bonusTxt.setText("⚡ Quick Thinker Bonus! +5");
             bonusTxt.setVisibility(View.VISIBLE);
         }
 
         if (drawingView != null) {
             drawingView.setFeedbackColor(true);
-
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 drawingView.clearCanvas();
             }, 1000);
@@ -1188,7 +1243,7 @@ public class MultipleChoicePage extends AppCompatActivity
         overlay.setVisibility(View.VISIBLE);
         successDialog.setVisibility(View.VISIBLE);
 
-        // Pop animation
+        // Pop-in animation
         successDialog.setScaleX(0.7f);
         successDialog.setScaleY(0.7f);
         successDialog.setAlpha(0f);
@@ -1198,16 +1253,17 @@ public class MultipleChoicePage extends AppCompatActivity
                 .scaleY(1f)
                 .alpha(1f)
                 .setDuration(300)
+                .setInterpolator(new OvershootInterpolator(1.5f))
                 .start();
 
-        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
             drawingView.resetMarkerColor();
             hintQuestionMark.setVisibility(View.VISIBLE);
             successDialog.setVisibility(View.GONE);
             overlay.setVisibility(View.GONE);
-
         }, 2500);
     }
+
     private void showKidFriendlyErrorAnimated(MathProblem problem, Runnable onComplete) {
         playEffectSound("wrong.mp3");
         drawingView.setDrawingEnabled(false);
@@ -1253,10 +1309,18 @@ public class MultipleChoicePage extends AppCompatActivity
         TextView operatorView = new TextView(this);
         String operatorSymbol = "";
         switch (operationName) {
-            case "Addition": operatorSymbol = "+"; break;
-            case "Subtraction": operatorSymbol = "-"; break;
-            case "Multiplication": operatorSymbol = "×"; break;
-            case "Division": operatorSymbol = "÷"; break;
+            case "Addition":
+                operatorSymbol = "+";
+                break;
+            case "Subtraction":
+                operatorSymbol = "-";
+                break;
+            case "Multiplication":
+                operatorSymbol = "×";
+                break;
+            case "Division":
+                operatorSymbol = "÷";
+                break;
         }
         operatorView.setText(operatorSymbol);
         operatorView.setTextSize(28f);
@@ -1328,6 +1392,7 @@ public class MultipleChoicePage extends AppCompatActivity
             if (onComplete != null) onComplete.run();
         }, 5000);
     }
+
     private void addIncreasingBounce(View view, long startDelay, int bounces, float startScale, float increment) {
         view.setScaleX(0f);
         view.setScaleY(0f);
@@ -1358,7 +1423,6 @@ public class MultipleChoicePage extends AppCompatActivity
                         .start())
                 .start();
     }
-
 
 
     @Override

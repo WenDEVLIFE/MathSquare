@@ -90,6 +90,10 @@ public class DrawingView extends View {
         handPaint.setShadowLayer(15, 0, 0, Color.YELLOW);
     }
     public void showAnimatedHint(String number) {
+        if (getWidth() == 0 || getHeight() == 0) {
+            post(() -> showAnimatedHint(number));
+            return;
+        }
         if (hintPath == null || hintPaint == null) setupHintDrawing();
 
         hintPath.reset();
@@ -100,44 +104,42 @@ public class DrawingView extends View {
 
         char[] digits = number.toCharArray();
         int count = digits.length;
-        float digitWidth;
-        float gap;
 
-        if (count == 1) {
-            digitWidth = w * 0.38f; // Large for single digit
-            gap = 0;
-        } else if (count == 2) {
-            digitWidth = w * 0.35f; // Medium for two digits
-            gap = w * 0.02f;
-        } else {
-            digitWidth = w * 0.30f; // Smaller for three+ digits
-            gap = w * 0.03f;
+        // --- Digit height is the anchor: use 65% of the view height ---
+        float digitHeight = h * 0.65f;
+
+        // --- Maintain a natural aspect ratio per digit (width = 60% of height) ---
+        float digitWidth = digitHeight * 0.60f;
+
+        // --- Gap between digits ---
+        float gap = digitWidth * 0.20f;
+
+        // --- Cap total width so it never overflows the canvas ---
+        float totalWidth = (digitWidth * count) + (gap * (count - 1));
+        if (totalWidth > w * 0.85f) {
+            float scale = (w * 0.85f) / totalWidth;
+            digitWidth  *= scale;
+            digitHeight *= scale;
+            gap         *= scale;
+            totalWidth   = (digitWidth * count) + (gap * (count - 1));
         }
 
-        float totalWidth = (digitWidth * count) + (gap * (count - 1));
-        float startX = (w - totalWidth) / 2f;
+        // --- Center horizontally and vertically ---
+        float startX       = (w - totalWidth) / 2f;
+        float top          = (h - digitHeight) / 2f;
+        float bottom       = top + digitHeight;
 
         for (int i = 0; i < count; i++) {
-            float left = startX + (i * (digitWidth + gap));
-            float right = left + digitWidth;
-            float centerX = (left + right) / 2;
-            float top = h * 0.2f;
-            float bottom = h * 0.8f;
+            float left    = startX + (i * (digitWidth + gap));
+            float right   = left + digitWidth;
+            float centerX = (left + right) / 2f;
             float middleY = (top + bottom) / 2f;
 
-            appendDigitPath(String.valueOf(digits[i]), left, right, top, bottom, centerX, middleY, w, h);
+            appendDigitPath(String.valueOf(digits[i]),
+                    left, right, top, bottom, centerX, middleY, w, h);
         }
 
         pathMeasure = new PathMeasure(hintPath, false);
-
-        // Initialize hand paint if not done
-        if (handPaint == null) {
-            handPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            handPaint.setColor(Color.parseColor("#FFD700"));
-            handPaint.setStyle(Paint.Style.FILL);
-            handPaint.setShadowLayer(10, 0, 5, Color.GRAY);
-        }
-
         startAnimation();
     }
 

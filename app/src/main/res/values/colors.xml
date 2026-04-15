@@ -4,8 +4,23 @@
     <color name="white">#FFFFFFFF</color>
     <color name="whiteTheme">#FF000000</color>
 
+    <!-- Yellow BG -->
     <color name="yellowbg">#D9FFDB58</color>
-    
-        <color name="colorAccent">#FF4081</color>
-    
+
+    <!-- Yellow Theme Extensions -->
+    <color name="yellowDark">#F9A825</color>
+    <color name="yellowDeep">#F57F17</color>
+    <color name="yellowLight">#FFF9C4</color>
+    <color name="yellowGlow">#FFFFAA00</color>
+    <color name="yellowBorder">#FFE65100</color>
+
+    <!-- Game accent colors -->
+    <color name="gameGreen">#2E7D32</color>
+    <color name="gameRed">#B71C1C</color>
+    <color name="gameBrown">#3E2723</color>
+    <color name="gameGold">#FFD700</color>
+    <color name="gameGoldDark">#FFA000</color>
+    <color name="gameShadowBrown">#5D4037</color>
+
+    <color name="colorAccent">#FF4081</color>
 </resources>

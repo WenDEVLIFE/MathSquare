@@ -7,7 +7,10 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -27,6 +30,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -126,6 +130,7 @@ public class passingStageSelection extends AppCompatActivity {
 
         // Initialize the levels
         String operation = getIntent().getStringExtra("operation");
+        String sectionId = getIntent().getStringExtra("difficulty");
         String difficulty = getIntent().getStringExtra("difficulty");
         String passingWorldType = getIntent().getStringExtra("passing");
         boolean reloadProgress = getIntent().getBooleanExtra("reload_progress", false);
@@ -264,7 +269,7 @@ public class passingStageSelection extends AppCompatActivity {
                 // For level 1 (index 0), set as available and flash
                 level.setContentDescription("Available");
                 level.setBackgroundResource(R.drawable.btn_short_condition); // Resource for available state
-                startFlashingAnimation(flashbox);
+                //startFlashingAnimation(flashbox);
             } else {
                 // For all other levels, set as not available
                 level.setContentDescription("Not_Available");
@@ -281,6 +286,7 @@ public class passingStageSelection extends AppCompatActivity {
                     intent.putExtra("operation", operation);
                     intent.putExtra("passing", currentLevel);
                     intent.putExtra("game_type", "Passing");
+                    intent.putExtra("sectionId", sectionId);
                     intent.putExtra("passing_world", "world_one");
                     intent.putExtra("passing_next_level", nextLevelToUnlock);
                     intent.putExtra("difficulty", difficultySection);
@@ -316,7 +322,6 @@ public class passingStageSelection extends AppCompatActivity {
                 .whereEqualTo("firstName", firstName)
                 .whereEqualTo("lastName", lastName)
                 .whereEqualTo("section", section)
-                .whereEqualTo("gameType", "Passing")
                 .whereEqualTo("grade", grade)
                 .whereEqualTo("operation_type", operation);
 
@@ -325,7 +330,6 @@ public class passingStageSelection extends AppCompatActivity {
             query.get()
                     .addOnSuccessListener(queryDocumentSnapshots -> {
 
-                        // Same inside here
                         long elapsed = System.currentTimeMillis() - startTime;
                         if (elapsed > 3000) {
                             Snackbar.make(rootView, "Slow connection detected. Data loaded in " + elapsed / 1000 + " seconds.",
@@ -338,15 +342,15 @@ public class passingStageSelection extends AppCompatActivity {
                                 String currentLevel = "level_" + (i + 1);
                                 String nextLevelToUnlock = "level_" + (i + 2);
                                 FrameLayout level = levels[i];
-                                ImageView flashbox = flashboxes[i];
 
                                 if (i == 0) {
                                     level.setContentDescription("Available");
                                     level.setBackgroundResource(R.drawable.btn_short_condition);
-                                    startFlashingAnimation(flashbox);
+                                    startFlashingAnimation(level); // Flash the level button directly
                                 } else {
                                     level.setContentDescription("Not_Available");
                                     level.setBackgroundResource(R.drawable.btn_short_condition_off);
+                                    stopFlashingAnimation(level); // Ensure it doesn't flash
                                 }
 
                                 String levelState = (String) level.getContentDescription();
@@ -357,6 +361,7 @@ public class passingStageSelection extends AppCompatActivity {
                                         intent.putExtra("operation", operation);
                                         intent.putExtra("passing", currentLevel);
                                         intent.putExtra("game_type", "Passing");
+                                        intent.putExtra("sectionId", sectionId);
                                         intent.putExtra("passing_world", "world_one");
                                         intent.putExtra("passing_next_level", nextLevelToUnlock);
                                         intent.putExtra("difficulty", difficultySection);
@@ -424,17 +429,14 @@ public class passingStageSelection extends AppCompatActivity {
                                             String currentLevel = "level_" + (i + 1);
                                             String nextLevelToUnlock = "level_" + (i + 2);
                                             FrameLayout level = levels[i];
-                                            ImageView flashbox = flashboxes[i];
 
                                             boolean isCompleted = completedLevels.contains(currentLevel);
                                             boolean isAvailable = (i == availableIndex);
 
-                                            startFlashingAnimation(flashbox);
-
                                             if (isCompleted) {
                                                 level.setContentDescription("Completed");
                                                 level.setBackgroundResource(R.drawable.btn_short_condition);
-                                                flashbox.setImageResource(R.drawable.transparent_box);
+                                                stopFlashingAnimation(level); // Stop flashing for completed
 
                                                 String starsEarned = starsPerLevel.get(currentLevel);
                                                 if ("1 Stars".equals(starsEarned)) {
@@ -447,8 +449,7 @@ public class passingStageSelection extends AppCompatActivity {
                                             } else if (isAvailable) {
                                                 level.setContentDescription("Available");
                                                 level.setBackgroundResource(R.drawable.btn_short_condition);
-                                                flashbox.setImageResource(R.drawable.white_box);
-                                                startFlashingAnimation(flashbox);
+                                                startFlashingAnimation(level); // Flash the available level directly
 
                                                 boolean streak5 = isOnStarStreak(starsPerLevel, 1, 5);
                                                 boolean streak3 = isOnStarStreak(starsPerLevel, 1, 3);
@@ -461,6 +462,7 @@ public class passingStageSelection extends AppCompatActivity {
                                             } else {
                                                 level.setContentDescription("Not_Available");
                                                 level.setBackgroundResource(R.drawable.btn_short_condition_off);
+                                                stopFlashingAnimation(level); // Stop flashing for locked
                                             }
 
                                             level.setOnClickListener(v -> {
@@ -471,6 +473,7 @@ public class passingStageSelection extends AppCompatActivity {
                                                     intent.putExtra("operation", operation);
                                                     intent.putExtra("passing", currentLevel);
                                                     intent.putExtra("game_type", "Passing");
+                                                    intent.putExtra("sectionId", sectionId);
                                                     intent.putExtra("passing_world", "world_one");
                                                     intent.putExtra("passing_next_level", nextLevelToUnlock);
                                                     intent.putExtra("difficulty", difficultySection);
@@ -490,21 +493,17 @@ public class passingStageSelection extends AppCompatActivity {
                                     .addOnFailureListener(historyError -> {
                                         Toast.makeText(this, "Error loading history: " + historyError.getMessage(), Toast.LENGTH_SHORT).show();
                                     });
-
-
-
                         }
-
                     })
                     .addOnFailureListener(e -> {
                         Toast.makeText(this, "Error loading data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
-        } else {
-            // Just normal load
+        }
+        else {
+            // Normal load
             query.get()
                     .addOnSuccessListener(queryDocumentSnapshots -> {
 
-                        // Same inside here
                         long elapsed = System.currentTimeMillis() - startTime;
                         if (elapsed > 3000) {
                             Snackbar.make(rootView, "Slow connection detected. Data loaded in " + elapsed / 1000 + " seconds.",
@@ -517,15 +516,15 @@ public class passingStageSelection extends AppCompatActivity {
                                 String currentLevel = "level_" + (i + 1);
                                 String nextLevelToUnlock = "level_" + (i + 2);
                                 FrameLayout level = levels[i];
-                                ImageView flashbox = flashboxes[i];
 
                                 if (i == 0) {
                                     level.setContentDescription("Available");
                                     level.setBackgroundResource(R.drawable.btn_short_condition);
-                                    startFlashingAnimation(flashbox);
+                                    startFlashingAnimation(level); // Flash the level button directly
                                 } else {
                                     level.setContentDescription("Not_Available");
                                     level.setBackgroundResource(R.drawable.btn_short_condition_off);
+                                    stopFlashingAnimation(level); // Ensure it doesn't flash
                                 }
 
                                 String levelState = (String) level.getContentDescription();
@@ -536,6 +535,7 @@ public class passingStageSelection extends AppCompatActivity {
                                         intent.putExtra("operation", operation);
                                         intent.putExtra("passing", currentLevel);
                                         intent.putExtra("game_type", "Passing");
+                                        intent.putExtra("sectionId", sectionId);
                                         intent.putExtra("passing_world", "world_one");
                                         intent.putExtra("passing_next_level", nextLevelToUnlock);
                                         intent.putExtra("difficulty", difficultySection);
@@ -603,17 +603,14 @@ public class passingStageSelection extends AppCompatActivity {
                                             String currentLevel = "level_" + (i + 1);
                                             String nextLevelToUnlock = "level_" + (i + 2);
                                             FrameLayout level = levels[i];
-                                            ImageView flashbox = flashboxes[i];
 
                                             boolean isCompleted = completedLevels.contains(currentLevel);
                                             boolean isAvailable = (i == availableIndex);
 
-                                            startFlashingAnimation(flashbox);
-
                                             if (isCompleted) {
                                                 level.setContentDescription("Completed");
                                                 level.setBackgroundResource(R.drawable.btn_short_condition);
-                                                flashbox.setImageResource(R.drawable.transparent_box);
+                                                stopFlashingAnimation(level); // Stop flashing for completed
 
                                                 String starsEarned = starsPerLevel.get(currentLevel);
                                                 if ("1 Stars".equals(starsEarned)) {
@@ -626,8 +623,7 @@ public class passingStageSelection extends AppCompatActivity {
                                             } else if (isAvailable) {
                                                 level.setContentDescription("Available");
                                                 level.setBackgroundResource(R.drawable.btn_short_condition);
-                                                flashbox.setImageResource(R.drawable.white_box);
-                                                startFlashingAnimation(flashbox);
+                                                startFlashingAnimation(level); // Flash the available level directly
 
                                                 boolean streak5 = isOnStarStreak(starsPerLevel, 1, 5);
                                                 boolean streak3 = isOnStarStreak(starsPerLevel, 1, 3);
@@ -640,6 +636,7 @@ public class passingStageSelection extends AppCompatActivity {
                                             } else {
                                                 level.setContentDescription("Not_Available");
                                                 level.setBackgroundResource(R.drawable.btn_short_condition_off);
+                                                stopFlashingAnimation(level); // Stop flashing for locked
                                             }
 
                                             level.setOnClickListener(v -> {
@@ -650,6 +647,7 @@ public class passingStageSelection extends AppCompatActivity {
                                                     intent.putExtra("operation", operation);
                                                     intent.putExtra("passing", currentLevel);
                                                     intent.putExtra("game_type", "Passing");
+                                                    intent.putExtra("sectionId", sectionId);
                                                     intent.putExtra("passing_world", "world_one");
                                                     intent.putExtra("passing_next_level", nextLevelToUnlock);
                                                     intent.putExtra("difficulty", difficultySection);
@@ -670,7 +668,6 @@ public class passingStageSelection extends AppCompatActivity {
                                         Toast.makeText(this, "Error loading history: " + historyError.getMessage(), Toast.LENGTH_SHORT).show();
                                     });
                         }
-
                     })
                     .addOnFailureListener(e -> {
                         Toast.makeText(this, "Error loading data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -698,6 +695,75 @@ public class passingStageSelection extends AppCompatActivity {
             VignetteEffect.apply(this, backgroundFrame);
         });
 
+    }
+
+    private void startShimmerAnimation(ImageView flashbox) {
+        flashbox.setVisibility(View.VISIBLE);
+        GradientDrawable shimmer = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{0x00FFFFFF, 0x66FFFFFF, 0x00FFFFFF}
+        );
+        flashbox.setImageDrawable(shimmer);
+        flashbox.setScaleType(ImageView.ScaleType.FIT_XY);
+        flashbox.post(() -> {
+            float w = flashbox.getWidth();
+            ObjectAnimator sweep = ObjectAnimator.ofFloat(flashbox, "translationX", -w, w);
+            sweep.setDuration(1200);
+            sweep.setInterpolator(new LinearInterpolator());
+            sweep.setRepeatCount(ValueAnimator.INFINITE);
+            sweep.setRepeatMode(ValueAnimator.RESTART);
+            sweep.setStartDelay(400);
+            sweep.start();
+            flashbox.setTag(sweep);
+        });
+    }
+
+    private void startBreatheAnimation(FrameLayout level) {
+        // Scale up
+        ObjectAnimator scaleUpX = ObjectAnimator.ofFloat(level, "scaleX", 1f, 1.09f);
+        ObjectAnimator scaleUpY = ObjectAnimator.ofFloat(level, "scaleY", 1f, 1.09f);
+        ObjectAnimator fadeUp   = ObjectAnimator.ofFloat(level, "alpha", 0.85f, 1f);
+
+        // Scale down
+        ObjectAnimator scaleDownX = ObjectAnimator.ofFloat(level, "scaleX", 1.09f, 1f);
+        ObjectAnimator scaleDownY = ObjectAnimator.ofFloat(level, "scaleY", 1.09f, 1f);
+        ObjectAnimator fadeDown   = ObjectAnimator.ofFloat(level, "alpha", 1f, 0.85f);
+
+        AnimatorSet expand = new AnimatorSet();
+        expand.playTogether(scaleUpX, scaleUpY, fadeUp);
+        expand.setDuration(600);
+        expand.setInterpolator(new AccelerateDecelerateInterpolator());
+
+        AnimatorSet shrink = new AnimatorSet();
+        shrink.playTogether(scaleDownX, scaleDownY, fadeDown);
+        shrink.setDuration(600);
+        shrink.setInterpolator(new AccelerateDecelerateInterpolator());
+
+        AnimatorSet breathe = new AnimatorSet();
+        breathe.playSequentially(expand, shrink);
+        breathe.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                breathe.start();
+            }
+        });
+        breathe.start();
+        level.setTag(R.id.level_one, breathe);
+    }
+    private void stopBreatheAnimation(FrameLayout level) {
+        Object tag = level.getTag(R.id.level_one);
+        if (tag instanceof AnimatorSet) {
+            ((AnimatorSet) tag).cancel();
+        }
+        level.setScaleX(1f);
+        level.setScaleY(1f);
+        level.setAlpha(1f);
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private void setLevelsEnabled(FrameLayout[] levels, boolean enabled) {
@@ -810,19 +876,59 @@ public class passingStageSelection extends AppCompatActivity {
 
     // Stop Focus Animation
     private void stopButtonFocusAnimation(View button) {
-        AnimatorSet animatorSet = (AnimatorSet) button.getTag();
-        if (animatorSet != null) {
-            animatorSet.cancel();  // Stop the animation when focus is lost
+        Object tag = button.getTag();
+
+        if (tag instanceof Animator) {
+            Animator animator = (Animator) tag;
+            animator.cancel();
         }
     }
+    private void startFlashingAnimation(FrameLayout view) {
+        // Prevent stacking multiple animators on the same view
+        if (view.getTag() instanceof ValueAnimator) {
+            return;
+        }
 
-    private void startFlashingAnimation(View view) {
-        // Create an ObjectAnimator to animate the alpha property
-        ObjectAnimator animator = ObjectAnimator.ofFloat(view, "alpha", 0f, 1f);
-        animator.setDuration(500); // Duration for the fade in and out
-        animator.setRepeatMode(ObjectAnimator.REVERSE); // Reverse the animation
-        animator.setRepeatCount(ObjectAnimator.INFINITE); // Repeat indefinitely
+        Drawable background = view.getBackground();
+        if (background == null) return;
+
+        // MUST mutate() so we only animate this specific button's background
+        final Drawable mutatedBackground = background.mutate();
+
+        // Changed 150 to 255.
+        // This will make the tint transition from normal to SOLID WHITE.
+        ValueAnimator animator = ValueAnimator.ofInt(0, 255);
+        animator.setDuration(600); // 600ms pulse
+        animator.setRepeatMode(ValueAnimator.REVERSE);
+        animator.setRepeatCount(ValueAnimator.INFINITE);
+
+        animator.addUpdateListener(animation -> {
+            int alpha = (int) animation.getAnimatedValue();
+            // Construct a white color with the current animated alpha
+            int filterColor = Color.argb(alpha, 255, 255, 255);
+
+            // Apply it over the top of the button shape
+            mutatedBackground.setColorFilter(filterColor, PorterDuff.Mode.SRC_ATOP);
+        });
+
         animator.start();
+
+        // Store animator so we can cancel it later
+        view.setTag(animator);
+    }
+
+    private void stopFlashingAnimation(FrameLayout view) {
+        if (view.getTag() instanceof ValueAnimator) {
+            ValueAnimator animator = (ValueAnimator) view.getTag();
+            animator.cancel();
+            view.setTag(null); // Clear the tag
+        }
+
+        // Clear the color filter to return the background to its exact original state
+        Drawable background = view.getBackground();
+        if (background != null) {
+            background.clearColorFilter();
+        }
     }
 
     @Override

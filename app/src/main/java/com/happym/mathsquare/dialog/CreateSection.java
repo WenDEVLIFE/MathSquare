@@ -32,6 +32,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.DialogFragment;
 
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.firestore.FieldValue;
@@ -99,8 +100,8 @@ public class CreateSection extends DialogFragment {
         // Firestore instance
         db = FirebaseDb.getFirestore();
 
-        TextInputLayout sectionLayout = view.findViewById(R.id.email_address_layout);
-        Spinner numberDropdownPicker = view.findViewById(R.id.numberDropdownPicker);
+        TextInputLayout sectionLayout = view.findViewById(R.id.section_name_layout);
+        MaterialAutoCompleteTextView numberDropdownPicker = view.findViewById(R.id.numberDropdownPicker);
         TextView spinnerError = view.findViewById(R.id.spinnerError);
         AppCompatButton btbSubmit = view.findViewById(R.id.btn_submit);
 
@@ -108,10 +109,9 @@ public class CreateSection extends DialogFragment {
         animateButtonFocus(btbSubmit);
 
         List<String> grades = Arrays.asList("Select your grade", "1", "2", "3", "4", "5", "6");
-        ArrayAdapter<String> adapterGrades = new ArrayAdapter<>(getContext(), R.layout.spinner_item, grades);
+        ArrayAdapter<String> adapterGrades = new ArrayAdapter<>(requireContext(), R.layout.spinner_item, grades);
         adapterGrades.setDropDownViewResource(R.layout.spinner_item);
         numberDropdownPicker.setAdapter(adapterGrades);
-
 
         ((TextInputEditText) sectionLayout.getEditText()).addTextChangedListener(new TextWatcher() {
             @Override
@@ -144,26 +144,27 @@ public class CreateSection extends DialogFragment {
                     sectionLayout.setError("Section is required");
                     hasError = true;
                 }
-
-
-                int gradePosition = numberDropdownPicker.getSelectedItemPosition();
-                String selectedGrade = (gradePosition > 0) ? numberDropdownPicker.getSelectedItem().toString() : null;
-                if (selectedGrade == null) {
+                String selectedGrade = numberDropdownPicker.getText().toString();
+                if (TextUtils.isEmpty(selectedGrade) || selectedGrade.equals("Select your grade")) {
                     spinnerError.setText("Please select a grade");
                     spinnerError.setVisibility(View.VISIBLE);
                     hasError = true;
                 }
 
                 if (!hasError) {
-                    String uuid = UUID.randomUUID().toString(); // Generate a random UUID
+                    String uuid = UUID.randomUUID().toString();
+                    String teacherEmail = sharedPreferences.getEmail(getContext());
+                    String teacherName = sharedPreferences.getTeacherN(getContext());
+                    String teacherUid = sharedPreferences.getEmail(getContext()); // using email as UID based on your Firestore schema
 
-                    // Create a map with only the required fields
                     HashMap<String, Object> sectionData = new HashMap<>();
-                    sectionData.put("Section", sections); // Field for the Section name
-                    sectionData.put("Grade_Number", Integer.parseInt(selectedGrade)); // Field for the Grade number
-                    sectionData.put("timestamp", FieldValue.serverTimestamp()); // Field for the server timestamp
+                    sectionData.put("Section", sections);
+                    sectionData.put("Grade_Number", Integer.parseInt(selectedGrade));
+                    sectionData.put("teacherEmail", teacherEmail);
+                    sectionData.put("teacherName", teacherName);
+                    sectionData.put("teacherUid", teacherUid);
+                    sectionData.put("timestamp", FieldValue.serverTimestamp());
 
-                    // Save the document in the "Sections" collection with the random UUID as its document ID
                     db.collection("Sections")
                             .document(uuid)
                             .set(sectionData)
@@ -175,8 +176,6 @@ public class CreateSection extends DialogFragment {
                                 Toast.makeText(getContext(), "Error adding section: " + e.getMessage(), Toast.LENGTH_LONG).show();
                             });
                 }
-
-
             }
         });
 

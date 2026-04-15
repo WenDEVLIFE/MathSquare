@@ -126,6 +126,7 @@ public class PracticeLevels extends AppCompatActivity {
 
 
         String operation = getIntent().getStringExtra("operation");
+        String sectionId = getIntent().getStringExtra("difficulty");
         difficulty = getIntent().getStringExtra("difficulty");
 
         ImageView operationDisplayIcon = findViewById(R.id.difficultyImage);
@@ -184,6 +185,7 @@ public class PracticeLevels extends AppCompatActivity {
             intent.putExtra("heartLimit", heartCount);
             intent.putExtra("timerLimit", timerCount);
             intent.putExtra("questionLimit", questionCount);
+            intent.putExtra("sectionId", sectionId);
 
 // Animate button click and stop animation
             animateButtonClick(btnEnter);
@@ -241,6 +243,12 @@ public class PracticeLevels extends AppCompatActivity {
             VignetteEffect.apply(this, backgroundFrame);
         });
 
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private void playSound(String fileName) {
@@ -333,12 +341,6 @@ public class PracticeLevels extends AppCompatActivity {
 
         MusicManager.resume();
 
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        MusicManager.pause();
     }
 
     @Override

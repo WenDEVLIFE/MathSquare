@@ -292,6 +292,7 @@
                      android:layout_height="30dp"
                      android:layout_width="match_parent"
                      android:src="@drawable/ic_star_three"
+
                      android:translationY="-200dp"
                      android:layout_gravity="center" />
 

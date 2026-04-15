@@ -81,18 +81,18 @@
                      android:orientation="horizontal">
 
                     <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="wrap_content"
-                         android:gravity="center"
-                         android:layout_marginHorizontal="27dp"
-                         android:shadowRadius="4"
-                         android:textSize="11sp"
-                         android:fontFamily="@font/paytone_one"
-                         android:textColor="@color/white"
-                         android:shadowColor="#000000"
-                         android:shadowDx="2"
-                         android:shadowDy="2"
-                         android:text="Practice" />
+                        android:layout_width="82dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="27dp"
+                        android:fontFamily="@font/paytone_one"
+                        android:gravity="center"
+                        android:shadowColor="#000000"
+                        android:shadowDx="2"
+                        android:shadowDy="2"
+                        android:shadowRadius="4"
+                        android:text="Practice"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
 
                 </LinearLayout>
 
@@ -131,18 +131,18 @@
                      android:orientation="horizontal">
 
                     <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="wrap_content"
-                         android:gravity="center"
-                         android:layout_marginHorizontal="28dp"
-                         android:shadowRadius="4"
-                         android:textSize="11sp"
-                         android:fontFamily="@font/paytone_one"
-                         android:textColor="@color/white"
-                         android:shadowColor="#000000"
-                         android:shadowDx="2"
-                         android:shadowDy="2"
-                         android:text="On Timer" />
+                        android:layout_width="88dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="28dp"
+                        android:fontFamily="@font/paytone_one"
+                        android:gravity="center"
+                        android:shadowColor="#000000"
+                        android:shadowDx="2"
+                        android:shadowDy="2"
+                        android:shadowRadius="4"
+                        android:text="On Timer"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
 
                 </LinearLayout>
 
@@ -173,26 +173,26 @@
                  android:translationX="60dp">
 
                 <LinearLayout
-                     android:layout_height="25dp"
-                     android:layout_width="100dp"
-                     android:layout_marginBottom="6dp"
-                     android:gravity="center"
-                     android:background="@drawable/btn_long_condition_off"
-                     android:orientation="horizontal">
+                    android:layout_width="110dp"
+                    android:layout_height="25dp"
+                    android:layout_marginBottom="6dp"
+                    android:background="@drawable/btn_long_condition_off"
+                    android:gravity="center"
+                    android:orientation="horizontal">
 
                     <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="wrap_content"
-                         android:gravity="center"
-                         android:layout_marginHorizontal="28dp"
-                         android:shadowRadius="4"
-                         android:textSize="11sp"
-                         android:fontFamily="@font/paytone_one"
-                         android:textColor="@color/white"
-                         android:shadowColor="#000000"
-                         android:shadowDx="2"
-                         android:shadowDy="2"
-                         android:text="Passing" />
+                        android:layout_width="65dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="28dp"
+                        android:fontFamily="@font/paytone_one"
+                        android:gravity="center"
+                        android:shadowColor="#000000"
+                        android:shadowDx="2"
+                        android:shadowDy="2"
+                        android:shadowRadius="4"
+                        android:text="Passing"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
 
                 </LinearLayout>
 

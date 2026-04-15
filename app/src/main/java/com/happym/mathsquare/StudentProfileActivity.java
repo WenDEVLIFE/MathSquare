@@ -44,6 +44,8 @@ public class StudentProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_profile);
 
+        MusicManager.playBGGame(this, "music.mp3");
+
         backButton = findViewById(R.id.btn_back);
         profileImage = findViewById(R.id.profile_image);
         firstNameText = findViewById(R.id.first_name);
@@ -193,6 +195,19 @@ public class StudentProfileActivity extends AppCompatActivity {
                         rank++;
                     }
                 });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MusicManager.resume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        MusicManager.pause();
     }
 
     private int dpToPx(int dp) {

@@ -5,4 +5,8 @@
     <dimen name="day_night_default_width">84dp</dimen>
     <dimen name="day_night_default_height">48dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
+
+    <dimen name="clear_btn_size">50dp</dimen>
+    <dimen name="draw_label_text_size">14sp</dimen>
+    <dimen name="hint_question_mark_size">80sp</dimen>
 </resources>

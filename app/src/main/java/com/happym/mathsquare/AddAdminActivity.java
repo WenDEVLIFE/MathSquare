@@ -21,6 +21,7 @@ import androidx.core.view.WindowCompat;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.happym.mathsquare.Service.FirebaseDb;
 
@@ -31,6 +32,7 @@ public class AddAdminActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
 
+    FirebaseAuth mAuth;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,6 +44,7 @@ public class AddAdminActivity extends AppCompatActivity {
 
         // Firestore instance
         db = FirebaseDb.getFirestore();
+        mAuth = FirebaseAuth.getInstance();
 
         TextInputLayout emailLayout = findViewById(R.id.email_address_layout);
         TextInputLayout firstNameLayout = findViewById(R.id.first_name_layout);
@@ -156,26 +159,29 @@ public class AddAdminActivity extends AppCompatActivity {
             }
 
             if (!hasError) {
-                // Generate a unique document ID
-                String teacherId = UUID.randomUUID().toString();
-
-                // Prepare data to save
-                HashMap<String, Object> teacherData = new HashMap<>();
-                teacherData.put("firstName", firstName);
-                teacherData.put("email", email);
-                teacherData.put("password", password); // In a real app, password should be hashed
                 animateButtonClick(submitButton);
-                // Save teacher data to Firestore
-                db.collection("Admin")
-                        .document(teacherId)
-                        .set(teacherData)
-                        .addOnSuccessListener(aVoid -> {
-                            // Account created, navigate to Dashboard
-                            Toast.makeText(AddAdminActivity.this, "Admin account created successfully", Toast.LENGTH_LONG).show();
-                            finish();
-                        })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(AddAdminActivity.this, "Error creating Admin account: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                mAuth.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                String adminUid = task.getResult().getUser().getUid();
+                                HashMap<String, Object> adminData = new HashMap<>();
+                                adminData.put("adminId", adminUid);
+                                adminData.put("firstName", firstName);
+                                adminData.put("password", password);
+                                adminData.put("email", email);
+                                db.collection("Admin")
+                                        .document(adminUid)
+                                        .set(adminData)
+                                        .addOnSuccessListener(aVoid -> {
+                                            Toast.makeText(AddAdminActivity.this, "Admin account created successfully", Toast.LENGTH_LONG).show();
+                                            finish();
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Toast.makeText(AddAdminActivity.this, "Error creating Admin record: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                        });
+                            } else {
+                                Toast.makeText(AddAdminActivity.this, "Auth Error: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                            }
                         });
             }
         });

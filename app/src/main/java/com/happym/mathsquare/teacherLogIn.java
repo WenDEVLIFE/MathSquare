@@ -1,5 +1,8 @@
 package com.happym.mathsquare;
 
+import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.text.InputFilter;
 
 import android.animation.AnimatorSet;
@@ -11,6 +14,7 @@ import android.util.Patterns;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,8 +23,10 @@ import androidx.appcompat.widget.AppCompatButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.happym.mathsquare.Service.FirebaseDb;
+import com.happym.mathsquare.Utils.PasswordUtils;
 import com.happym.mathsquare.sharedPreferences;
 
 import androidx.core.view.WindowCompat;
@@ -28,11 +34,16 @@ import androidx.core.view.WindowCompat;
 public class teacherLogIn extends AppCompatActivity {
     private FirebaseFirestore db;
 
+    private FrameLayout loadingContainer;
+    FirebaseAuth mAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FirebaseApp.initializeApp(this);
         db = FirebaseDb.getFirestore();
+        mAuth = FirebaseAuth.getInstance();
+
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
 
@@ -44,7 +55,7 @@ public class teacherLogIn extends AppCompatActivity {
         TextInputLayout emailLayout = findViewById(R.id.email_address_layout);
         TextInputLayout passwordLayout = findViewById(R.id.password);
         AppCompatButton submitButton = findViewById(R.id.btn_sign_in);
-
+        loadingContainer = findViewById(R.id.loading_container);
 
         TextInputEditText emailEditText = (TextInputEditText) emailLayout.getEditText();
 
@@ -72,14 +83,15 @@ public class teacherLogIn extends AppCompatActivity {
             emailLayout.setError(null);
             passwordLayout.setError(null);
 
-            String email = ((TextInputEditText) emailLayout.getEditText()).getText().toString().trim();
+            String email = emailEditText.getText().toString().trim();
+            String password = passwordEditText.getText().toString();
+
             if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 emailLayout.setError("Valid email address is required");
                 animateShakeRotateEditTextErrorAnimation(emailLayout);
                 hasError = true;
             }
 
-            String password = ((TextInputEditText) passwordLayout.getEditText()).getText().toString();
             if (TextUtils.isEmpty(password)) {
                 passwordLayout.setError("Password is required");
                 animateShakeRotateEditTextErrorAnimation(passwordLayout);
@@ -87,64 +99,125 @@ public class teacherLogIn extends AppCompatActivity {
             }
 
             if (!hasError) {
-                animateButtonClick(submitButton);
-                db.collection("Accounts")
-                        .document("Teachers")
-                        .collection(email)
-                        .document("MyProfile")
-                        .get()
-                        .addOnSuccessListener(documentSnapshot -> {
-                            if (documentSnapshot.exists()) {
-                                String storedPassword = documentSnapshot.getString("password");
-                                if (storedPassword != null && storedPassword.equals(password)) {
-                                    sharedPreferences.setLoggedIn(teacherLogIn.this, true);
-                                    sharedPreferences.saveEmail(teacherLogIn.this, email);
+                showLoading(true, submitButton);
 
-                                    Intent intent = new Intent(teacherLogIn.this, Dashboard.class);
+                // Authenticate the user securely via Firebase Auth
+                mAuth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                String uid = task.getResult().getUser().getUid();
+                                String hashedInputPassword = PasswordUtils.hashPassword(password); // Used for teachers
 
+                                db.collection("Accounts")
+                                        .document("Teachers")
+                                        .collection(email)
+                                        .document("MyProfile")
+                                        .get()
+                                        .addOnSuccessListener(teacherSnapshot -> {
+                                            if (teacherSnapshot.exists()) {
+                                                String storedPassword = teacherSnapshot.getString("password");
+                                                // Teachers use the hashed password
+                                                if (storedPassword != null && storedPassword.equals(hashedInputPassword)) {
+                                                    // SUCCESS: User is a Teacher & Hashes Match
+                                                    sharedPreferences.setLoggedIn(teacherLogIn.this, true);
+                                                    sharedPreferences.saveEmail(teacherLogIn.this, email);
+                                                    sharedPreferences.notifyGuestAccountStatus(teacherLogIn.this, false);
 
-                                    // Login success
-                                    Toast.makeText(this, "Welcome back Teacher!", Toast.LENGTH_SHORT).show();
-                                    startActivity(intent);
-                                    finish();
-                                    // Navigate to the next screen or perform the next action
-                                } else {
-                                    // Incorrect password
-                                    passwordLayout.setError("Incorrect password");
-                                    animateShakeRotateEditTextErrorAnimation(passwordLayout);
-                                }
-                            } else {
-
-                                db.collection("Admin")
-                                        .whereEqualTo("email", email).get().addOnSuccessListener(queryDocumentSnapshots -> {
-                                            if (!queryDocumentSnapshots.isEmpty()) {
-                                                // Admin account
-                                                String storedPassword = queryDocumentSnapshots.getDocuments().get(0).getString("password");
-                                                if (storedPassword != null && storedPassword.equals(password)) {
-                                                    Intent intent = new Intent(teacherLogIn.this, AdminActivity.class);
+                                                    Intent intent = new Intent(teacherLogIn.this, Dashboard.class);
                                                     startActivity(intent);
+                                                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                                                     finish();
                                                 } else {
-                                                    // Incorrect password
-                                                    passwordLayout.setError("Incorrect password");
+                                                    // FAILED: Firebase let them in, but your manual hash failed
+                                                    mAuth.signOut();
+                                                    showLoading(false, submitButton);
+                                                    passwordLayout.setError("Database password mismatch");
                                                     animateShakeRotateEditTextErrorAnimation(passwordLayout);
                                                 }
+
                                             } else {
-                                                // Account does not exist
-                                                emailLayout.setError("Account does not exist");
-                                                animateShakeRotateEditTextErrorAnimation(emailLayout);
+                                                db.collection("Admin").document(uid).get()
+                                                        .addOnSuccessListener(adminSnapshot -> {
+                                                            if (adminSnapshot.exists()) {
+
+                                                                String storedPassword = adminSnapshot.getString("password");
+                                                                if (storedPassword != null && storedPassword.equals(password)) {
+                                                                    sharedPreferences.setAdminLoggedIn(teacherLogIn.this, true);
+                                                                    sharedPreferences.saveEmail(teacherLogIn.this, email);
+                                                                    sharedPreferences.notifyGuestAccountStatus(teacherLogIn.this, false);
+
+                                                                    Intent intent = new Intent(teacherLogIn.this, AdminActivity.class);
+                                                                    startActivity(intent);
+                                                                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                                                                    finish();
+                                                                } else {
+                                                                    // FAILED: Firebase let them in, but your manual hash failed
+                                                                    mAuth.signOut();
+                                                                    showLoading(false, submitButton);
+                                                                    passwordLayout.setError("Database password mismatch");
+                                                                    animateShakeRotateEditTextErrorAnimation(passwordLayout);
+                                                                }
+
+                                                            } else {
+                                                                // FAILED: They logged in, but have no role profile in the DB
+                                                                mAuth.signOut(); // Kick them out
+                                                                showLoading(false, submitButton);
+                                                                emailLayout.setError("Account role not found");
+                                                                animateShakeRotateEditTextErrorAnimation(emailLayout);
+                                                            }
+                                                        })
+                                                        .addOnFailureListener(e -> {
+                                                            mAuth.signOut();
+                                                            showLoading(false, submitButton);
+                                                            Toast.makeText(teacherLogIn.this, "Database Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                        });
                                             }
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            mAuth.signOut();
+                                            showLoading(false, submitButton);
+                                            Toast.makeText(teacherLogIn.this, "Error accessing account: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                         });
+
+                            } else {
+                                showLoading(false, submitButton);
+                                passwordLayout.setError("Incorrect email or password");
+                                animateShakeRotateEditTextErrorAnimation(passwordLayout);
+                                animateShakeRotateEditTextErrorAnimation(emailLayout);
                             }
-                        })
-                        .addOnFailureListener(e -> {
-                            // Handle any errors with the Firestore request
-                            Toast.makeText(this, "Error accessing account: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         });
             }
         });
+    }
 
+    private void showLoading(boolean isLoading, AppCompatButton button) {
+        if (isLoading) {
+            button.setEnabled(false);
+            button.setAlpha(0.5f);
+            ColorMatrix matrix = new ColorMatrix();
+            matrix.setSaturation(0);
+            ColorMatrixColorFilter filter = new ColorMatrixColorFilter(matrix);
+            if (button.getBackground() != null) {
+                button.getBackground().setColorFilter(filter);
+            }
+            button.setTextColor(Color.LTGRAY);
+            loadingContainer.setVisibility(View.VISIBLE);
 
+        } else {
+            button.setEnabled(true);
+            button.setAlpha(1.0f);
+            if (button.getBackground() != null) {
+                button.getBackground().clearColorFilter();
+            }
+            button.setTextColor(Color.WHITE);
+            loadingContainer.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private void animateShakeRotateEditTextErrorAnimation(View view) {
